@@ -1,0 +1,12 @@
+Attack Provenance Graph (reconstructed from top rare paths):
+nodes=11 edges=10
+/bin/busybox -[EX x3]-> /bin/busybox
+sh -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/busybox

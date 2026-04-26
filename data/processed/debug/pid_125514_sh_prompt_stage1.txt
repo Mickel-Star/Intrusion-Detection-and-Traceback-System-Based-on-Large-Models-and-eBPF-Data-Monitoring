@@ -1,0 +1,80 @@
+You are an incident response analyst. Extract a concise IOC list strictly from the provided Evidence.
+Rules: Only output items that literally appear in Evidence. Output Markdown with sections: IOCs.Files, IOCs.Network, IOCs.Processes.
+
+Evidence:
+Attack Provenance Graph (reconstructed from top rare paths):
+nodes=12 edges=11
+/bin/sleep -[EX x1]-> /bin/sleep
+/bin/sleep -[EX x1]-> /bin/sleep
+/bin/sleep -[EX x1]-> /bin/sleep
+/bin/sleep -[EX x1]-> /bin/sleep
+/bin/sleep -[EX x1]-> /bin/sleep
+/bin/sleep -[EX x1]-> /bin/sleep
+/bin/sleep -[EX x1]-> /bin/sleep
+/bin/sleep -[EX x1]-> /bin/sleep
+/bin/sleep -[EX x1]-> /bin/sleep
+/bin/sleep -[EX x1]-> /bin/sleep
+/bin/sleep -[EX x1]-> /bin/sleep
+
+- score=298.974 path=/bin/sleep EX-> /bin/sleep EX<- /bin/sleep EX-> /bin/sleep EX<- /bin/sleep EX-> /bin/sleep EX<- /bin/sleep EX-> /bin/sleep EX<- /bin/sleep EX-> /bin/sleep EX<- /bin/sleep
+
+/bin/busybox -[EX x3]-> /bin/busybox
+/bin/busybox -[EX x2]-> /bin/busybox
+/bin/busybox -[EX x1]-> /bin/sleep
+sh -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/sleep
+sh -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/sleep
+sh -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/sleep
+sh -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/sleep
+sh -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/sleep
+sh -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/sleep
+sh -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/sleep
+sh -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/sleep
+sh -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/sleep
+sh -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/sleep
+sh -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/sleep
+sh -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/sleep
+sh -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/sleep
+sh -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/sleep
+sh -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/sleep
+sh -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/sleep
+sh -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/sleep
+sh -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/sleep
+sh -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/busybox

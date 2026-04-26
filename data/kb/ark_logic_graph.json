@@ -1,0 +1,1417 @@
+{
+  "directed": true,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "name": "Container and Resource Discovery",
+      "tactic": "Discovery",
+      "type": "Technique",
+      "id": "T1613"
+    },
+    {
+      "name": "Password Guessing",
+      "tactic": "Credential Access",
+      "type": "Technique",
+      "id": "T1110.001"
+    },
+    {
+      "name": "Create or Modify System Process",
+      "tactic": "Persistence",
+      "type": "Technique",
+      "id": "T1543"
+    },
+    {
+      "name": "External Remote Services",
+      "tactic": "Persistence",
+      "type": "Technique",
+      "id": "T1133"
+    },
+    {
+      "name": "Container Orchestration Job",
+      "tactic": "Execution",
+      "type": "Technique",
+      "id": "T1053.007"
+    },
+    {
+      "name": "Permission Groups Discovery",
+      "tactic": "Discovery",
+      "type": "Technique",
+      "id": "T1069"
+    },
+    {
+      "name": "Match Legitimate Resource Name or Location",
+      "tactic": "Defense Evasion",
+      "type": "Technique",
+      "id": "T1036.005"
+    },
+    {
+      "name": "Additional Container Cluster Roles",
+      "tactic": "Persistence",
+      "type": "Technique",
+      "id": "T1098.006"
+    },
+    {
+      "name": "Scheduled Task/Job",
+      "tactic": "Execution",
+      "type": "Technique",
+      "id": "T1053"
+    },
+    {
+      "name": "Impair Defenses",
+      "tactic": "Defense Evasion",
+      "type": "Technique",
+      "id": "T1562"
+    },
+    {
+      "name": "Exploit Public-Facing Application",
+      "tactic": "Initial Access",
+      "type": "Technique",
+      "id": "T1190"
+    },
+    {
+      "name": "Masquerading",
+      "tactic": "Defense Evasion",
+      "type": "Technique",
+      "id": "T1036"
+    },
+    {
+      "name": "Unsecured Credentials",
+      "tactic": "Credential Access",
+      "type": "Technique",
+      "id": "T1552"
+    },
+    {
+      "name": "Escape to Host",
+      "tactic": "Privilege Escalation",
+      "type": "Technique",
+      "id": "T1611"
+    },
+    {
+      "name": "Implant Internal Image",
+      "tactic": "Persistence",
+      "type": "Technique",
+      "id": "T1525"
+    },
+    {
+      "name": "Use Alternate Authentication Material",
+      "tactic": "Defense Evasion",
+      "type": "Technique",
+      "id": "T1550"
+    },
+    {
+      "name": "Deploy Container",
+      "tactic": "Defense Evasion",
+      "type": "Technique",
+      "id": "T1610"
+    },
+    {
+      "name": "Default Accounts",
+      "tactic": "Defense Evasion",
+      "type": "Technique",
+      "id": "T1078.001"
+    },
+    {
+      "name": "Local Account",
+      "tactic": "Persistence",
+      "type": "Technique",
+      "id": "T1136.001"
+    },
+    {
+      "name": "Password Spraying",
+      "tactic": "Credential Access",
+      "type": "Technique",
+      "id": "T1110.003"
+    },
+    {
+      "name": "Bandwidth Hijacking",
+      "tactic": "Impact",
+      "type": "Technique",
+      "id": "T1496.002"
+    },
+    {
+      "name": "Indicator Removal",
+      "tactic": "Defense Evasion",
+      "type": "Technique",
+      "id": "T1070"
+    },
+    {
+      "name": "Container Administration Command",
+      "tactic": "Execution",
+      "type": "Technique",
+      "id": "T1609"
+    },
+    {
+      "name": "Build Image on Host",
+      "tactic": "Defense Evasion",
+      "type": "Technique",
+      "id": "T1612"
+    },
+    {
+      "name": "Credentials In Files",
+      "tactic": "Credential Access",
+      "type": "Technique",
+      "id": "T1552.001"
+    },
+    {
+      "name": "Steal Application Access Token",
+      "tactic": "Credential Access",
+      "type": "Technique",
+      "id": "T1528"
+    },
+    {
+      "name": "User Execution",
+      "tactic": "Execution",
+      "type": "Technique",
+      "id": "T1204"
+    },
+    {
+      "name": "Account Manipulation",
+      "tactic": "Persistence",
+      "type": "Technique",
+      "id": "T1098"
+    },
+    {
+      "name": "Compute Hijacking",
+      "tactic": "Impact",
+      "type": "Technique",
+      "id": "T1496.001"
+    },
+    {
+      "name": "Brute Force",
+      "tactic": "Credential Access",
+      "type": "Technique",
+      "id": "T1110"
+    },
+    {
+      "name": "Disable or Modify Tools",
+      "tactic": "Defense Evasion",
+      "type": "Technique",
+      "id": "T1562.001"
+    },
+    {
+      "name": "Malicious Image",
+      "tactic": "Execution",
+      "type": "Technique",
+      "id": "T1204.003"
+    },
+    {
+      "name": "Container Service",
+      "tactic": "Persistence",
+      "type": "Technique",
+      "id": "T1543.005"
+    },
+    {
+      "name": "Valid Accounts",
+      "tactic": "Defense Evasion",
+      "type": "Technique",
+      "id": "T1078"
+    },
+    {
+      "name": "Exploitation for Privilege Escalation",
+      "tactic": "Privilege Escalation",
+      "type": "Technique",
+      "id": "T1068"
+    },
+    {
+      "name": "Credential Stuffing",
+      "tactic": "Credential Access",
+      "type": "Technique",
+      "id": "T1110.004"
+    },
+    {
+      "name": "Container CLI/API",
+      "tactic": "Execution",
+      "type": "Technique",
+      "id": "T1059.013"
+    },
+    {
+      "name": "Endpoint Denial of Service",
+      "tactic": "Impact",
+      "type": "Technique",
+      "id": "T1499"
+    },
+    {
+      "name": "Resource Hijacking",
+      "tactic": "Impact",
+      "type": "Technique",
+      "id": "T1496"
+    },
+    {
+      "name": "Masquerade Account Name",
+      "tactic": "Defense Evasion",
+      "type": "Technique",
+      "id": "T1036.010"
+    },
+    {
+      "name": "Data Destruction",
+      "tactic": "Impact",
+      "type": "Technique",
+      "id": "T1485"
+    },
+    {
+      "name": "Network Denial of Service",
+      "tactic": "Impact",
+      "type": "Technique",
+      "id": "T1498"
+    },
+    {
+      "name": "Create Account",
+      "tactic": "Persistence",
+      "type": "Technique",
+      "id": "T1136"
+    },
+    {
+      "name": "Network Service Discovery",
+      "tactic": "Discovery",
+      "type": "Technique",
+      "id": "T1046"
+    },
+    {
+      "name": "Application Access Token",
+      "tactic": "Defense Evasion",
+      "type": "Technique",
+      "id": "T1550.001"
+    },
+    {
+      "name": "Inhibit System Recovery",
+      "tactic": "Impact",
+      "type": "Technique",
+      "id": "T1490"
+    },
+    {
+      "name": "Container API",
+      "tactic": "Credential Access",
+      "type": "Technique",
+      "id": "T1552.007"
+    },
+    {
+      "name": "Local Accounts",
+      "tactic": "Defense Evasion",
+      "type": "Technique",
+      "id": "T1078.003"
+    }
+  ],
+  "links": [
+    {
+      "type": "logical_flow",
+      "source": "T1110.001",
+      "target": "T1613"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1110.001",
+      "target": "T1069"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1110.001",
+      "target": "T1046"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1543",
+      "target": "T1611"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1543",
+      "target": "T1068"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1133",
+      "target": "T1611"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1133",
+      "target": "T1068"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1053.007",
+      "target": "T1543"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1053.007",
+      "target": "T1133"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1053.007",
+      "target": "T1098.006"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1053.007",
+      "target": "T1525"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1053.007",
+      "target": "T1136.001"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1053.007",
+      "target": "T1098"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1053.007",
+      "target": "T1543.005"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1053.007",
+      "target": "T1136"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1036.005",
+      "target": "T1110.001"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1036.005",
+      "target": "T1552"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1036.005",
+      "target": "T1110.003"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1036.005",
+      "target": "T1552.001"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1036.005",
+      "target": "T1528"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1036.005",
+      "target": "T1110"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1036.005",
+      "target": "T1110.004"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1036.005",
+      "target": "T1552.007"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1098.006",
+      "target": "T1611"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1098.006",
+      "target": "T1068"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1053",
+      "target": "T1543"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1053",
+      "target": "T1133"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1053",
+      "target": "T1098.006"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1053",
+      "target": "T1525"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1053",
+      "target": "T1136.001"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1053",
+      "target": "T1098"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1053",
+      "target": "T1543.005"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1053",
+      "target": "T1136"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1562",
+      "target": "T1110.001"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1562",
+      "target": "T1552"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1562",
+      "target": "T1110.003"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1562",
+      "target": "T1552.001"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1562",
+      "target": "T1528"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1562",
+      "target": "T1110"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1562",
+      "target": "T1110.004"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1562",
+      "target": "T1552.007"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1190",
+      "target": "T1053.007"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1190",
+      "target": "T1053"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1190",
+      "target": "T1609"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1190",
+      "target": "T1204"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1190",
+      "target": "T1204.003"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1190",
+      "target": "T1059.013"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1036",
+      "target": "T1110.001"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1036",
+      "target": "T1552"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1036",
+      "target": "T1110.003"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1036",
+      "target": "T1552.001"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1036",
+      "target": "T1528"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1036",
+      "target": "T1110"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1036",
+      "target": "T1110.004"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1036",
+      "target": "T1552.007"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1552",
+      "target": "T1613"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1552",
+      "target": "T1069"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1552",
+      "target": "T1046"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1611",
+      "target": "T1036.005"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1611",
+      "target": "T1562"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1611",
+      "target": "T1036"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1611",
+      "target": "T1550"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1611",
+      "target": "T1610"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1611",
+      "target": "T1078.001"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1611",
+      "target": "T1070"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1611",
+      "target": "T1612"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1611",
+      "target": "T1562.001"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1611",
+      "target": "T1078"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1611",
+      "target": "T1036.010"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1611",
+      "target": "T1550.001"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1611",
+      "target": "T1078.003"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1525",
+      "target": "T1611"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1525",
+      "target": "T1068"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1550",
+      "target": "T1110.001"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1550",
+      "target": "T1552"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1550",
+      "target": "T1110.003"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1550",
+      "target": "T1552.001"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1550",
+      "target": "T1528"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1550",
+      "target": "T1110"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1550",
+      "target": "T1110.004"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1550",
+      "target": "T1552.007"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1610",
+      "target": "T1110.001"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1610",
+      "target": "T1552"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1610",
+      "target": "T1110.003"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1610",
+      "target": "T1552.001"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1610",
+      "target": "T1528"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1610",
+      "target": "T1110"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1610",
+      "target": "T1110.004"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1610",
+      "target": "T1552.007"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1078.001",
+      "target": "T1110.001"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1078.001",
+      "target": "T1552"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1078.001",
+      "target": "T1110.003"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1078.001",
+      "target": "T1552.001"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1078.001",
+      "target": "T1528"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1078.001",
+      "target": "T1110"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1078.001",
+      "target": "T1110.004"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1078.001",
+      "target": "T1552.007"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1136.001",
+      "target": "T1611"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1136.001",
+      "target": "T1068"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1110.003",
+      "target": "T1613"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1110.003",
+      "target": "T1069"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1110.003",
+      "target": "T1046"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1070",
+      "target": "T1110.001"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1070",
+      "target": "T1552"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1070",
+      "target": "T1110.003"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1070",
+      "target": "T1552.001"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1070",
+      "target": "T1528"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1070",
+      "target": "T1110"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1070",
+      "target": "T1110.004"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1070",
+      "target": "T1552.007"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1609",
+      "target": "T1543"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1609",
+      "target": "T1133"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1609",
+      "target": "T1098.006"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1609",
+      "target": "T1525"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1609",
+      "target": "T1136.001"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1609",
+      "target": "T1098"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1609",
+      "target": "T1543.005"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1609",
+      "target": "T1136"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1612",
+      "target": "T1110.001"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1612",
+      "target": "T1552"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1612",
+      "target": "T1110.003"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1612",
+      "target": "T1552.001"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1612",
+      "target": "T1528"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1612",
+      "target": "T1110"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1612",
+      "target": "T1110.004"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1612",
+      "target": "T1552.007"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1552.001",
+      "target": "T1613"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1552.001",
+      "target": "T1069"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1552.001",
+      "target": "T1046"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1528",
+      "target": "T1613"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1528",
+      "target": "T1069"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1528",
+      "target": "T1046"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1204",
+      "target": "T1543"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1204",
+      "target": "T1133"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1204",
+      "target": "T1098.006"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1204",
+      "target": "T1525"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1204",
+      "target": "T1136.001"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1204",
+      "target": "T1098"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1204",
+      "target": "T1543.005"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1204",
+      "target": "T1136"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1098",
+      "target": "T1611"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1098",
+      "target": "T1068"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1110",
+      "target": "T1613"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1110",
+      "target": "T1069"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1110",
+      "target": "T1046"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1562.001",
+      "target": "T1110.001"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1562.001",
+      "target": "T1552"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1562.001",
+      "target": "T1110.003"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1562.001",
+      "target": "T1552.001"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1562.001",
+      "target": "T1528"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1562.001",
+      "target": "T1110"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1562.001",
+      "target": "T1110.004"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1562.001",
+      "target": "T1552.007"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1204.003",
+      "target": "T1543"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1204.003",
+      "target": "T1133"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1204.003",
+      "target": "T1098.006"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1204.003",
+      "target": "T1525"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1204.003",
+      "target": "T1136.001"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1204.003",
+      "target": "T1098"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1204.003",
+      "target": "T1543.005"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1204.003",
+      "target": "T1136"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1543.005",
+      "target": "T1611"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1543.005",
+      "target": "T1068"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1078",
+      "target": "T1110.001"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1078",
+      "target": "T1552"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1078",
+      "target": "T1110.003"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1078",
+      "target": "T1552.001"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1078",
+      "target": "T1528"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1078",
+      "target": "T1110"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1078",
+      "target": "T1110.004"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1078",
+      "target": "T1552.007"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1068",
+      "target": "T1036.005"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1068",
+      "target": "T1562"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1068",
+      "target": "T1036"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1068",
+      "target": "T1550"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1068",
+      "target": "T1610"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1068",
+      "target": "T1078.001"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1068",
+      "target": "T1070"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1068",
+      "target": "T1612"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1068",
+      "target": "T1562.001"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1068",
+      "target": "T1078"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1068",
+      "target": "T1036.010"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1068",
+      "target": "T1550.001"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1068",
+      "target": "T1078.003"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1110.004",
+      "target": "T1613"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1110.004",
+      "target": "T1069"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1110.004",
+      "target": "T1046"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1059.013",
+      "target": "T1543"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1059.013",
+      "target": "T1133"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1059.013",
+      "target": "T1098.006"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1059.013",
+      "target": "T1525"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1059.013",
+      "target": "T1136.001"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1059.013",
+      "target": "T1098"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1059.013",
+      "target": "T1543.005"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1059.013",
+      "target": "T1136"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1036.010",
+      "target": "T1110.001"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1036.010",
+      "target": "T1552"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1036.010",
+      "target": "T1110.003"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1036.010",
+      "target": "T1552.001"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1036.010",
+      "target": "T1528"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1036.010",
+      "target": "T1110"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1036.010",
+      "target": "T1110.004"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1036.010",
+      "target": "T1552.007"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1136",
+      "target": "T1611"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1136",
+      "target": "T1068"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1550.001",
+      "target": "T1110.001"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1550.001",
+      "target": "T1552"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1550.001",
+      "target": "T1110.003"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1550.001",
+      "target": "T1552.001"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1550.001",
+      "target": "T1528"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1550.001",
+      "target": "T1110"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1550.001",
+      "target": "T1110.004"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1550.001",
+      "target": "T1552.007"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1552.007",
+      "target": "T1613"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1552.007",
+      "target": "T1069"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1552.007",
+      "target": "T1046"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1078.003",
+      "target": "T1110.001"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1078.003",
+      "target": "T1552"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1078.003",
+      "target": "T1110.003"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1078.003",
+      "target": "T1552.001"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1078.003",
+      "target": "T1528"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1078.003",
+      "target": "T1110"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1078.003",
+      "target": "T1110.004"
+    },
+    {
+      "type": "logical_flow",
+      "source": "T1078.003",
+      "target": "T1552.007"
+    }
+  ]
+}

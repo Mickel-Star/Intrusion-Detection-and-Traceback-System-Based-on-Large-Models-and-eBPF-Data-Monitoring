@@ -1,0 +1,28 @@
+{
+  "manifest_version": 1,
+  "log_file": "/home/yzx/DRSEC_v2/data/raw/benign_tracee.log",
+  "windows_dir": "/home/yzx/DRSEC_v2/data/processed/test_bbk_windows_v3",
+  "persist_windows": true,
+  "record_count": 1,
+  "summary": {
+    "window_count": 1,
+    "trainable_window_count": 1,
+    "scorable_window_count": 1,
+    "empty_window_count": 0,
+    "processless_trainable_window_count": 0,
+    "node_count_sum": 723,
+    "edge_count_sum": 1249,
+    "process_node_count_sum": 178
+  },
+  "records": [
+    {
+      "window_id": "window_0001",
+      "path": "/home/yzx/DRSEC_v2/data/processed/test_bbk_windows_v3/window_0001.json",
+      "node_count": 723,
+      "edge_count": 1249,
+      "process_node_count": 178,
+      "trainable": true,
+      "scorable": true
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+You are an incident response analyst. Extract a concise IOC list strictly from the provided Evidence.
+Rules: Only output items that literally appear in Evidence. Output Markdown with sections: IOCs.Files, IOCs.Network, IOCs.Processes.
+
+Evidence:
+Attack Provenance Graph (reconstructed from top rare paths):
+nodes=3 edges=2
+sh -[WR x2]-> fd:3_pid:125038
+sh -[WR x2]-> fd:4_pid:125038
+
+- score=298.974 path=sh WR-> fd:3_pid:125038 WR<- sh WR-> fd:3_pid:125038 WR<- sh WR-> fd:3_pid:125038 WR<- sh WR-> fd:3_pid:125038 WR<- sh WR-> fd:3_pid:125038 WR<- sh
+- score=269.076 path=sh WR-> fd:3_pid:125038 WR<- sh WR-> fd:3_pid:125038 WR<- sh WR-> fd:3_pid:125038 WR<- sh WR-> fd:3_pid:125038 WR<- sh WR-> fd:3_pid:125038
+- score=269.076 path=sh WR-> fd:3_pid:125038 WR<- sh WR-> fd:3_pid:125038 WR<- sh WR-> fd:3_pid:125038 WR<- sh WR-> fd:3_pid:125038 WR<- sh WR-> fd:4_pid:125038
+- score=239.179 path=sh WR-> fd:3_pid:125038 WR<- sh WR-> fd:3_pid:125038 WR<- sh WR-> fd:3_pid:125038 WR<- sh WR-> fd:3_pid:125038 WR<- sh
+- score=209.281 path=sh WR-> fd:3_pid:125038 WR<- sh WR-> fd:3_pid:125038 WR<- sh WR-> fd:3_pid:125038 WR<- sh WR-> fd:3_pid:125038
+- score=209.281 path=sh WR-> fd:3_pid:125038 WR<- sh WR-> fd:3_pid:125038 WR<- sh WR-> fd:3_pid:125038 WR<- sh WR-> fd:4_pid:125038
+- score=179.384 path=sh WR-> fd:3_pid:125038 WR<- sh WR-> fd:3_pid:125038 WR<- sh WR-> fd:3_pid:125038 WR<- sh
+- score=149.487 path=sh WR-> fd:3_pid:125038 WR<- sh WR-> fd:3_pid:125038 WR<- sh WR-> fd:3_pid:125038
+- score=149.487 path=sh WR-> fd:3_pid:125038 WR<- sh WR-> fd:3_pid:125038 WR<- sh WR-> fd:4_pid:125038
+- score=119.589 path=sh WR-> fd:3_pid:125038 WR<- sh WR-> fd:3_pid:125038 WR<- sh
+
+sh -[WR x2]-> fd:3_pid:125038
+sh -[WR x2]-> fd:4_pid:125038

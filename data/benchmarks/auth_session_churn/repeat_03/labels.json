@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "scenario_id": "auth_session_churn",
+  "kind": "benign",
+  "positive_roles": [],
+  "negative_roles": [
+    "benign"
+  ],
+  "containers": [
+    {
+      "role": "benign",
+      "container_id": "b566d0a25ee89e520071705cd6270bce6fd840c43eadf518e5ca87dea702c7b9",
+      "container_name": "drsec-bench-auth_session_churn-r03-benign",
+      "label": "negative"
+    },
+    {
+      "role": "target",
+      "container_id": "9bcd8632ee679cf528b1245b4c3fa4dcd5469c393c2e90547c4ea4d64bd0d471",
+      "container_name": "drsec-target",
+      "label": "ignored"
+    },
+    {
+      "role": "target_dsock",
+      "container_id": "02628c6eddd671e4013af7af14229d98d0730b2e3ac7bb0dde8c6850323cc95a",
+      "container_name": "drsec-target-dsock",
+      "label": "ignored"
+    },
+    {
+      "role": "c2",
+      "container_id": "dfca37b857e9c410598c04c83d48dfe4cb61120f3fc6a32afec8f80136c807f6",
+      "container_name": "drsec-c2",
+      "label": "ignored"
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "scenario_id": "mmap_mutation_probe",
+  "kind": "attack",
+  "positive_roles": [
+    "attacker",
+    "target"
+  ],
+  "negative_roles": [],
+  "containers": [
+    {
+      "role": "attacker",
+      "container_id": "0de2bc88ad8f80f70aa4fcb42941b55e9452005621f277fa2c20acc630a8bd16",
+      "container_name": "drsec-bench-mmap_mutation_probe-r03-attacker",
+      "label": "positive"
+    },
+    {
+      "role": "target",
+      "container_id": "09750c0fa13d3aecc76100e18134433fc6c1b7031459f7618ad177d36cd42872",
+      "container_name": "drsec-target",
+      "label": "positive"
+    },
+    {
+      "role": "target_dsock",
+      "container_id": "b5d849984f4f4db666b98b6c106a5b639957d65ddd65f6108401d7e12a384ba9",
+      "container_name": "drsec-target-dsock",
+      "label": "ignored"
+    },
+    {
+      "role": "c2",
+      "container_id": "4357dea6e654d081f1e946b0f24473951a05d45fc8a4f8a595b5541ca1951e3c",
+      "container_name": "drsec-c2",
+      "label": "ignored"
+    }
+  ]
+}

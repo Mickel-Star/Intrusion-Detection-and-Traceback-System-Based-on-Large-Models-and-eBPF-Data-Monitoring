@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "scenario_id": "cpu_miner",
+  "kind": "attack",
+  "positive_roles": [
+    "attacker",
+    "target"
+  ],
+  "negative_roles": [],
+  "containers": [
+    {
+      "role": "attacker",
+      "container_id": "11ffdd93f71bcb5c618b4f212b3c78e42b103268e1d89eb206ff4e482a84c107",
+      "container_name": "drsec-bench-cpu_miner-r01-attacker",
+      "label": "positive"
+    },
+    {
+      "role": "target",
+      "container_id": "6f6a78ea9ac3bd3194020ccc06dffbb67d39837a48264b8141e97cbef4923103",
+      "container_name": "drsec-target",
+      "label": "positive"
+    },
+    {
+      "role": "target_dsock",
+      "container_id": "75cdae8d0936095496ee2114049fc1fc261f8bbc180b24839cc51c5d92fc442a",
+      "container_name": "drsec-target-dsock",
+      "label": "ignored"
+    },
+    {
+      "role": "c2",
+      "container_id": "d7101c633027e1825c2ccd05ef115a2fc3d67c792087ef67c0f991acb6cad8de",
+      "container_name": "drsec-c2",
+      "label": "ignored"
+    }
+  ]
+}

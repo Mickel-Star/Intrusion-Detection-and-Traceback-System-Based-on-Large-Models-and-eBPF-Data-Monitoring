@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "scenario_id": "shadow_read",
+  "kind": "attack",
+  "positive_roles": [
+    "attacker",
+    "target"
+  ],
+  "negative_roles": [],
+  "containers": [
+    {
+      "role": "attacker",
+      "container_id": "d7a7eefba19f590e0aeef820e9cf801e6a54284c84c7f7170d83d7fe6d81e603",
+      "container_name": "drsec-bench-shadow_read-r02-attacker",
+      "label": "positive"
+    },
+    {
+      "role": "target",
+      "container_id": "856f21594603f75a5af3f5e9069c89f83f84237a29655cd95c30d93b1cb94007",
+      "container_name": "drsec-target",
+      "label": "positive"
+    },
+    {
+      "role": "target_dsock",
+      "container_id": "9d2e2a2aeea4a54ce0975ded7a0a01d691b718ada22f608725a75301f2467a1c",
+      "container_name": "drsec-target-dsock",
+      "label": "ignored"
+    },
+    {
+      "role": "c2",
+      "container_id": "d2650a159aaaa16073341563ce243a6841a4be9337d2cbc0f33a0b2207332c1b",
+      "container_name": "drsec-c2",
+      "label": "ignored"
+    }
+  ]
+}

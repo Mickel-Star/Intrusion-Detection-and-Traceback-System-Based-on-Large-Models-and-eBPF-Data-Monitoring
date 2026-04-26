@@ -1,0 +1,19 @@
+{
+  "scenario_id": "search_heavy",
+  "kind": "benign",
+  "repeat_id": 3,
+  "driver_role": "benign",
+  "driver_container_name": "drsec-bench-search_heavy-r03-benign",
+  "driver_container_id": "dd1c9ec5cd674c43cca6d11321a99e37fa18f34e68237759df52748e5e4124c3",
+  "target_container_id": "2ba9b19b1a92fb9e921344f34dafc1108cabc6328087b8b25828fb4b7d1a8511",
+  "target_dsock_container_id": "61afb8879b418f0877d67163adec4d8e4e01874a83b558e21d97215d4cee4baa",
+  "c2_container_id": "5b2616dd00acddcfd6facad4cc3534ff879406c79fdb63d8a063cbb0b02b4929",
+  "trace_out": "/home/yzx/DRSEC_v2/data/benchmarks/search_heavy/repeat_03/trace.log",
+  "windows_dir": "/home/yzx/DRSEC_v2/data/benchmarks/search_heavy/repeat_03/windows",
+  "metrics_path": "/home/yzx/DRSEC_v2/data/benchmarks/search_heavy/repeat_03/metrics.json",
+  "window_seconds": 10,
+  "threshold": 0.5,
+  "max_windows": 0,
+  "command": "set -eu; for i in $(seq 1 12); do ORDER_ID=$(curl -s -H 'Content-Type: application/json' -d '{\"customer\":\"alice\",\"item\":\"sku-003\",\"quantity\":1}' 'http://vuln-app:5000/api/order' | sed -n 's/.*\"order_id\":\\([0-9][0-9]*\\).*/\\1/p'); curl -s \"http://vuln-app:5000/api/search?q=alice\" >/dev/null; curl -s \"http://vuln-app:5000/api/search?q=sku-003\" >/dev/null; if [ -n \"$ORDER_ID\" ]; then curl -s \"http://vuln-app:5000/api/order/$ORDER_ID\" >/dev/null; fi; sleep 0.25; done; sleep 2",
+  "duration_seconds": 10
+}

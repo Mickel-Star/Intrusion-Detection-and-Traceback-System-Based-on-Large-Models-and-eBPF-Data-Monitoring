@@ -1,0 +1,226 @@
+{
+  "run_id": "repeat_02",
+  "scenario_id": "cpu_miner",
+  "repeat_id": 2,
+  "kind": "attack",
+  "labels": {
+    "schema_version": 1,
+    "scenario_id": "cpu_miner",
+    "kind": "attack",
+    "positive_roles": [
+      "attacker",
+      "target"
+    ],
+    "negative_roles": [],
+    "containers": [
+      {
+        "role": "attacker",
+        "container_id": "88c5d92a34b320c709bc8e830d48896d4a888e3d6ec0a0869b27954e7ad99259",
+        "container_name": "drsec-bench-cpu_miner-r02-attacker",
+        "label": "positive"
+      },
+      {
+        "role": "target",
+        "container_id": "417070efe1a35450039854443ad79ec60ac67239a8bc26875408f3908778e023",
+        "container_name": "drsec-target",
+        "label": "positive"
+      },
+      {
+        "role": "target_dsock",
+        "container_id": "be1bd1d5fef34ffb1b29111890d487a23223190f52d06d18b1a30e9c6e436436",
+        "container_name": "drsec-target-dsock",
+        "label": "ignored"
+      },
+      {
+        "role": "c2",
+        "container_id": "a443b3c3ed41a67a7c95019ab1f5788d0b0ef22f96b7148856cc753b27412746",
+        "container_name": "drsec-c2",
+        "label": "ignored"
+      }
+    ]
+  },
+  "window_candidates": [
+    {
+      "window_file": "window_0001.json",
+      "ground_truth_positive": [
+        "repeat_02:417070efe1a3:2583393",
+        "repeat_02:417070efe1a3:2583394",
+        "repeat_02:88c5d92a34b3:2583345",
+        "repeat_02:88c5d92a34b3:2583383",
+        "repeat_02:88c5d92a34b3:2583384"
+      ],
+      "ground_truth_negative": [],
+      "candidate_processes": [
+        {
+          "pid": 2583383,
+          "role": "attacker",
+          "label": "positive",
+          "score": 1.0,
+          "name": "entrypoint.sh"
+        },
+        {
+          "pid": 2583393,
+          "role": "target",
+          "label": "positive",
+          "score": 0.42134831460674155,
+          "name": "sh"
+        },
+        {
+          "pid": 2583345,
+          "role": "attacker",
+          "label": "positive",
+          "score": 0.2696629213483146,
+          "name": "entrypoint.sh"
+        },
+        {
+          "pid": 2583394,
+          "role": "target",
+          "label": "positive",
+          "score": 0.2696629213483146,
+          "name": "sh"
+        },
+        {
+          "pid": 2583384,
+          "role": "attacker",
+          "label": "positive",
+          "score": 0.24719101123595505,
+          "name": "sh"
+        }
+      ]
+    },
+    {
+      "window_file": "window_0002.json",
+      "ground_truth_positive": [
+        "repeat_02:417070efe1a3:2583393",
+        "repeat_02:88c5d92a34b3:2583345",
+        "repeat_02:88c5d92a34b3:2583384"
+      ],
+      "ground_truth_negative": [],
+      "candidate_processes": [
+        {
+          "pid": 2583393,
+          "role": "target",
+          "label": "positive",
+          "score": 1.0,
+          "name": "python"
+        },
+        {
+          "pid": 2583345,
+          "role": "attacker",
+          "label": "positive",
+          "score": 1.0,
+          "name": "sh"
+        },
+        {
+          "pid": 2583384,
+          "role": "attacker",
+          "label": "positive",
+          "score": 0.5,
+          "name": "curl"
+        }
+      ]
+    }
+  ],
+  "process_samples": [
+    {
+      "sample_id": "repeat_02:417070efe1a3:2583393",
+      "run_id": "repeat_02",
+      "scenario_id": "cpu_miner",
+      "repeat_id": 2,
+      "kind": "attack",
+      "role": "target",
+      "container_id": "417070efe1a3",
+      "label": "positive",
+      "pid": 2583393,
+      "process_name": "sh",
+      "score": 1.0
+    },
+    {
+      "sample_id": "repeat_02:417070efe1a3:2583394",
+      "run_id": "repeat_02",
+      "scenario_id": "cpu_miner",
+      "repeat_id": 2,
+      "kind": "attack",
+      "role": "target",
+      "container_id": "417070efe1a3",
+      "label": "positive",
+      "pid": 2583394,
+      "process_name": "sh",
+      "score": 0.2696629213483146
+    },
+    {
+      "sample_id": "repeat_02:88c5d92a34b3:2583345",
+      "run_id": "repeat_02",
+      "scenario_id": "cpu_miner",
+      "repeat_id": 2,
+      "kind": "attack",
+      "role": "attacker",
+      "container_id": "88c5d92a34b3",
+      "label": "positive",
+      "pid": 2583345,
+      "process_name": "entrypoint.sh",
+      "score": 1.0
+    },
+    {
+      "sample_id": "repeat_02:88c5d92a34b3:2583383",
+      "run_id": "repeat_02",
+      "scenario_id": "cpu_miner",
+      "repeat_id": 2,
+      "kind": "attack",
+      "role": "attacker",
+      "container_id": "88c5d92a34b3",
+      "label": "positive",
+      "pid": 2583383,
+      "process_name": "entrypoint.sh",
+      "score": 1.0
+    },
+    {
+      "sample_id": "repeat_02:88c5d92a34b3:2583384",
+      "run_id": "repeat_02",
+      "scenario_id": "cpu_miner",
+      "repeat_id": 2,
+      "kind": "attack",
+      "role": "attacker",
+      "container_id": "88c5d92a34b3",
+      "label": "positive",
+      "pid": 2583384,
+      "process_name": "sh",
+      "score": 0.5
+    }
+  ],
+  "role_samples": [
+    {
+      "sample_id": "repeat_02:attacker:88c5d92a34b3",
+      "run_id": "repeat_02",
+      "scenario_id": "cpu_miner",
+      "repeat_id": 2,
+      "kind": "attack",
+      "role": "attacker",
+      "container_id": "88c5d92a34b3",
+      "label": "positive",
+      "score": 1.0
+    },
+    {
+      "sample_id": "repeat_02:target:417070efe1a3",
+      "run_id": "repeat_02",
+      "scenario_id": "cpu_miner",
+      "repeat_id": 2,
+      "kind": "attack",
+      "role": "target",
+      "container_id": "417070efe1a3",
+      "label": "positive",
+      "score": 1.0
+    }
+  ],
+  "scenario_samples": [
+    {
+      "sample_id": "repeat_02",
+      "run_id": "repeat_02",
+      "scenario_id": "cpu_miner",
+      "repeat_id": 2,
+      "kind": "attack",
+      "label": "positive",
+      "score": 1.0
+    }
+  ]
+}

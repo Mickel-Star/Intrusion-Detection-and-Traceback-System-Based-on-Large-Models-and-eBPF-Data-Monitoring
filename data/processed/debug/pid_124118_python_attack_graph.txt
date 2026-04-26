@@ -1,0 +1,8 @@
+Attack Provenance Graph (reconstructed from top rare paths):
+nodes=7 edges=6
+/usr/local/bin/python3.14 -[WR x305]-> fd:3_pid:124118
+/usr/local/bin/python3.14 -[WR x11]-> fd:4_pid:124118
+/usr/local/bin/python3.14 -[SD x2]-> pid:124118->unknown:0
+/usr/local/bin/python3.14 -[WR x2]-> fd:1_pid:124118
+/usr/local/bin/python3.14 -[WR x2]-> fd:2_pid:124118
+/usr/local/bin/python3.14 -[EX x1]-> /usr/local/bin/python3.14

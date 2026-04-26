@@ -1,0 +1,5 @@
+Attack Provenance Graph (reconstructed from top rare paths):
+nodes=6 edges=3
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/bin/ping -[EX x1]-> /bin/ping
+python -[WR x1]-> fd:4_pid:2437533

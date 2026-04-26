@@ -1,0 +1,5 @@
+Attack Provenance Graph (reconstructed from top rare paths):
+nodes=4 edges=3
+entrypoint.sh -[WR x1]-> fd:10_pid:124634
+entrypoint.sh -[WR x1]-> fd:3_pid:124634
+entrypoint.sh -[WR x1]-> fd:4_pid:124634

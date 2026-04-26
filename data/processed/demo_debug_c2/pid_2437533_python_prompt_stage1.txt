@@ -1,0 +1,41 @@
+You are an incident response analyst. Extract a concise IOC list strictly from the provided Evidence.
+Rules: Only output items that literally appear in Evidence. Output Markdown with sections: IOCs.Files, IOCs.Network, IOCs.Processes.
+
+Evidence:
+Attack Provenance Graph (reconstructed from top rare paths):
+nodes=6 edges=3
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/bin/ping -[EX x1]-> /bin/ping
+python -[WR x1]-> fd:4_pid:2437533
+
+- score=1.000 path=python WR-> fd:4_pid:2437533 WR<- python WR-> fd:4_pid:2437533 WR<- python WR-> fd:4_pid:2437533 WR<- python WR-> fd:4_pid:2437533 WR<- python WR-> fd:4_pid:2437533 WR<- python
+- score=1.000 path=/bin/ping EX-> /bin/ping EX<- /bin/ping EX-> /bin/ping EX<- /bin/ping EX-> /bin/ping EX<- /bin/ping EX-> /bin/ping EX<- /bin/ping EX-> /bin/ping EX<- /bin/ping
+- score=1.000 path=/usr/bin/curl EX-> /usr/bin/curl EX<- /usr/bin/curl EX-> /usr/bin/curl EX<- /usr/bin/curl EX-> /usr/bin/curl EX<- /usr/bin/curl EX-> /usr/bin/curl EX<- /usr/bin/curl EX-> /usr/bin/curl EX<- /usr/bin/curl
+
+WindowAlert: window_0001 score=0.097 | containers=3 | top_processes=python pid=2437533 score=0.097; sh pid=2439110 score=0.051; sh pid=2439101 score=0.051 | top_paths=python Write-> fd:4_pid:2437533 Write<- python Write-> fd:4_pid:2437533 Write<- python Write-> f; /bin/ping Execute-> /bin/ping Execute<- /bin/ping Execute-> /bin/ping Execute<- /bin/ping Execut; /usr/bin/curl Execute-> /usr/bin/curl Execute<- /usr/bin/curl Execute-> /usr/bin/curl Execute<- 
+
+pid:2437533->unknown:0 -[RC x1]-> python
+python -[WR x1]-> fd:1_pid:2437533
+python -[WR x1]-> fd:3_pid:2437533
+python -[WR x1]-> fd:4_pid:2437533
+
+/bin/ping -[EX x1]-> /bin/ping
+/bin/ping -[EX x1]-> /bin/ping
+/bin/ping -[SD x3]-> pid:2439110->unknown:0
+/bin/ping -[WR x1]-> fd:1_pid:2439110
+/bin/ping -[WR x1]-> fd:2_pid:2439110
+/bin/ping -[WR x1]-> fd:3_pid:2439110
+/bin/ping -[WR x1]-> fd:5_pid:2439110
+fd:3_pid:2439110 -[RD x1]-> /bin/ping
+
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[SD x5]-> pid:2439101->unknown:0
+pid:2439101->unknown:0 -[RC x1]-> /usr/bin/curl
+/usr/bin/curl -[WR x20]-> fd:3_pid:2439101
+/usr/bin/curl -[WR x3]-> fd:5_pid:2439101
+/usr/bin/curl -[WR x3]-> fd:7_pid:2439101
+/usr/bin/curl -[WR x2]-> fd:6_pid:2439101
+/usr/bin/curl -[WR x1]-> fd:4_pid:2439101
+fd:3_pid:2439101 -[RD x33]-> /usr/bin/curl
+fd:7_pid:2439101 -[RD x5]-> /usr/bin/curl

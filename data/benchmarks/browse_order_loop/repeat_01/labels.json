@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "scenario_id": "browse_order_loop",
+  "kind": "benign",
+  "positive_roles": [],
+  "negative_roles": [
+    "benign"
+  ],
+  "containers": [
+    {
+      "role": "benign",
+      "container_id": "53eb36f9dddef132631c2aee4e6abd4aadcd10fb8ffa62d9606e9b0383f339d7",
+      "container_name": "drsec-bench-browse_order_loop-r01-benign",
+      "label": "negative"
+    },
+    {
+      "role": "target",
+      "container_id": "89f4b896a9b3444bf16ee008a760953e70e769e4055939768c9fecc4cc7fe3b1",
+      "container_name": "drsec-target",
+      "label": "ignored"
+    },
+    {
+      "role": "target_dsock",
+      "container_id": "7c2692cb88e64ed092cdb7a8703c39047d8a93f05e2e100e59abbc8ea0e58898",
+      "container_name": "drsec-target-dsock",
+      "label": "ignored"
+    },
+    {
+      "role": "c2",
+      "container_id": "c07ec6e22c674d1e7b8dcc7dc5f9707f534bd8c209307711e524ffde120e28d6",
+      "container_name": "drsec-c2",
+      "label": "ignored"
+    }
+  ]
+}

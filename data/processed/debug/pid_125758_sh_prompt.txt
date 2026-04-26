@@ -1,0 +1,63 @@
+You are a security analyst. Write a grounded incident report.
+Rules:
+1) Only reference entities that appear in AllowedEntities.
+2) Only reference technique IDs in AllowedTechniques.
+3) Provide a verdict (Malicious/Benign/Unknown) and recommended actions.
+Output Markdown with sections: Summary, Evidence, ATT&CK Mapping, Impact, Recommended Actions, Confidence.
+
+TargetProcess: sh pid=125758
+AllowedEntities:
+{"paths": [], "ips": [], "iocs": ["sh"]}
+AllowedTechniques: None
+
+SimilarCases:
+- case_id=case_1773574548_4d279c65 pid=125492 name=sh score=298.974 doc=.../curl -[EX x1
+- case_id=case_1773577950_dca94f4c pid=125727 name=sh score=298.974 doc=.../curl -[EX x1
+- case_id=case_1773562100_f1ecf8dc pid=124670 name=sh score=298.974 doc=.../curl -[EX x1
+
+BBK:
+- path_score=298.974 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+- path_score=269.076 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+- path_score=269.076 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+- path_score=239.179 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+- path_score=209.281 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+
+EvidenceGraph:
+Attack Provenance Graph (reconstructed from top rare paths):
+nodes=3 edges=2
+sh -[WR x2]-> fd:3_pid:125758
+sh -[WR x2]-> fd:4_pid:125758
+
+RarePaths:
+- score=298.974 path=sh WR-> fd:3_pid:125758 WR<- sh WR-> fd:3_pid:125758 WR<- sh WR-> fd:3_pid:125758 WR<- sh WR-> fd:3_pid:125758 WR<- sh WR-> fd:3_pid:125758 WR<- sh
+- score=269.076 path=sh WR-> fd:3_pid:125758 WR<- sh WR-> fd:3_pid:125758 WR<- sh WR-> fd:3_pid:125758 WR<- sh WR-> fd:3_pid:125758 WR<- sh WR-> fd:3_pid:125758
+- score=269.076 path=sh WR-> fd:3_pid:125758 WR<- sh WR-> fd:3_pid:125758 WR<- sh WR-> fd:3_pid:125758 WR<- sh WR-> fd:3_pid:125758 WR<- sh WR-> fd:4_pid:125758
+- score=239.179 path=sh WR-> fd:3_pid:125758 WR<- sh WR-> fd:3_pid:125758 WR<- sh WR-> fd:3_pid:125758 WR<- sh WR-> fd:3_pid:125758 WR<- sh
+- score=209.281 path=sh WR-> fd:3_pid:125758 WR<- sh WR-> fd:3_pid:125758 WR<- sh WR-> fd:3_pid:125758 WR<- sh WR-> fd:3_pid:125758
+- score=209.281 path=sh WR-> fd:3_pid:125758 WR<- sh WR-> fd:3_pid:125758 WR<- sh WR-> fd:3_pid:125758 WR<- sh WR-> fd:4_pid:125758
+- score=179.384 path=sh WR-> fd:3_pid:125758 WR<- sh WR-> fd:3_pid:125758 WR<- sh WR-> fd:3_pid:125758 WR<- sh
+- score=149.487 path=sh WR-> fd:3_pid:125758 WR<- sh WR-> fd:3_pid:125758 WR<- sh WR-> fd:3_pid:125758
+- score=149.487 path=sh WR-> fd:3_pid:125758 WR<- sh WR-> fd:3_pid:125758 WR<- sh WR-> fd:4_pid:125758
+- score=119.589 path=sh WR-> fd:3_pid:125758 WR<- sh WR-> fd:3_pid:125758 WR<- sh
+
+IOCList:
+### IOCs
+
+#### IOCs.Files
+*   `fd:3_pid:125758`
+*   `fd:4_pid:125758`
+
+#### IOCs.Network
+*   *(No network indicators explicitly listed in the evidence.)*
+
+#### IOCs.Processes
+*   `sh`
+*   `pid:125758`
+
+StageMapping:
+| Stage | TechniqueID | Confidence | EvidenceSnippet |
+|-------|-------------|------------|------------------|
+| Execution | Unknown | Low | `sh -[WR x2]-> fd:3_pid:125758` |
+| Persistence | Unknown | Low | `sh -[WR x2]-> fd:4_pid:125758` |
+
+**Explanation:** The provided evidence shows a provenance graph with a `sh` (shell) process writing to file descriptors (`fd:3`, `fd:4`) of a specific process (`pid:125758`). This indicates command execution and potential inter-process communication or redirection. However, without specific `AllowedTechniques` to map these actions to, and given the limited context (no details on what `fd:3` or `fd:4` represent, e.g., network sockets, files), the specific ATT&CK techniques cannot be identified. Therefore, the techniques are listed as `Unknown`. The `Confidence` is set to `Low` due to the high level of abstraction in the evidence.

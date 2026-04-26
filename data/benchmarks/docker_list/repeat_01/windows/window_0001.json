@@ -1,0 +1,950 @@
+{
+  "nodes": [
+    {
+      "id": "proc:pid:2470127",
+      "meta": {
+        "uuid": "pid:2470127",
+        "pathname": "/bin/busybox",
+        "name": "entrypoint.sh",
+        "pid": 2470127,
+        "container_id": "1dd4183767e3",
+        "container_image": "curlimages/curl:",
+        "pod_name": null
+      }
+    },
+    {
+      "id": "file:/bin/busybox|inode:3121",
+      "meta": {
+        "uuid": "/bin/busybox|inode:3121",
+        "pathname": "/bin/busybox",
+        "name": "/bin/busybox"
+      }
+    },
+    {
+      "id": "file:fd:3_pid:2470127",
+      "meta": {
+        "uuid": "fd:3_pid:2470127",
+        "pathname": "fd:3_pid:2470127",
+        "name": "fd:3_pid:2470127"
+      }
+    },
+    {
+      "id": "file:fd:10_pid:2470127",
+      "meta": {
+        "uuid": "fd:10_pid:2470127",
+        "pathname": "fd:10_pid:2470127",
+        "name": "fd:10_pid:2470127"
+      }
+    },
+    {
+      "id": "file:fd:4_pid:2470127",
+      "meta": {
+        "uuid": "fd:4_pid:2470127",
+        "pathname": "fd:4_pid:2470127",
+        "name": "fd:4_pid:2470127"
+      }
+    },
+    {
+      "id": "proc:pid:2470166",
+      "meta": {
+        "uuid": "pid:2470166",
+        "pathname": "",
+        "name": "entrypoint.sh",
+        "pid": 2470166,
+        "container_id": "1dd4183767e3",
+        "container_image": "curlimages/curl:",
+        "pod_name": null
+      }
+    },
+    {
+      "id": "file:fd:10_pid:2470166",
+      "meta": {
+        "uuid": "fd:10_pid:2470166",
+        "pathname": "fd:10_pid:2470166",
+        "name": "fd:10_pid:2470166"
+      }
+    },
+    {
+      "id": "file:fd:3_pid:2470166",
+      "meta": {
+        "uuid": "fd:3_pid:2470166",
+        "pathname": "fd:3_pid:2470166",
+        "name": "fd:3_pid:2470166"
+      }
+    },
+    {
+      "id": "file:fd:4_pid:2470166",
+      "meta": {
+        "uuid": "fd:4_pid:2470166",
+        "pathname": "fd:4_pid:2470166",
+        "name": "fd:4_pid:2470166"
+      }
+    },
+    {
+      "id": "file:/usr/local/sbin/sh",
+      "meta": {
+        "uuid": "/usr/local/sbin/sh",
+        "pathname": "/usr/local/sbin/sh",
+        "name": "/usr/local/sbin/sh"
+      }
+    },
+    {
+      "id": "file:/usr/local/bin/sh",
+      "meta": {
+        "uuid": "/usr/local/bin/sh",
+        "pathname": "/usr/local/bin/sh",
+        "name": "/usr/local/bin/sh"
+      }
+    },
+    {
+      "id": "file:/usr/sbin/sh",
+      "meta": {
+        "uuid": "/usr/sbin/sh",
+        "pathname": "/usr/sbin/sh",
+        "name": "/usr/sbin/sh"
+      }
+    },
+    {
+      "id": "file:/usr/bin/sh",
+      "meta": {
+        "uuid": "/usr/bin/sh",
+        "pathname": "/usr/bin/sh",
+        "name": "/usr/bin/sh"
+      }
+    },
+    {
+      "id": "file:/sbin/sh",
+      "meta": {
+        "uuid": "/sbin/sh",
+        "pathname": "/sbin/sh",
+        "name": "/sbin/sh"
+      }
+    },
+    {
+      "id": "file:/bin/sh",
+      "meta": {
+        "uuid": "/bin/sh",
+        "pathname": "/bin/sh",
+        "name": "/bin/sh"
+      }
+    },
+    {
+      "id": "file:fd:11_pid:2470127",
+      "meta": {
+        "uuid": "fd:11_pid:2470127",
+        "pathname": "fd:11_pid:2470127",
+        "name": "fd:11_pid:2470127"
+      }
+    },
+    {
+      "id": "proc:pid:2470168",
+      "meta": {
+        "uuid": "pid:2470168",
+        "pathname": "/usr/bin/curl",
+        "name": "sh",
+        "pid": 2470168,
+        "container_id": "1dd4183767e3",
+        "container_image": "curlimages/curl:",
+        "pod_name": null
+      }
+    },
+    {
+      "id": "file:/usr/bin/curl",
+      "meta": {
+        "uuid": "/usr/bin/curl",
+        "pathname": "/usr/bin/curl",
+        "name": "/usr/bin/curl"
+      }
+    },
+    {
+      "id": "file:/usr/bin/curl|inode:2093",
+      "meta": {
+        "uuid": "/usr/bin/curl|inode:2093",
+        "pathname": "/usr/bin/curl",
+        "name": "/usr/bin/curl"
+      }
+    },
+    {
+      "id": "file:fd:3_pid:2470168",
+      "meta": {
+        "uuid": "fd:3_pid:2470168",
+        "pathname": "fd:3_pid:2470168",
+        "name": "fd:3_pid:2470168"
+      }
+    },
+    {
+      "id": "file:fd:5_pid:2470168",
+      "meta": {
+        "uuid": "fd:5_pid:2470168",
+        "pathname": "fd:5_pid:2470168",
+        "name": "fd:5_pid:2470168"
+      }
+    },
+    {
+      "id": "file:fd:7_pid:2470168",
+      "meta": {
+        "uuid": "fd:7_pid:2470168",
+        "pathname": "fd:7_pid:2470168",
+        "name": "fd:7_pid:2470168"
+      }
+    },
+    {
+      "id": "net:tcp:pid:2470168->unknown:0",
+      "meta": {
+        "uuid": "tcp:pid:2470168->unknown:0",
+        "src_ip": "pid",
+        "dst_ip": "unknown",
+        "name": "pid:2470168->unknown:0"
+      }
+    },
+    {
+      "id": "file:fd:6_pid:2470168",
+      "meta": {
+        "uuid": "fd:6_pid:2470168",
+        "pathname": "fd:6_pid:2470168",
+        "name": "fd:6_pid:2470168"
+      }
+    },
+    {
+      "id": "proc:pid:2470177",
+      "meta": {
+        "uuid": "pid:2470177",
+        "pathname": "/bin/busybox",
+        "name": "sh",
+        "pid": 2470177,
+        "container_id": "8bbddeb57366",
+        "container_image": "deploy-vuln-app:",
+        "pod_name": null
+      }
+    },
+    {
+      "id": "file:/bin/busybox|inode:2573",
+      "meta": {
+        "uuid": "/bin/busybox|inode:2573",
+        "pathname": "/bin/busybox",
+        "name": "/bin/busybox"
+      }
+    },
+    {
+      "id": "proc:pid:2470178",
+      "meta": {
+        "uuid": "pid:2470178",
+        "pathname": "/bin/ping",
+        "name": "sh",
+        "pid": 2470178,
+        "container_id": "8bbddeb57366",
+        "container_image": "deploy-vuln-app:",
+        "pod_name": null
+      }
+    },
+    {
+      "id": "file:/bin/ping",
+      "meta": {
+        "uuid": "/bin/ping",
+        "pathname": "/bin/ping",
+        "name": "/bin/ping"
+      }
+    },
+    {
+      "id": "file:/bin/ping|inode:2125",
+      "meta": {
+        "uuid": "/bin/ping|inode:2125",
+        "pathname": "/bin/ping",
+        "name": "/bin/ping"
+      }
+    },
+    {
+      "id": "file:fd:3_pid:2470178",
+      "meta": {
+        "uuid": "fd:3_pid:2470178",
+        "pathname": "fd:3_pid:2470178",
+        "name": "fd:3_pid:2470178"
+      }
+    },
+    {
+      "id": "net:tcp:pid:2470178->unknown:0",
+      "meta": {
+        "uuid": "tcp:pid:2470178->unknown:0",
+        "src_ip": "pid",
+        "dst_ip": "unknown",
+        "name": "pid:2470178->unknown:0"
+      }
+    },
+    {
+      "id": "file:fd:5_pid:2470178",
+      "meta": {
+        "uuid": "fd:5_pid:2470178",
+        "pathname": "fd:5_pid:2470178",
+        "name": "fd:5_pid:2470178"
+      }
+    },
+    {
+      "id": "file:fd:1_pid:2470178",
+      "meta": {
+        "uuid": "fd:1_pid:2470178",
+        "pathname": "fd:1_pid:2470178",
+        "name": "fd:1_pid:2470178"
+      }
+    },
+    {
+      "id": "file:fd:2_pid:2470178",
+      "meta": {
+        "uuid": "fd:2_pid:2470178",
+        "pathname": "fd:2_pid:2470178",
+        "name": "fd:2_pid:2470178"
+      }
+    },
+    {
+      "id": "file:/usr/local/bin/python",
+      "meta": {
+        "uuid": "/usr/local/bin/python",
+        "pathname": "/usr/local/bin/python",
+        "name": "/usr/local/bin/python"
+      }
+    },
+    {
+      "id": "file:/usr/local/bin/python3.14|inode:6521",
+      "meta": {
+        "uuid": "/usr/local/bin/python3.14|inode:6521",
+        "pathname": "/usr/local/bin/python3.14",
+        "name": "/usr/local/bin/python3.14"
+      }
+    },
+    {
+      "id": "file:fd:3_pid:2470177",
+      "meta": {
+        "uuid": "fd:3_pid:2470177",
+        "pathname": "fd:3_pid:2470177",
+        "name": "fd:3_pid:2470177"
+      }
+    },
+    {
+      "id": "file:fd:2_pid:2470177",
+      "meta": {
+        "uuid": "fd:2_pid:2470177",
+        "pathname": "fd:2_pid:2470177",
+        "name": "fd:2_pid:2470177"
+      }
+    },
+    {
+      "id": "file:fd:4_pid:2470168",
+      "meta": {
+        "uuid": "fd:4_pid:2470168",
+        "pathname": "fd:4_pid:2470168",
+        "name": "fd:4_pid:2470168"
+      }
+    },
+    {
+      "id": "file:/bin/sleep",
+      "meta": {
+        "uuid": "/bin/sleep",
+        "pathname": "/bin/sleep",
+        "name": "/bin/sleep"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "src": "proc:pid:2470127",
+      "dst": "file:/bin/busybox|inode:3121",
+      "type": "Execute",
+      "count": 3,
+      "first_ts": 5603909098000,
+      "last_ts": 5603978341000,
+      "segments": [
+        {
+          "bin": 1,
+          "count": 3
+        }
+      ]
+    },
+    {
+      "src": "proc:pid:2470127",
+      "dst": "file:fd:3_pid:2470127",
+      "type": "Write",
+      "count": 6,
+      "first_ts": 5603909376000,
+      "last_ts": 5603910270000,
+      "segments": [
+        {
+          "bin": 1,
+          "count": 6
+        }
+      ]
+    },
+    {
+      "src": "proc:pid:2470127",
+      "dst": "file:fd:4_pid:2470127",
+      "type": "Write",
+      "count": 1,
+      "first_ts": 5603909488000,
+      "last_ts": 5603909488000,
+      "segments": [
+        {
+          "bin": 1,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "src": "proc:pid:2470127",
+      "dst": "file:/usr/local/sbin/sh",
+      "type": "Execute",
+      "count": 2,
+      "first_ts": 5603909734000,
+      "last_ts": 5603909734000,
+      "segments": [
+        {
+          "bin": 1,
+          "count": 2
+        }
+      ]
+    },
+    {
+      "src": "proc:pid:2470127",
+      "dst": "file:/usr/local/bin/sh",
+      "type": "Execute",
+      "count": 2,
+      "first_ts": 5603909757000,
+      "last_ts": 5603909757000,
+      "segments": [
+        {
+          "bin": 1,
+          "count": 2
+        }
+      ]
+    },
+    {
+      "src": "proc:pid:2470127",
+      "dst": "file:/usr/sbin/sh",
+      "type": "Execute",
+      "count": 2,
+      "first_ts": 5603909779000,
+      "last_ts": 5603909779000,
+      "segments": [
+        {
+          "bin": 1,
+          "count": 2
+        }
+      ]
+    },
+    {
+      "src": "proc:pid:2470127",
+      "dst": "file:/usr/bin/sh",
+      "type": "Execute",
+      "count": 2,
+      "first_ts": 5603909799000,
+      "last_ts": 5603909799000,
+      "segments": [
+        {
+          "bin": 1,
+          "count": 2
+        }
+      ]
+    },
+    {
+      "src": "proc:pid:2470127",
+      "dst": "file:/sbin/sh",
+      "type": "Execute",
+      "count": 2,
+      "first_ts": 5603909820000,
+      "last_ts": 5603909820000,
+      "segments": [
+        {
+          "bin": 1,
+          "count": 2
+        }
+      ]
+    },
+    {
+      "src": "proc:pid:2470127",
+      "dst": "file:/bin/sh",
+      "type": "Execute",
+      "count": 1,
+      "first_ts": 5603909835000,
+      "last_ts": 5603909835000,
+      "segments": [
+        {
+          "bin": 1,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "src": "proc:pid:2470127",
+      "dst": "file:fd:11_pid:2470127",
+      "type": "Write",
+      "count": 1,
+      "first_ts": 5603910232000,
+      "last_ts": 5603910232000,
+      "segments": [
+        {
+          "bin": 1,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "src": "proc:pid:2470127",
+      "dst": "file:fd:10_pid:2470127",
+      "type": "Write",
+      "count": 2,
+      "first_ts": 5603910240000,
+      "last_ts": 5603978127000,
+      "segments": [
+        {
+          "bin": 1,
+          "count": 2
+        }
+      ]
+    },
+    {
+      "src": "proc:pid:2470127",
+      "dst": "file:/bin/sleep",
+      "type": "Execute",
+      "count": 1,
+      "first_ts": 5603978226000,
+      "last_ts": 5603978226000,
+      "segments": [
+        {
+          "bin": 1,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "src": "file:fd:3_pid:2470127",
+      "dst": "proc:pid:2470127",
+      "type": "Read",
+      "count": 2,
+      "first_ts": 5603909492000,
+      "last_ts": 5603909688000,
+      "segments": [
+        {
+          "bin": 1,
+          "count": 2
+        }
+      ]
+    },
+    {
+      "src": "file:fd:10_pid:2470127",
+      "dst": "proc:pid:2470127",
+      "type": "Read",
+      "count": 4,
+      "first_ts": 5603909392000,
+      "last_ts": 5603910237000,
+      "segments": [
+        {
+          "bin": 1,
+          "count": 4
+        }
+      ]
+    },
+    {
+      "src": "proc:pid:2470166",
+      "dst": "file:fd:10_pid:2470166",
+      "type": "Write",
+      "count": 1,
+      "first_ts": 5603909511000,
+      "last_ts": 5603909511000,
+      "segments": [
+        {
+          "bin": 1,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "src": "proc:pid:2470166",
+      "dst": "file:fd:3_pid:2470166",
+      "type": "Write",
+      "count": 1,
+      "first_ts": 5603909523000,
+      "last_ts": 5603909523000,
+      "segments": [
+        {
+          "bin": 1,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "src": "proc:pid:2470166",
+      "dst": "file:fd:4_pid:2470166",
+      "type": "Write",
+      "count": 1,
+      "first_ts": 5603909527000,
+      "last_ts": 5603909527000,
+      "segments": [
+        {
+          "bin": 1,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "src": "file:fd:11_pid:2470127",
+      "dst": "proc:pid:2470127",
+      "type": "Read",
+      "count": 2,
+      "first_ts": 5603910210000,
+      "last_ts": 5603910220000,
+      "segments": [
+        {
+          "bin": 1,
+          "count": 2
+        }
+      ]
+    },
+    {
+      "src": "proc:pid:2470168",
+      "dst": "file:/usr/bin/curl",
+      "type": "Execute",
+      "count": 1,
+      "first_ts": 5603910389000,
+      "last_ts": 5603910389000,
+      "segments": [
+        {
+          "bin": 1,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "src": "proc:pid:2470168",
+      "dst": "file:/usr/bin/curl|inode:2093",
+      "type": "Execute",
+      "count": 1,
+      "first_ts": 5603910531000,
+      "last_ts": 5603910531000,
+      "segments": [
+        {
+          "bin": 1,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "src": "proc:pid:2470168",
+      "dst": "file:fd:3_pid:2470168",
+      "type": "Write",
+      "count": 20,
+      "first_ts": 5603910821000,
+      "last_ts": 5603977700000,
+      "segments": [
+        {
+          "bin": 1,
+          "count": 20
+        }
+      ]
+    },
+    {
+      "src": "proc:pid:2470168",
+      "dst": "file:fd:5_pid:2470168",
+      "type": "Write",
+      "count": 3,
+      "first_ts": 5603913998000,
+      "last_ts": 5603977630000,
+      "segments": [
+        {
+          "bin": 1,
+          "count": 3
+        }
+      ]
+    },
+    {
+      "src": "proc:pid:2470168",
+      "dst": "file:fd:7_pid:2470168",
+      "type": "Write",
+      "count": 3,
+      "first_ts": 5603914094000,
+      "last_ts": 5603914455000,
+      "segments": [
+        {
+          "bin": 1,
+          "count": 3
+        }
+      ]
+    },
+    {
+      "src": "proc:pid:2470168",
+      "dst": "net:tcp:pid:2470168->unknown:0",
+      "type": "Send",
+      "count": 5,
+      "first_ts": 5603914126000,
+      "last_ts": 5603914769000,
+      "segments": [
+        {
+          "bin": 1,
+          "count": 5
+        }
+      ]
+    },
+    {
+      "src": "proc:pid:2470168",
+      "dst": "file:fd:6_pid:2470168",
+      "type": "Write",
+      "count": 2,
+      "first_ts": 5603914478000,
+      "last_ts": 5603914549000,
+      "segments": [
+        {
+          "bin": 1,
+          "count": 2
+        }
+      ]
+    },
+    {
+      "src": "proc:pid:2470168",
+      "dst": "file:fd:4_pid:2470168",
+      "type": "Write",
+      "count": 1,
+      "first_ts": 5603977715000,
+      "last_ts": 5603977715000,
+      "segments": [
+        {
+          "bin": 1,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "src": "file:fd:3_pid:2470168",
+      "dst": "proc:pid:2470168",
+      "type": "Read",
+      "count": 33,
+      "first_ts": 5603910773000,
+      "last_ts": 5603913763000,
+      "segments": [
+        {
+          "bin": 1,
+          "count": 33
+        }
+      ]
+    },
+    {
+      "src": "file:fd:7_pid:2470168",
+      "dst": "proc:pid:2470168",
+      "type": "Read",
+      "count": 5,
+      "first_ts": 5603914082000,
+      "last_ts": 5603914108000,
+      "segments": [
+        {
+          "bin": 1,
+          "count": 5
+        }
+      ]
+    },
+    {
+      "src": "net:tcp:pid:2470168->unknown:0",
+      "dst": "proc:pid:2470168",
+      "type": "Receive",
+      "count": 2,
+      "first_ts": 5603977590000,
+      "last_ts": 5603977616000,
+      "segments": [
+        {
+          "bin": 1,
+          "count": 2
+        }
+      ]
+    },
+    {
+      "src": "proc:pid:2470177",
+      "dst": "file:/bin/busybox|inode:2573",
+      "type": "Execute",
+      "count": 1,
+      "first_ts": 5603921048000,
+      "last_ts": 5603921048000,
+      "segments": [
+        {
+          "bin": 1,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "src": "proc:pid:2470177",
+      "dst": "file:/usr/local/bin/python",
+      "type": "Execute",
+      "count": 1,
+      "first_ts": 5603922132000,
+      "last_ts": 5603922132000,
+      "segments": [
+        {
+          "bin": 1,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "src": "proc:pid:2470177",
+      "dst": "file:/usr/local/bin/python3.14|inode:6521",
+      "type": "Execute",
+      "count": 1,
+      "first_ts": 5603924323000,
+      "last_ts": 5603924323000,
+      "segments": [
+        {
+          "bin": 1,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "src": "proc:pid:2470177",
+      "dst": "file:fd:3_pid:2470177",
+      "type": "Write",
+      "count": 47,
+      "first_ts": 5603924470000,
+      "last_ts": 5603970080000,
+      "segments": [
+        {
+          "bin": 1,
+          "count": 47
+        }
+      ]
+    },
+    {
+      "src": "proc:pid:2470177",
+      "dst": "file:fd:2_pid:2470177",
+      "type": "Write",
+      "count": 4,
+      "first_ts": 5603971170000,
+      "last_ts": 5603971208000,
+      "segments": [
+        {
+          "bin": 1,
+          "count": 4
+        }
+      ]
+    },
+    {
+      "src": "proc:pid:2470178",
+      "dst": "file:/bin/ping",
+      "type": "Execute",
+      "count": 1,
+      "first_ts": 5603921470000,
+      "last_ts": 5603921470000,
+      "segments": [
+        {
+          "bin": 1,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "src": "proc:pid:2470178",
+      "dst": "file:/bin/ping|inode:2125",
+      "type": "Execute",
+      "count": 1,
+      "first_ts": 5603921577000,
+      "last_ts": 5603921577000,
+      "segments": [
+        {
+          "bin": 1,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "src": "proc:pid:2470178",
+      "dst": "file:fd:3_pid:2470178",
+      "type": "Write",
+      "count": 1,
+      "first_ts": 5603921713000,
+      "last_ts": 5603921713000,
+      "segments": [
+        {
+          "bin": 1,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "src": "proc:pid:2470178",
+      "dst": "net:tcp:pid:2470178->unknown:0",
+      "type": "Send",
+      "count": 3,
+      "first_ts": 5603921903000,
+      "last_ts": 5603921974000,
+      "segments": [
+        {
+          "bin": 1,
+          "count": 3
+        }
+      ]
+    },
+    {
+      "src": "proc:pid:2470178",
+      "dst": "file:fd:5_pid:2470178",
+      "type": "Write",
+      "count": 1,
+      "first_ts": 5603921918000,
+      "last_ts": 5603921918000,
+      "segments": [
+        {
+          "bin": 1,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "src": "proc:pid:2470178",
+      "dst": "file:fd:1_pid:2470178",
+      "type": "Write",
+      "count": 1,
+      "first_ts": 5603922054000,
+      "last_ts": 5603922054000,
+      "segments": [
+        {
+          "bin": 1,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "src": "proc:pid:2470178",
+      "dst": "file:fd:2_pid:2470178",
+      "type": "Write",
+      "count": 1,
+      "first_ts": 5603922057000,
+      "last_ts": 5603922057000,
+      "segments": [
+        {
+          "bin": 1,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "src": "file:fd:3_pid:2470178",
+      "dst": "proc:pid:2470178",
+      "type": "Read",
+      "count": 1,
+      "first_ts": 5603921663000,
+      "last_ts": 5603921663000,
+      "segments": [
+        {
+          "bin": 1,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "src": "file:fd:3_pid:2470177",
+      "dst": "proc:pid:2470177",
+      "type": "Read",
+      "count": 78,
+      "first_ts": 5603924412000,
+      "last_ts": 5603970057000,
+      "segments": [
+        {
+          "bin": 1,
+          "count": 78
+        }
+      ]
+    }
+  ]
+}

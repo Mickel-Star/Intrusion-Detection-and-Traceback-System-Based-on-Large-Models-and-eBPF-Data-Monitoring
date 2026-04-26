@@ -1,0 +1,60 @@
+You are a security analyst. Write a grounded incident report.
+Rules:
+1) Only reference entities that appear in AllowedEntities.
+2) Only reference technique IDs in AllowedTechniques.
+3) Provide a verdict (Malicious/Benign/Unknown) and recommended actions.
+Output Markdown with sections: Summary, Evidence, ATT&CK Mapping, Impact, Recommended Actions, Confidence.
+
+TargetProcess: entrypoint.sh pid=124634
+AllowedEntities:
+{"paths": [], "ips": [], "iocs": ["entrypoint.sh"]}
+AllowedTechniques: None
+
+SimilarCases:
+- case_id=case_1773561229_f238de22 pid=124118 name=python score=298.974 doc=.../python3.14
+- case_id=case_1773561282_e9068ed7 pid=124540 name=entrypoint.sh score=298.974 doc=.../sleep
+
+BBK:
+- path_score=298.974 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+- path_score=269.076 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+- path_score=269.076 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+- path_score=269.076 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+- path_score=239.179 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+
+EvidenceGraph:
+Attack Provenance Graph (reconstructed from top rare paths):
+nodes=4 edges=3
+entrypoint.sh -[WR x1]-> fd:10_pid:124634
+entrypoint.sh -[WR x1]-> fd:3_pid:124634
+entrypoint.sh -[WR x1]-> fd:4_pid:124634
+
+RarePaths:
+- score=298.974 path=entrypoint.sh WR-> fd:10_pid:124634 WR<- entrypoint.sh WR-> fd:10_pid:124634 WR<- entrypoint.sh WR-> fd:10_pid:124634 WR<- entrypoint.sh WR-> fd:10_pid:124634 WR<- entrypoint.sh WR-> fd:10_pid:124634 WR<- entrypoint.sh
+- score=269.076 path=entrypoint.sh WR-> fd:10_pid:124634 WR<- entrypoint.sh WR-> fd:10_pid:124634 WR<- entrypoint.sh WR-> fd:10_pid:124634 WR<- entrypoint.sh WR-> fd:10_pid:124634 WR<- entrypoint.sh WR-> fd:10_pid:124634
+- score=269.076 path=entrypoint.sh WR-> fd:10_pid:124634 WR<- entrypoint.sh WR-> fd:10_pid:124634 WR<- entrypoint.sh WR-> fd:10_pid:124634 WR<- entrypoint.sh WR-> fd:10_pid:124634 WR<- entrypoint.sh WR-> fd:3_pid:124634
+- score=269.076 path=entrypoint.sh WR-> fd:10_pid:124634 WR<- entrypoint.sh WR-> fd:10_pid:124634 WR<- entrypoint.sh WR-> fd:10_pid:124634 WR<- entrypoint.sh WR-> fd:10_pid:124634 WR<- entrypoint.sh WR-> fd:4_pid:124634
+- score=239.179 path=entrypoint.sh WR-> fd:10_pid:124634 WR<- entrypoint.sh WR-> fd:10_pid:124634 WR<- entrypoint.sh WR-> fd:10_pid:124634 WR<- entrypoint.sh WR-> fd:10_pid:124634 WR<- entrypoint.sh
+- score=209.281 path=entrypoint.sh WR-> fd:10_pid:124634 WR<- entrypoint.sh WR-> fd:10_pid:124634 WR<- entrypoint.sh WR-> fd:10_pid:124634 WR<- entrypoint.sh WR-> fd:10_pid:124634
+- score=209.281 path=entrypoint.sh WR-> fd:10_pid:124634 WR<- entrypoint.sh WR-> fd:10_pid:124634 WR<- entrypoint.sh WR-> fd:10_pid:124634 WR<- entrypoint.sh WR-> fd:3_pid:124634
+- score=209.281 path=entrypoint.sh WR-> fd:10_pid:124634 WR<- entrypoint.sh WR-> fd:10_pid:124634 WR<- entrypoint.sh WR-> fd:10_pid:124634 WR<- entrypoint.sh WR-> fd:4_pid:124634
+- score=179.384 path=entrypoint.sh WR-> fd:10_pid:124634 WR<- entrypoint.sh WR-> fd:10_pid:124634 WR<- entrypoint.sh WR-> fd:10_pid:124634 WR<- entrypoint.sh
+- score=149.487 path=entrypoint.sh WR-> fd:10_pid:124634 WR<- entrypoint.sh WR-> fd:10_pid:124634 WR<- entrypoint.sh WR-> fd:10_pid:124634
+
+IOCList:
+### IOCs
+
+#### IOCs.Files
+*   `entrypoint.sh`
+
+#### IOCs.Network
+*   *(No network indicators explicitly listed in the evidence.)*
+
+#### IOCs.Processes
+*   `pid:124634`
+
+StageMapping:
+| Stage | TechniqueID | Confidence | EvidenceSnippet |
+|-------|--------------|------------|-----------------|
+| Execution | Unknown | Low | `entrypoint.sh` writes to file descriptors of PID 124634 (fd:10, fd:3, fd:4). |
+| Persistence | Unknown | Low | Repeated write operations from `entrypoint.sh` to the same process's file descriptors suggest a maintained connection or channel. |
+| Defense Evasion | Unknown | Low | Use of script (`entrypoint.sh`) and inter-process communication (file descriptors) to obscure actions. |

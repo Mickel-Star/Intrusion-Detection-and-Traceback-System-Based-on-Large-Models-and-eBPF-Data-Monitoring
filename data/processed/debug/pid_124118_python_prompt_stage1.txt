@@ -1,0 +1,32 @@
+You are an incident response analyst. Extract a concise IOC list strictly from the provided Evidence.
+Rules: Only output items that literally appear in Evidence. Output Markdown with sections: IOCs.Files, IOCs.Network, IOCs.Processes.
+
+Evidence:
+Attack Provenance Graph (reconstructed from top rare paths):
+nodes=7 edges=6
+/usr/local/bin/python3.14 -[WR x305]-> fd:3_pid:124118
+/usr/local/bin/python3.14 -[WR x11]-> fd:4_pid:124118
+/usr/local/bin/python3.14 -[SD x2]-> pid:124118->unknown:0
+/usr/local/bin/python3.14 -[WR x2]-> fd:1_pid:124118
+/usr/local/bin/python3.14 -[WR x2]-> fd:2_pid:124118
+/usr/local/bin/python3.14 -[EX x1]-> /usr/local/bin/python3.14
+
+- score=298.974 path=/usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14
+- score=269.076 path=/usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14
+- score=269.076 path=/usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 WR-> fd:3_pid:124118
+- score=269.076 path=/usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 WR-> fd:4_pid:124118
+- score=269.076 path=/usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 WR-> fd:1_pid:124118
+- score=269.076 path=/usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 SD-> pid:124118->unknown:0
+- score=269.076 path=/usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 WR-> fd:2_pid:124118
+- score=239.179 path=/usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14
+- score=209.281 path=/usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14
+- score=209.281 path=/usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 WR-> fd:3_pid:124118
+
+/usr/local/bin/python3.14 -[EX x1]-> /usr/local/bin/python3.14
+/usr/local/bin/python3.14 -[SD x2]-> pid:124118->unknown:0
+/usr/local/bin/python3.14 -[WR x305]-> fd:3_pid:124118
+/usr/local/bin/python3.14 -[WR x11]-> fd:4_pid:124118
+/usr/local/bin/python3.14 -[WR x2]-> fd:1_pid:124118
+/usr/local/bin/python3.14 -[WR x2]-> fd:2_pid:124118
+fd:3_pid:124118 -[RD x522]-> /usr/local/bin/python3.14
+fd:4_pid:124118 -[RD x10]-> /usr/local/bin/python3.14

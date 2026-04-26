@@ -1,0 +1,81 @@
+You are an incident response analyst. Extract a concise IOC list strictly from the provided Evidence.
+Rules: Only output items that literally appear in Evidence. Output Markdown with sections: IOCs.Files, IOCs.Network, IOCs.Processes.
+
+Evidence:
+Attack Provenance Graph (reconstructed from top rare paths):
+nodes=12 edges=11
+sh -[EX x1]-> /bin/sed
+sh -[EX x1]-> /bin/sed
+sh -[EX x1]-> /bin/sed
+sh -[EX x1]-> /bin/sed
+sh -[EX x1]-> /bin/sed
+sh -[EX x1]-> /bin/sed
+sh -[EX x1]-> /bin/sed
+sh -[EX x1]-> /bin/sed
+sh -[EX x1]-> /bin/sed
+sh -[EX x1]-> /bin/sed
+sh -[WR x1]-> fd:3_pid:125493
+
+- score=298.974 path=sh WR-> fd:3_pid:125493 WR<- sh WR-> fd:3_pid:125493 WR<- sh WR-> fd:3_pid:125493 WR<- sh WR-> fd:3_pid:125493 WR<- sh WR-> fd:3_pid:125493 WR<- sh
+- score=298.974 path=sh WR-> fd:3_pid:125493 WR<- sh WR-> fd:3_pid:125493 WR<- sh WR-> fd:3_pid:125493 WR<- sh WR-> fd:3_pid:125493 WR<- sh EX-> /bin/sed EX<- sh
+
+/bin/busybox -[EX x3]-> /bin/busybox
+/bin/busybox -[EX x2]-> /bin/busybox
+sh -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/sed
+/bin/sleep -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/sed
+/bin/sleep -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/sed
+/bin/sleep -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/sed
+/bin/sleep -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/sed
+/bin/sleep -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/sed
+/bin/sleep -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/sed
+/bin/sleep -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/sed
+/bin/sleep -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/sed
+/bin/sleep -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/sed
+/bin/sleep -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/sed
+/bin/sleep -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/sed
+/bin/sleep -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/sed
+/bin/sleep -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/sed
+/bin/sleep -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/sed
+/bin/sleep -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/sed
+/bin/sleep -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/sed
+/bin/sleep -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/sed
+/bin/sleep -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/sed
+/bin/sleep -[EX x1]-> /bin/busybox

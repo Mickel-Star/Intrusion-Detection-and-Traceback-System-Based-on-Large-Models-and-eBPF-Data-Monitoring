@@ -1,0 +1,19 @@
+{
+  "scenario_id": "admin_readonly",
+  "kind": "benign",
+  "repeat_id": 2,
+  "driver_role": "benign",
+  "driver_container_name": "drsec-bench-admin_readonly-r02-benign",
+  "driver_container_id": "ed5f0c4d6eb722aa4a651dae2d0863fe33147f25cc298f03553f4b6df4965057",
+  "target_container_id": "6bb80c7e8753aa79453ef4c0cbb86719df561741952989c5d3b2e730098bea13",
+  "target_dsock_container_id": "f545f33c67791b2425e972905450f56aa588259f997ced1fb453d635865f4536",
+  "c2_container_id": "cd0c2647016c9cf76b83a7db45003b1c5707ed659447fdb5099530575e81aad9",
+  "trace_out": "/home/yzx/DRSEC_v2/data/benchmarks/admin_readonly/repeat_02/trace.log",
+  "windows_dir": "/home/yzx/DRSEC_v2/data/benchmarks/admin_readonly/repeat_02/windows",
+  "metrics_path": "/home/yzx/DRSEC_v2/data/benchmarks/admin_readonly/repeat_02/metrics.json",
+  "window_seconds": 10,
+  "threshold": 0.5,
+  "max_windows": 0,
+  "command": "set -eu; for i in $(seq 1 20); do TOKEN=$(curl -s -H 'Content-Type: application/json' -d '{\"username\":\"bob\",\"password\":\"password\"}' 'http://vuln-app:5000/api/login' | sed -n 's/.*\"token\":\"\\([^\"]*\\)\".*/\\1/p'); curl -s 'http://vuln-app:5000/api/items' >/dev/null; curl -s 'http://vuln-app:5000/api/search?q=alice' >/dev/null; if [ -n \"$TOKEN\" ]; then curl -s -H \"Authorization: Bearer $TOKEN\" 'http://vuln-app:5000/api/me' >/dev/null; curl -s -X POST -H \"Authorization: Bearer $TOKEN\" 'http://vuln-app:5000/api/logout' >/dev/null; fi; sleep 0.2; done; sleep 2",
+  "duration_seconds": 10
+}

@@ -1,0 +1,67 @@
+You are a security analyst. Write a grounded incident report.
+Rules:
+1) Only reference entities that appear in AllowedEntities.
+2) Only reference technique IDs in AllowedTechniques.
+3) Provide a verdict (Malicious/Benign/Unknown) and recommended actions.
+Output Markdown with sections: Summary, Evidence, ATT&CK Mapping, Impact, Recommended Actions, Confidence.
+
+TargetProcess: sh pid=124968
+AllowedEntities:
+{"paths": ["/bin/busybox", "/bin/sed", "/bin/sleep"], "ips": [], "iocs": ["sh"]}
+AllowedTechniques: None
+
+SimilarCases:
+- case_id=case_1773565528_db0ca6fd pid=124919 name=sh score=298.974 doc=.../curl -[EX x1
+- case_id=case_1773564644_c7900250 pid=124828 name=sh score=298.974 doc=.../curl -[EX x1
+- case_id=case_1773563685_8a58f631 pid=124779 name=sh score=298.974 doc=.../curl -[EX x1
+
+BBK:
+- path_score=298.974 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+- path_score=298.974 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+- path_score=298.974 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+- path_score=298.974 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+- path_score=298.974 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+
+EvidenceGraph:
+Attack Provenance Graph (reconstructed from top rare paths):
+nodes=12 edges=11
+sh -[EX x1]-> /bin/sed
+sh -[EX x1]-> /bin/sed
+sh -[EX x1]-> /bin/sed
+sh -[EX x1]-> /bin/sed
+sh -[EX x1]-> /bin/sed
+sh -[EX x1]-> /bin/sed
+sh -[EX x1]-> /bin/sed
+sh -[EX x1]-> /bin/sed
+sh -[EX x1]-> /bin/sed
+sh -[EX x1]-> /bin/sed
+sh -[WR x1]-> fd:3_pid:124968
+
+RarePaths:
+- score=298.974 path=sh WR-> fd:3_pid:124968 WR<- sh WR-> fd:3_pid:124968 WR<- sh WR-> fd:3_pid:124968 WR<- sh WR-> fd:3_pid:124968 WR<- sh WR-> fd:3_pid:124968 WR<- sh
+- score=298.974 path=sh WR-> fd:3_pid:124968 WR<- sh WR-> fd:3_pid:124968 WR<- sh WR-> fd:3_pid:124968 WR<- sh WR-> fd:3_pid:124968 WR<- sh EX-> /bin/sed EX<- sh
+
+IOCList:
+### IOCs
+
+#### IOCs.Files
+*   `/bin/sed`
+*   `/bin/busybox`
+*   `/bin/sleep`
+
+#### IOCs.Network
+*(No network indicators literally appear in the provided Evidence.)*
+
+#### IOCs.Processes
+*   `sh`
+*   `pid:124968`
+
+StageMapping:
+| Stage | TechniqueID | Confidence | EvidenceSnippet |
+|-------|-------------|------------|-----------------|
+| Execution | Unknown | Low | `sh -[EX x1]-> /bin/sed` |
+| Defense Evasion | Unknown | Low | `sh WR-> fd:3_pid:124968` |
+| Persistence | Unknown | Low | `sh WR-> fd:3_pid:124968 WR<- sh` (repeated pattern) |
+
+**Explanation:**  
+The provided evidence shows a shell (`sh`) repeatedly executing `sed` and writing to a file descriptor (`fd:3`) associated with a specific process ID. Without any allowed techniques to reference, all mappings are marked as "Unknown." The repetitive execution suggests an **Execution** stage activity. The writes to a file descriptor in a loop could indicate attempts to maintain access or manipulate data, hinting at **Defense Evasion** or **Persistence**, but specific MITRE ATT&CK techniques cannot be identified under the given constraints.

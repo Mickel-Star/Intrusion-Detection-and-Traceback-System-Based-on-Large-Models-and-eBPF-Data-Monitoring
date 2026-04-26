@@ -1,0 +1,257 @@
+{
+  "run_id": "repeat_01",
+  "scenario_id": "drop_and_exec",
+  "repeat_id": 1,
+  "kind": "attack",
+  "labels": {
+    "schema_version": 1,
+    "scenario_id": "drop_and_exec",
+    "kind": "attack",
+    "positive_roles": [
+      "attacker",
+      "target"
+    ],
+    "negative_roles": [],
+    "containers": [
+      {
+        "role": "attacker",
+        "container_id": "7590840add51306225cf7a7c3e8d6efb0ed1b849dc049c1770afbd91231114a3",
+        "container_name": "drsec-bench-drop_and_exec-r01-attacker",
+        "label": "positive"
+      },
+      {
+        "role": "target",
+        "container_id": "23b2f7d87972032a8cdfb27ddc4d46f71eb7b868acdd08528143b66db784a6d4",
+        "container_name": "drsec-target",
+        "label": "positive"
+      },
+      {
+        "role": "target_dsock",
+        "container_id": "404981db8b54e74498da09209b7d75a850a72ce4e4a1cb94806cfb3650a09bc9",
+        "container_name": "drsec-target-dsock",
+        "label": "ignored"
+      },
+      {
+        "role": "c2",
+        "container_id": "b7556c0554d646a342adbde8efa21ef4fba24603fd63982a0fc128fc60a0609c",
+        "container_name": "drsec-c2",
+        "label": "ignored"
+      }
+    ]
+  },
+  "window_candidates": [
+    {
+      "window_file": "window_0001.json",
+      "ground_truth_positive": [
+        "repeat_01:23b2f7d87972:2531536",
+        "repeat_01:23b2f7d87972:2531537",
+        "repeat_01:23b2f7d87972:2531538",
+        "repeat_01:23b2f7d87972:2531539",
+        "repeat_01:23b2f7d87972:2531540",
+        "repeat_01:7590840add51:2531484",
+        "repeat_01:7590840add51:2531523",
+        "repeat_01:7590840add51:2531524"
+      ],
+      "ground_truth_negative": [],
+      "candidate_processes": [
+        {
+          "pid": 2531523,
+          "role": "attacker",
+          "label": "positive",
+          "score": 1.0,
+          "name": "entrypoint.sh"
+        },
+        {
+          "pid": 2531538,
+          "role": "target",
+          "label": "positive",
+          "score": 1.0,
+          "name": "sh"
+        },
+        {
+          "pid": 2531540,
+          "role": "target",
+          "label": "positive",
+          "score": 1.0,
+          "name": "agent.sh"
+        },
+        {
+          "pid": 2531536,
+          "role": "target",
+          "label": "positive",
+          "score": 0.449438202247191,
+          "name": "sh"
+        },
+        {
+          "pid": 2531524,
+          "role": "attacker",
+          "label": "positive",
+          "score": 0.3539325842696629,
+          "name": "sh"
+        },
+        {
+          "pid": 2531484,
+          "role": "attacker",
+          "label": "positive",
+          "score": 0.24719101123595505,
+          "name": "entrypoint.sh"
+        },
+        {
+          "pid": 2531539,
+          "role": "target",
+          "label": "positive",
+          "score": 0.24719101123595505,
+          "name": "id"
+        },
+        {
+          "pid": 2531537,
+          "role": "target",
+          "label": "positive",
+          "score": 0.21348314606741572,
+          "name": "sh"
+        }
+      ]
+    }
+  ],
+  "process_samples": [
+    {
+      "sample_id": "repeat_01:23b2f7d87972:2531536",
+      "run_id": "repeat_01",
+      "scenario_id": "drop_and_exec",
+      "repeat_id": 1,
+      "kind": "attack",
+      "role": "target",
+      "container_id": "23b2f7d87972",
+      "label": "positive",
+      "pid": 2531536,
+      "process_name": "sh",
+      "score": 0.449438202247191
+    },
+    {
+      "sample_id": "repeat_01:23b2f7d87972:2531537",
+      "run_id": "repeat_01",
+      "scenario_id": "drop_and_exec",
+      "repeat_id": 1,
+      "kind": "attack",
+      "role": "target",
+      "container_id": "23b2f7d87972",
+      "label": "positive",
+      "pid": 2531537,
+      "process_name": "sh",
+      "score": 0.21348314606741572
+    },
+    {
+      "sample_id": "repeat_01:23b2f7d87972:2531538",
+      "run_id": "repeat_01",
+      "scenario_id": "drop_and_exec",
+      "repeat_id": 1,
+      "kind": "attack",
+      "role": "target",
+      "container_id": "23b2f7d87972",
+      "label": "positive",
+      "pid": 2531538,
+      "process_name": "sh",
+      "score": 1.0
+    },
+    {
+      "sample_id": "repeat_01:23b2f7d87972:2531539",
+      "run_id": "repeat_01",
+      "scenario_id": "drop_and_exec",
+      "repeat_id": 1,
+      "kind": "attack",
+      "role": "target",
+      "container_id": "23b2f7d87972",
+      "label": "positive",
+      "pid": 2531539,
+      "process_name": "id",
+      "score": 0.24719101123595505
+    },
+    {
+      "sample_id": "repeat_01:23b2f7d87972:2531540",
+      "run_id": "repeat_01",
+      "scenario_id": "drop_and_exec",
+      "repeat_id": 1,
+      "kind": "attack",
+      "role": "target",
+      "container_id": "23b2f7d87972",
+      "label": "positive",
+      "pid": 2531540,
+      "process_name": "agent.sh",
+      "score": 1.0
+    },
+    {
+      "sample_id": "repeat_01:7590840add51:2531484",
+      "run_id": "repeat_01",
+      "scenario_id": "drop_and_exec",
+      "repeat_id": 1,
+      "kind": "attack",
+      "role": "attacker",
+      "container_id": "7590840add51",
+      "label": "positive",
+      "pid": 2531484,
+      "process_name": "entrypoint.sh",
+      "score": 0.24719101123595505
+    },
+    {
+      "sample_id": "repeat_01:7590840add51:2531523",
+      "run_id": "repeat_01",
+      "scenario_id": "drop_and_exec",
+      "repeat_id": 1,
+      "kind": "attack",
+      "role": "attacker",
+      "container_id": "7590840add51",
+      "label": "positive",
+      "pid": 2531523,
+      "process_name": "entrypoint.sh",
+      "score": 1.0
+    },
+    {
+      "sample_id": "repeat_01:7590840add51:2531524",
+      "run_id": "repeat_01",
+      "scenario_id": "drop_and_exec",
+      "repeat_id": 1,
+      "kind": "attack",
+      "role": "attacker",
+      "container_id": "7590840add51",
+      "label": "positive",
+      "pid": 2531524,
+      "process_name": "sh",
+      "score": 0.3539325842696629
+    }
+  ],
+  "role_samples": [
+    {
+      "sample_id": "repeat_01:attacker:7590840add51",
+      "run_id": "repeat_01",
+      "scenario_id": "drop_and_exec",
+      "repeat_id": 1,
+      "kind": "attack",
+      "role": "attacker",
+      "container_id": "7590840add51",
+      "label": "positive",
+      "score": 1.0
+    },
+    {
+      "sample_id": "repeat_01:target:23b2f7d87972",
+      "run_id": "repeat_01",
+      "scenario_id": "drop_and_exec",
+      "repeat_id": 1,
+      "kind": "attack",
+      "role": "target",
+      "container_id": "23b2f7d87972",
+      "label": "positive",
+      "score": 1.0
+    }
+  ],
+  "scenario_samples": [
+    {
+      "sample_id": "repeat_01",
+      "run_id": "repeat_01",
+      "scenario_id": "drop_and_exec",
+      "repeat_id": 1,
+      "kind": "attack",
+      "label": "positive",
+      "score": 1.0
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+You are a security analyst. Write a grounded incident report.
+Rules:
+1) Only reference entities that appear in AllowedEntities.
+2) Only reference technique IDs in AllowedTechniques.
+3) Provide a verdict (Malicious/Benign/Unknown) and recommended actions.
+Output Markdown with sections: Summary, Evidence, ATT&CK Mapping, Impact, Recommended Actions, Confidence.
+
+TargetProcess: entrypoint.sh pid=124540
+AllowedEntities:
+{"paths": ["/bin/busybox", "/bin/sh", "/bin/sleep", "/sbin/sh", "/usr/bin/sh", "/usr/local/bin/sh", "/usr/local/sbin/sh", "/usr/sbin/sh"], "ips": [], "iocs": ["entrypoint.sh"]}
+AllowedTechniques: None
+
+SimilarCases:
+- case_id=case_1773561229_f238de22 pid=124118 name=python score=298.974 doc=.../python3.14
+
+BBK:
+- path_score=298.974 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+- path_score=298.974 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+- path_score=298.974 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+- path_score=298.974 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+- path_score=298.974 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+
+EvidenceGraph:
+Attack Provenance Graph (reconstructed from top rare paths):
+nodes=11 edges=10
+/bin/busybox -[EX x3]-> /bin/busybox
+sh -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/busybox
+
+RarePaths:
+- score=298.974 path=/bin/busybox EX-> /bin/busybox EX<- /bin/busybox EX-> /bin/busybox EX<- /bin/busybox EX-> /bin/busybox EX<- /bin/busybox EX-> /bin/busybox EX<- /bin/busybox EX-> /bin/busybox EX<- /bin/busybox
+- score=298.974 path=/bin/busybox EX-> /bin/busybox EX<- /bin/busybox EX-> /bin/busybox EX<- /bin/busybox EX-> /bin/busybox EX<- /bin/busybox EX-> /bin/busybox EX<- /bin/busybox EX-> /bin/busybox EX<- sh
+- score=298.974 path=/bin/busybox EX-> /bin/busybox EX<- /bin/busybox EX-> /bin/busybox EX<- /bin/busybox EX-> /bin/busybox EX<- /bin/busybox EX-> /bin/busybox EX<- /bin/busybox EX-> /bin/busybox EX<- /bin/sleep
+
+IOCList:
+### IOCs.Files
+* `/bin/busybox`
+* `/bin/sh`
+* `/bin/sleep`
+* `/sbin/sh`
+* `/usr/bin/sh`
+* `/usr/local/bin/sh`
+* `/usr/local/sbin/sh`
+* `/usr/sbin/sh`
+
+### IOCs.Network
+*No network indicators literally appear in the provided Evidence.*
+
+### IOCs.Processes
+* `sh`
+* `/bin/busybox`
+* `/bin/sleep`
+
+StageMapping:
+| Stage | TechniqueID | Confidence | EvidenceSnippet |
+|-------|-------------|------------|-----------------|
+| Execution | Unknown | Low | `/bin/busybox` executed multiple times via `sh` and `/bin/sleep` |
+| Persistence | Unknown | Low | Recurrent execution chains involving `/bin/busybox` |
+| Defense Evasion | Unknown | Low | Use of `/bin/busybox` as a multi-call binary for various commands |

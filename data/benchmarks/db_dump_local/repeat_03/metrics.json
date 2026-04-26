@@ -1,0 +1,174 @@
+{
+  "threshold": 0.5,
+  "run_count": 1,
+  "scenario_ids": [
+    "db_dump_local"
+  ],
+  "process_level": {
+    "tp": 1,
+    "fp": 0,
+    "fn": 5,
+    "tn": 0,
+    "precision": 1.0,
+    "recall": 0.16666666666666666,
+    "f1": 0.2857142857142857,
+    "accuracy": 0.16666666666666666,
+    "support": 6,
+    "positive_support": 6,
+    "negative_support": 0
+  },
+  "window_level": {
+    "tp": 1,
+    "fp": 0,
+    "fn": 0,
+    "tn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "accuracy": 1.0,
+    "support": 1,
+    "positive_support": 1,
+    "negative_support": 0
+  },
+  "role_level": {
+    "tp": 1,
+    "fp": 0,
+    "fn": 1,
+    "tn": 0,
+    "precision": 1.0,
+    "recall": 0.5,
+    "f1": 0.6666666666666666,
+    "accuracy": 0.5,
+    "support": 2,
+    "positive_support": 2,
+    "negative_support": 0
+  },
+  "scenario_level": {
+    "tp": 1,
+    "fp": 0,
+    "fn": 0,
+    "tn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "accuracy": 1.0,
+    "support": 1,
+    "positive_support": 1,
+    "negative_support": 0
+  },
+  "by_scenario": {
+    "db_dump_local": {
+      "process_level": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 5,
+        "tn": 0,
+        "precision": 1.0,
+        "recall": 0.16666666666666666,
+        "f1": 0.2857142857142857,
+        "accuracy": 0.16666666666666666,
+        "support": 6,
+        "positive_support": 6,
+        "negative_support": 0
+      },
+      "window_level": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "tn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "accuracy": 1.0,
+        "support": 1,
+        "positive_support": 1,
+        "negative_support": 0
+      },
+      "role_level": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 1,
+        "tn": 0,
+        "precision": 1.0,
+        "recall": 0.5,
+        "f1": 0.6666666666666666,
+        "accuracy": 0.5,
+        "support": 2,
+        "positive_support": 2,
+        "negative_support": 0
+      },
+      "scenario_level": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "tn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "accuracy": 1.0,
+        "support": 1,
+        "positive_support": 1,
+        "negative_support": 0
+      }
+    }
+  },
+  "by_role": {
+    "attacker": {
+      "process_level": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 3,
+        "tn": 0,
+        "precision": 1.0,
+        "recall": 0.25,
+        "f1": 0.4,
+        "accuracy": 0.25,
+        "support": 4,
+        "positive_support": 4,
+        "negative_support": 0
+      },
+      "role_level": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "tn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "accuracy": 1.0,
+        "support": 1,
+        "positive_support": 1,
+        "negative_support": 0
+      }
+    },
+    "target": {
+      "process_level": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 2,
+        "tn": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "accuracy": 0.0,
+        "support": 2,
+        "positive_support": 2,
+        "negative_support": 0
+      },
+      "role_level": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 1,
+        "tn": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "accuracy": 0.0,
+        "support": 1,
+        "positive_support": 1,
+        "negative_support": 0
+      }
+    }
+  },
+  "window_count": 1
+}

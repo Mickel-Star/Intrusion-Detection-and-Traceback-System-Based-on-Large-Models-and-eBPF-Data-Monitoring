@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "scenario_id": "admin_readonly",
+  "kind": "benign",
+  "positive_roles": [],
+  "negative_roles": [
+    "benign"
+  ],
+  "containers": [
+    {
+      "role": "benign",
+      "container_id": "ed5f0c4d6eb722aa4a651dae2d0863fe33147f25cc298f03553f4b6df4965057",
+      "container_name": "drsec-bench-admin_readonly-r02-benign",
+      "label": "negative"
+    },
+    {
+      "role": "target",
+      "container_id": "6bb80c7e8753aa79453ef4c0cbb86719df561741952989c5d3b2e730098bea13",
+      "container_name": "drsec-target",
+      "label": "ignored"
+    },
+    {
+      "role": "target_dsock",
+      "container_id": "f545f33c67791b2425e972905450f56aa588259f997ced1fb453d635865f4536",
+      "container_name": "drsec-target-dsock",
+      "label": "ignored"
+    },
+    {
+      "role": "c2",
+      "container_id": "cd0c2647016c9cf76b83a7db45003b1c5707ed659447fdb5099530575e81aad9",
+      "container_name": "drsec-c2",
+      "label": "ignored"
+    }
+  ]
+}

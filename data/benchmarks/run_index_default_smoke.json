@@ -1,0 +1,26 @@
+{
+  "scenario_set": "default",
+  "mode": "smoke",
+  "window_seconds": 10,
+  "threshold_sweep": true,
+  "manifest_path": "/home/yzx/DRSEC_v2/config/benchmark_scenarios.default.json",
+  "executed_runs": [
+    {
+      "scenario_id": "shadow_read",
+      "repeat_id": 1,
+      "run_dir": "/home/yzx/DRSEC_v2/data/benchmarks/shadow_read/repeat_01",
+      "window_count": 1,
+      "process_support": 8,
+      "metrics_path": "/home/yzx/DRSEC_v2/data/benchmarks/shadow_read/repeat_01/metrics.json"
+    },
+    {
+      "scenario_id": "browse_order_loop",
+      "repeat_id": 1,
+      "run_dir": "/home/yzx/DRSEC_v2/data/benchmarks/browse_order_loop/repeat_01",
+      "window_count": 1,
+      "process_support": 253,
+      "metrics_path": "/home/yzx/DRSEC_v2/data/benchmarks/browse_order_loop/repeat_01/metrics.json"
+    }
+  ],
+  "summary_path": "/home/yzx/DRSEC_v2/data/benchmarks/summary_default_smoke.json"
+}

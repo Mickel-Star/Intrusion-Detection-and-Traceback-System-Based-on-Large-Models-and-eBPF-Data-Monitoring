@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "scenario_id": "path_hijack",
+  "kind": "attack",
+  "positive_roles": [
+    "attacker",
+    "target"
+  ],
+  "negative_roles": [],
+  "containers": [
+    {
+      "role": "attacker",
+      "container_id": "f85badd0e136990b2e99ffa170a7a10c237f811901060d9c2eb4cb05eb599312",
+      "container_name": "drsec-bench-path_hijack-r02-attacker",
+      "label": "positive"
+    },
+    {
+      "role": "target",
+      "container_id": "40f78cc8ea109a01a18e9b807e7a71bec8a19ef90703bcbb258aa1de4f7c08fd",
+      "container_name": "drsec-target",
+      "label": "positive"
+    },
+    {
+      "role": "target_dsock",
+      "container_id": "5f6b3551b5e11579e2073e827ac6dcee4332eeab373a3269dfdfbc32cda73ae6",
+      "container_name": "drsec-target-dsock",
+      "label": "ignored"
+    },
+    {
+      "role": "c2",
+      "container_id": "90e7714134947b24568d75d1b40c12cbf40b9084316948a2485d1549eca5f2ce",
+      "container_name": "drsec-c2",
+      "label": "ignored"
+    }
+  ]
+}

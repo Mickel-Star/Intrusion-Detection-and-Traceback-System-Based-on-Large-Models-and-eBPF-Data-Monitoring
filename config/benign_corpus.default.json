@@ -1,0 +1,88 @@
+{
+  "schema_version": 2,
+  "corpus_version": "v2",
+  "corpus_dir": "data/benign_corpus_v2",
+  "profile_module": "scripts.benign_profiles.vuln_app",
+  "window_seconds": 15,
+  "prewarm_seconds": 60,
+  "prewarm_profile": "health_idle_poll",
+  "tracee_settle_seconds": 3,
+  "tracee_flush_seconds": 3,
+  "target": {
+    "name": "external-service",
+    "base_url": "http://127.0.0.1:5000",
+    "health_url": "http://127.0.0.1:5000/health",
+    "health_timeout_seconds": 60
+  },
+  "tracee": {
+    "image": "aquasec/tracee:latest",
+    "scopes": [
+      "container",
+      "comm!=tracee"
+    ],
+    "events": [
+      "sched_process_exec",
+      "execve",
+      "openat",
+      "read",
+      "write",
+      "close",
+      "connect",
+      "accept",
+      "sendto",
+      "recvfrom",
+      "fork",
+      "clone",
+      "vfork",
+      "mmap",
+      "security_socket_connect",
+      "security_socket_accept"
+    ]
+  },
+  "runs": [
+    {
+      "run_id": "run_a",
+      "split_role": "train",
+      "phases": [
+        {"profile_id": "health_idle_poll", "duration_seconds": 420},
+        {"profile_id": "auth_read_session", "duration_seconds": 420},
+        {"profile_id": "business_write_transaction", "duration_seconds": 420},
+        {"profile_id": "search_lookup_query", "duration_seconds": 420},
+        {"profile_id": "burst_then_idle", "duration_seconds": 420}
+      ]
+    },
+    {
+      "run_id": "run_b",
+      "split_role": "train",
+      "phases": [
+        {"profile_id": "search_lookup_query", "duration_seconds": 420},
+        {"profile_id": "business_write_transaction", "duration_seconds": 420},
+        {"profile_id": "auth_read_session", "duration_seconds": 420},
+        {"profile_id": "burst_then_idle", "duration_seconds": 420},
+        {"profile_id": "health_idle_poll", "duration_seconds": 420}
+      ]
+    },
+    {
+      "run_id": "run_c",
+      "split_role": "calibration",
+      "phases": [
+        {"profile_id": "burst_then_idle", "duration_seconds": 180},
+        {"profile_id": "health_idle_poll", "duration_seconds": 180},
+        {"profile_id": "search_lookup_query", "duration_seconds": 180},
+        {"profile_id": "auth_read_session", "duration_seconds": 180},
+        {"profile_id": "business_write_transaction", "duration_seconds": 180}
+      ]
+    },
+    {
+      "run_id": "run_d",
+      "split_role": "holdout",
+      "phases": [
+        {"profile_id": "auth_read_session", "duration_seconds": 240},
+        {"profile_id": "business_write_transaction", "duration_seconds": 240},
+        {"profile_id": "health_idle_poll", "duration_seconds": 240},
+        {"profile_id": "burst_then_idle", "duration_seconds": 240},
+        {"profile_id": "search_lookup_query", "duration_seconds": 240}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+You are an APT investigator. Map the evidence to ATT&CK tactics/techniques.
+Rules: You may only reference technique IDs present in AllowedTechniques. If uncertain, write Unknown.
+Output a Markdown table: Stage | TechniqueID | Confidence | EvidenceSnippet.
+
+AllowedTechniques: None
+SuggestedChain: None
+
+Evidence:
+Attack Provenance Graph (reconstructed from top rare paths):
+nodes=11 edges=10
+/bin/busybox -[EX x3]-> /bin/busybox
+sh -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/busybox
+sh -[EX x1]-> /bin/busybox
+/bin/sleep -[EX x1]-> /bin/busybox
+
+- score=298.974 path=/bin/busybox EX-> /bin/busybox EX<- /bin/busybox EX-> /bin/busybox EX<- /bin/busybox EX-> /bin/busybox EX<- /bin/busybox EX-> /bin/busybox EX<- /bin/busybox EX-> /bin/busybox EX<- /bin/busybox
+- score=298.974 path=/bin/busybox EX-> /bin/busybox EX<- /bin/busybox EX-> /bin/busybox EX<- /bin/busybox EX-> /bin/busybox EX<- /bin/busybox EX-> /bin/busybox EX<- /bin/busybox EX-> /bin/busybox EX<- sh
+- score=298.974 path=/bin/busybox EX-> /bin/busybox EX<- /bin/busybox EX-> /bin/busybox EX<- /bin/busybox EX-> /bin/busybox EX<- /bin/busybox EX-> /bin/busybox EX<- /bin/busybox EX-> /bin/busybox EX<- /bin/sleep
+
+TIK:
+

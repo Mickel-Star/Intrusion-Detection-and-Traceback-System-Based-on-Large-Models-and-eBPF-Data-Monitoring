@@ -1,0 +1,12 @@
+Attack Provenance Graph (reconstructed from top rare paths):
+nodes=11 edges=10
+/bin/sleep -[EX x1]-> /bin/sleep
+/bin/sleep -[EX x1]-> /bin/sleep
+/bin/sleep -[EX x1]-> /bin/sleep
+/bin/sleep -[EX x1]-> /bin/sleep
+/bin/sleep -[EX x1]-> /bin/sleep
+/bin/sleep -[EX x1]-> /bin/sleep
+/bin/sleep -[EX x1]-> /bin/sleep
+/bin/sleep -[EX x1]-> /bin/sleep
+/bin/sleep -[EX x1]-> /bin/sleep
+/bin/sleep -[EX x1]-> /bin/sleep

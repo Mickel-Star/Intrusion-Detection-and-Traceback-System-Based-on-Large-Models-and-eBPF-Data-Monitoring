@@ -1,0 +1,65 @@
+You are a security analyst. Write a grounded incident report.
+Rules:
+1) Only reference entities that appear in AllowedEntities.
+2) Only reference technique IDs in AllowedTechniques.
+3) Provide a verdict (Malicious/Benign/Unknown) and recommended actions.
+Output Markdown with sections: Summary, Evidence, ATT&CK Mapping, Impact, Recommended Actions, Confidence.
+
+TargetProcess: sh pid=125393
+AllowedEntities:
+{"paths": ["/bin/busybox", "/bin/sed", "/bin/sleep"], "ips": [], "iocs": ["sh"]}
+AllowedTechniques: None
+
+SimilarCases:
+- case_id=case_1773565686_a43ec74e pid=124926 name=sh score=298.974 doc=.../curl -[EX x1
+- case_id=case_1773569314_02b266cf pid=125161 name=sh score=298.974 doc=.../curl -[EX x1
+- case_id=case_1773568119_ee303fe8 pid=125040 name=sh score=298.974 doc=.../busybox
+
+BBK:
+- path_score=298.974 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+- path_score=298.974 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+- path_score=298.974 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+- path_score=298.974 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+- path_score=298.974 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+
+EvidenceGraph:
+Attack Provenance Graph (reconstructed from top rare paths):
+nodes=12 edges=11
+sh -[EX x1]-> /bin/sed
+sh -[EX x1]-> /bin/sed
+sh -[EX x1]-> /bin/sed
+sh -[EX x1]-> /bin/sed
+sh -[EX x1]-> /bin/sed
+sh -[EX x1]-> /bin/sed
+sh -[EX x1]-> /bin/sed
+sh -[EX x1]-> /bin/sed
+sh -[EX x1]-> /bin/sed
+sh -[EX x1]-> /bin/sed
+sh -[WR x1]-> fd:3_pid:125393
+
+RarePaths:
+- score=298.974 path=sh WR-> fd:3_pid:125393 WR<- sh WR-> fd:3_pid:125393 WR<- sh WR-> fd:3_pid:125393 WR<- sh WR-> fd:3_pid:125393 WR<- sh WR-> fd:3_pid:125393 WR<- sh
+- score=298.974 path=sh WR-> fd:3_pid:125393 WR<- sh WR-> fd:3_pid:125393 WR<- sh WR-> fd:3_pid:125393 WR<- sh WR-> fd:3_pid:125393 WR<- sh EX-> /bin/sed EX<- sh
+
+IOCList:
+### IOCs
+
+#### IOCs.Files
+*   `/bin/sed`
+*   `/bin/busybox`
+*   `/bin/sleep`
+
+#### IOCs.Network
+*(No network indicators literally appear in the provided Evidence.)*
+
+#### IOCs.Processes
+*   `sh`
+*   `pid:125393`
+
+StageMapping:
+Based on the provided evidence and the constraints of the task, I cannot map the evidence to any specific ATT&CK techniques because the `AllowedTechniques` list is empty (`AllowedTechniques: None`). Therefore, all technique IDs must be considered "Unknown".
+
+| Stage | TechniqueID | Confidence | EvidenceSnippet |
+| :---- | :---------- | :--------- | :-------------- |
+| Execution | Unknown | Low | `sh -[EX x1]-> /bin/sed` (repeated pattern) |
+| Privilege Escalation / Defense Evasion | Unknown | Low | `sh -[WR x1]-> fd:3_pid:125393` and complex write/read loop involving shell and file descriptor |

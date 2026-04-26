@@ -1,0 +1,65 @@
+You are a security analyst. Write a grounded incident report.
+Rules:
+1) Only reference entities that appear in AllowedEntities.
+2) Only reference technique IDs in AllowedTechniques.
+3) Provide a verdict (Malicious/Benign/Unknown) and recommended actions.
+Output Markdown with sections: Summary, Evidence, ATT&CK Mapping, Impact, Recommended Actions, Confidence.
+
+TargetProcess: sh pid=124771
+AllowedEntities:
+{"paths": [], "ips": [], "iocs": ["sh"]}
+AllowedTechniques: None
+
+SimilarCases:
+- case_id=case_1773563216_04f323d3 pid=124746 name=sh score=298.974 doc=.../curl -[EX x1
+- case_id=case_1773562819_af0b1dec pid=124706 name=sh score=298.974 doc=.../curl -[EX x1
+- case_id=case_1773561822_fb27d8d3 pid=124658 name=sh score=298.974 doc=.../curl -[EX x1
+
+BBK:
+- path_score=298.974 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+- path_score=269.076 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+- path_score=269.076 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+- path_score=239.179 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+- path_score=209.281 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+
+EvidenceGraph:
+Attack Provenance Graph (reconstructed from top rare paths):
+nodes=3 edges=2
+sh -[WR x2]-> fd:3_pid:124771
+sh -[WR x2]-> fd:4_pid:124771
+
+RarePaths:
+- score=298.974 path=sh WR-> fd:3_pid:124771 WR<- sh WR-> fd:3_pid:124771 WR<- sh WR-> fd:3_pid:124771 WR<- sh WR-> fd:3_pid:124771 WR<- sh WR-> fd:3_pid:124771 WR<- sh
+- score=269.076 path=sh WR-> fd:3_pid:124771 WR<- sh WR-> fd:3_pid:124771 WR<- sh WR-> fd:3_pid:124771 WR<- sh WR-> fd:3_pid:124771 WR<- sh WR-> fd:3_pid:124771
+- score=269.076 path=sh WR-> fd:3_pid:124771 WR<- sh WR-> fd:3_pid:124771 WR<- sh WR-> fd:3_pid:124771 WR<- sh WR-> fd:3_pid:124771 WR<- sh WR-> fd:4_pid:124771
+- score=239.179 path=sh WR-> fd:3_pid:124771 WR<- sh WR-> fd:3_pid:124771 WR<- sh WR-> fd:3_pid:124771 WR<- sh WR-> fd:3_pid:124771 WR<- sh
+- score=209.281 path=sh WR-> fd:3_pid:124771 WR<- sh WR-> fd:3_pid:124771 WR<- sh WR-> fd:3_pid:124771 WR<- sh WR-> fd:3_pid:124771
+- score=209.281 path=sh WR-> fd:3_pid:124771 WR<- sh WR-> fd:3_pid:124771 WR<- sh WR-> fd:3_pid:124771 WR<- sh WR-> fd:4_pid:124771
+- score=179.384 path=sh WR-> fd:3_pid:124771 WR<- sh WR-> fd:3_pid:124771 WR<- sh WR-> fd:3_pid:124771 WR<- sh
+- score=149.487 path=sh WR-> fd:3_pid:124771 WR<- sh WR-> fd:3_pid:124771 WR<- sh WR-> fd:3_pid:124771
+- score=149.487 path=sh WR-> fd:3_pid:124771 WR<- sh WR-> fd:3_pid:124771 WR<- sh WR-> fd:4_pid:124771
+- score=119.589 path=sh WR-> fd:3_pid:124771 WR<- sh WR-> fd:3_pid:124771 WR<- sh
+
+IOCList:
+### IOCs
+
+#### IOCs.Files
+*   `fd:3_pid:124771`
+*   `fd:4_pid:124771`
+
+#### IOCs.Network
+*   *(No network indicators explicitly listed in the evidence.)*
+
+#### IOCs.Processes
+*   `sh`
+*   `pid:124771`
+
+StageMapping:
+| Stage | TechniqueID | Confidence | EvidenceSnippet |
+|-------|--------------|------------|------------------|
+| Execution | Unknown | Low | `sh -[WR x2]-> fd:3_pid:124771` |
+| Persistence | Unknown | Low | `sh -[WR x2]-> fd:4_pid:124771` |
+| Defense Evasion | Unknown | Low | Recurrent `WR` operations between `sh` and file descriptors |
+
+**Explanation:**  
+The provided evidence shows a provenance graph with repeated write (`WR`) operations from a shell (`sh`) process to file descriptors (likely representing open files or network sockets). However, without specific `AllowedTechniques` to map against, and given the abstract nature of the data (lacking concrete commands, file paths, or network details), it is not possible to assign specific MITRE ATT&CK technique IDs. The activity suggests potential command execution, data exfiltration, or log tampering, but the mapping remains indeterminate under the given constraints.

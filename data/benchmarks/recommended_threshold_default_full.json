@@ -1,0 +1,8 @@
+{
+  "scenario_set": "default",
+  "mode": "full",
+  "metric": "process_level.f1",
+  "recommended_threshold": 0.5,
+  "selected_on": "validation_repeat_1",
+  "summary_path": "/home/yzx/DRSEC_v2/data/benchmarks/summary_default_full.json"
+}

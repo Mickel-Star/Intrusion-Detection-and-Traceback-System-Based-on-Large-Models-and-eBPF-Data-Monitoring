@@ -1,0 +1,146 @@
+{
+  "threshold": 0.5,
+  "run_count": 1,
+  "scenario_ids": [
+    "search_heavy"
+  ],
+  "process_level": {
+    "tp": 0,
+    "fp": 27,
+    "fn": 0,
+    "tn": 60,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "accuracy": 0.6896551724137931,
+    "support": 87,
+    "positive_support": 0,
+    "negative_support": 87
+  },
+  "window_level": {
+    "tp": 0,
+    "fp": 1,
+    "fn": 0,
+    "tn": 0,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "accuracy": 0.0,
+    "support": 1,
+    "positive_support": 0,
+    "negative_support": 1
+  },
+  "role_level": {
+    "tp": 0,
+    "fp": 1,
+    "fn": 0,
+    "tn": 0,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "accuracy": 0.0,
+    "support": 1,
+    "positive_support": 0,
+    "negative_support": 1
+  },
+  "scenario_level": {
+    "tp": 0,
+    "fp": 1,
+    "fn": 0,
+    "tn": 0,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "accuracy": 0.0,
+    "support": 1,
+    "positive_support": 0,
+    "negative_support": 1
+  },
+  "by_scenario": {
+    "search_heavy": {
+      "process_level": {
+        "tp": 0,
+        "fp": 27,
+        "fn": 0,
+        "tn": 60,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "accuracy": 0.6896551724137931,
+        "support": 87,
+        "positive_support": 0,
+        "negative_support": 87
+      },
+      "window_level": {
+        "tp": 0,
+        "fp": 1,
+        "fn": 0,
+        "tn": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "accuracy": 0.0,
+        "support": 1,
+        "positive_support": 0,
+        "negative_support": 1
+      },
+      "role_level": {
+        "tp": 0,
+        "fp": 1,
+        "fn": 0,
+        "tn": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "accuracy": 0.0,
+        "support": 1,
+        "positive_support": 0,
+        "negative_support": 1
+      },
+      "scenario_level": {
+        "tp": 0,
+        "fp": 1,
+        "fn": 0,
+        "tn": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "accuracy": 0.0,
+        "support": 1,
+        "positive_support": 0,
+        "negative_support": 1
+      }
+    }
+  },
+  "by_role": {
+    "benign": {
+      "process_level": {
+        "tp": 0,
+        "fp": 27,
+        "fn": 0,
+        "tn": 60,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "accuracy": 0.6896551724137931,
+        "support": 87,
+        "positive_support": 0,
+        "negative_support": 87
+      },
+      "role_level": {
+        "tp": 0,
+        "fp": 1,
+        "fn": 0,
+        "tn": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "accuracy": 0.0,
+        "support": 1,
+        "positive_support": 0,
+        "negative_support": 1
+      }
+    }
+  },
+  "window_count": 1
+}

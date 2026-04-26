@@ -1,0 +1,15 @@
+You are an incident response analyst. Extract a concise IOC list strictly from the provided Evidence.
+Rules: Only output items that literally appear in Evidence. Output Markdown with sections: IOCs.Files, IOCs.Network, IOCs.Processes.
+
+Evidence:
+Attack Provenance Graph (reconstructed from top rare paths):
+nodes=2 edges=1
+/usr/bin/bash -[WR x1]-> /tmp/smoke.sh
+
+- score=1.000 path=/usr/bin/bash WR-> /tmp/smoke.sh WR<- /usr/bin/bash WR-> /tmp/smoke.sh WR<- /usr/bin/bash WR-> /tmp/smoke.sh WR<- /usr/bin/bash WR-> /tmp/smoke.sh WR<- /usr/bin/bash WR-> /tmp/smoke.sh WR<- /usr/bin/bash
+- score=1.000 path=/usr/bin/bash WR-> /tmp/smoke.sh WR<- /usr/bin/bash WR-> /tmp/smoke.sh WR<- /usr/bin/bash WR-> /tmp/smoke.sh WR<- /usr/bin/bash WR-> /tmp/smoke.sh WR<- /usr/bin/bash WR-> /tmp/smoke.sh
+- score=1.000 path=/usr/bin/bash WR-> /tmp/smoke.sh WR<- /usr/bin/bash WR-> /tmp/smoke.sh WR<- /usr/bin/bash WR-> /tmp/smoke.sh WR<- /usr/bin/bash WR-> /tmp/smoke.sh WR<- /usr/bin/bash
+
+WindowAlert: window_0001 score=0.000 | containers=1 | top_processes=bash pid=42 score=0.000 | top_paths=/usr/bin/bash Write-> /tmp/smoke.sh Write<- /usr/bin/bash Write-> /tmp/smoke.sh Write<- /usr/bin; /usr/bin/bash Write-> /tmp/smoke.sh Write<- /usr/bin/bash Write-> /tmp/smoke.sh Write<- /usr/bin; /usr/bin/bash Write-> /tmp/smoke.sh Write<- /usr/bin/bash Write-> /tmp/smoke.sh Write<- /usr/bin
+
+/usr/bin/bash -[WR x1]-> /tmp/smoke.sh

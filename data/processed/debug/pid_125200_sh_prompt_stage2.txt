@@ -1,0 +1,27 @@
+You are an APT investigator. Map the evidence to ATT&CK tactics/techniques.
+Rules: You may only reference technique IDs present in AllowedTechniques. If uncertain, write Unknown.
+Output a Markdown table: Stage | TechniqueID | Confidence | EvidenceSnippet.
+
+AllowedTechniques: None
+SuggestedChain: None
+
+Evidence:
+Attack Provenance Graph (reconstructed from top rare paths):
+nodes=12 edges=11
+sh -[EX x1]-> /bin/sed
+sh -[EX x1]-> /bin/sed
+sh -[EX x1]-> /bin/sed
+sh -[EX x1]-> /bin/sed
+sh -[EX x1]-> /bin/sed
+sh -[EX x1]-> /bin/sed
+sh -[EX x1]-> /bin/sed
+sh -[EX x1]-> /bin/sed
+sh -[EX x1]-> /bin/sed
+sh -[EX x1]-> /bin/sed
+sh -[WR x1]-> fd:3_pid:125200
+
+- score=298.974 path=sh WR-> fd:3_pid:125200 WR<- sh WR-> fd:3_pid:125200 WR<- sh WR-> fd:3_pid:125200 WR<- sh WR-> fd:3_pid:125200 WR<- sh WR-> fd:3_pid:125200 WR<- sh
+- score=298.974 path=sh WR-> fd:3_pid:125200 WR<- sh WR-> fd:3_pid:125200 WR<- sh WR-> fd:3_pid:125200 WR<- sh WR-> fd:3_pid:125200 WR<- sh EX-> /bin/sed EX<- sh
+
+TIK:
+

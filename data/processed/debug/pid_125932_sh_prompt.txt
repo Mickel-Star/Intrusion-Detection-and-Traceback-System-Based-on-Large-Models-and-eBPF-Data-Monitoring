@@ -1,0 +1,108 @@
+
+You are a security analyst. Analyze the following suspicious process behavior based on the provided knowledge base and historical context.
+
+TARGET SUSPICIOUS BEHAVIOR:
+Process: sh (pid=125932)
+
+Graph Context:
+sh -[EX x1]-> /usr/bin/curl
+sh -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+sh -[EX x1]-> /usr/bin/curl
+sh -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+sh -[EX x1]-> /usr/bin/curl
+sh -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+sh -[EX x1]-> /usr/bin/curl
+sh -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+sh -[EX x1]-> /usr/bin/curl
+sh -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+
+BENIGN BEHAVIOR KNOWLEDGE (BBK):
+- path_score=298.974 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+- path_score=298.974 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+- path_score=298.974 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+- path_score=298.974 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+- path_score=298.974 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+
+RARE PATHS (from BBK rarity scoring):
+- score=298.974 path=/usr/bin/curl EX-> /usr/bin/curl EX<- sh WR-> fd:3_pid:124637 RD-> sh WR-> fd:3_pid:124637 RD-> sh WR-> fd:3_pid:124637 RD-> sh WR-> fd:3_pid:124637 RD-> sh
+- score=298.974 path=/usr/bin/curl EX-> /usr/bin/curl EX<- sh WR-> fd:3_pid:124637 RD-> sh WR-> fd:3_pid:124637 RD-> sh WR-> fd:3_pid:124637 RD-> sh EX-> /usr/bin/curl EX<- /usr/bin/curl
+- score=298.974 path=/usr/bin/curl EX-> /usr/bin/curl EX<- sh WR-> fd:3_pid:124637 RD-> sh WR-> fd:3_pid:124637 RD-> sh WR-> fd:3_pid:124637 RD-> sh EX-> /usr/bin/curl EX<- sh
+
+RELEVANT KNOWLEDGE (from Security Reports/Papers):
+
+
+RECONSTRUCTED ATTACK PROVENANCE GRAPH (for this process):
+Attack Provenance Graph (reconstructed from top rare paths):
+nodes=13 edges=13
+fd:3_pid:124637 -[RD x33]-> sh
+sh -[WR x21]-> fd:3_pid:124637
+sh -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+sh -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+
+SIMILAR HISTORICAL CASES (from Local Database):
+
+
+INSTRUCTIONS:
+1. Explain why this behavior is suspicious based on the knowledge base.
+2. Compare it with historical cases if available.
+3. Provide a verdict (Malicious/Benign/Unknown) and recommended actions.
+4. Output the report in Markdown format.

@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "scenario_id": "c2_exfil",
+  "kind": "attack",
+  "positive_roles": [
+    "attacker",
+    "target",
+    "c2"
+  ],
+  "negative_roles": [],
+  "containers": [
+    {
+      "role": "attacker",
+      "container_id": "e168f459e64c5e57370917a0cfae7853a140c508e245ca5a50d422e8f6c80f83",
+      "container_name": "drsec-bench-c2_exfil-r01-attacker",
+      "label": "positive"
+    },
+    {
+      "role": "target",
+      "container_id": "f3b93526eef62b7d265c043ee79e87d295bdc271dc512b45141c70f2e6abf1ed",
+      "container_name": "drsec-target",
+      "label": "positive"
+    },
+    {
+      "role": "target_dsock",
+      "container_id": "603311fb3fca477f8b1379d4defdb0c54b57b074ce9f2b2cd5fe606c852528f4",
+      "container_name": "drsec-target-dsock",
+      "label": "ignored"
+    },
+    {
+      "role": "c2",
+      "container_id": "2583e079bba3734bcc855573e0b6401f6211ca37ee1463090bef45bd34dba5e2",
+      "container_name": "drsec-c2",
+      "label": "positive"
+    }
+  ]
+}

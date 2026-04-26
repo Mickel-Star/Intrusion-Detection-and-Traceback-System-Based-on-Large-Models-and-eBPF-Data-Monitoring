@@ -1,0 +1,236 @@
+{
+  "run_id": "repeat_01",
+  "scenario_id": "env_probe",
+  "repeat_id": 1,
+  "kind": "attack",
+  "labels": {
+    "schema_version": 1,
+    "scenario_id": "env_probe",
+    "kind": "attack",
+    "positive_roles": [
+      "attacker",
+      "target"
+    ],
+    "negative_roles": [],
+    "containers": [
+      {
+        "role": "attacker",
+        "container_id": "62948a563a9d47877f9164ba332c23b24fd4051c047095fbb6977cf851da85e9",
+        "container_name": "drsec-bench-env_probe-r01-attacker",
+        "label": "positive"
+      },
+      {
+        "role": "target",
+        "container_id": "5fd4b21546f1dc89da455cbcf0c8025b37e90711c03daf51987a375b2aa68791",
+        "container_name": "drsec-target",
+        "label": "positive"
+      },
+      {
+        "role": "target_dsock",
+        "container_id": "f6b96f2e05a151d89d4c2d9da44c713330a0ec965394aff007e2d31a3447fb39",
+        "container_name": "drsec-target-dsock",
+        "label": "ignored"
+      },
+      {
+        "role": "c2",
+        "container_id": "091fdc469fda98a9fd8cea13cf9e661581d7157beb04220127ae27c9d5303931",
+        "container_name": "drsec-c2",
+        "label": "ignored"
+      }
+    ]
+  },
+  "window_candidates": [
+    {
+      "window_file": "window_0001.json",
+      "ground_truth_positive": [
+        "repeat_01:5fd4b21546f1:2501482",
+        "repeat_01:5fd4b21546f1:2501483",
+        "repeat_01:5fd4b21546f1:2501484",
+        "repeat_01:5fd4b21546f1:2501485",
+        "repeat_01:62948a563a9d:2501442",
+        "repeat_01:62948a563a9d:2501476",
+        "repeat_01:62948a563a9d:2501477"
+      ],
+      "ground_truth_negative": [],
+      "candidate_processes": [
+        {
+          "pid": 2501476,
+          "role": "attacker",
+          "label": "positive",
+          "score": 1.0,
+          "name": "entrypoint.sh"
+        },
+        {
+          "pid": 2501485,
+          "role": "target",
+          "label": "positive",
+          "score": 1.0,
+          "name": "sh"
+        },
+        {
+          "pid": 2501442,
+          "role": "attacker",
+          "label": "positive",
+          "score": 0.4887640449438202,
+          "name": "entrypoint.sh"
+        },
+        {
+          "pid": 2501482,
+          "role": "target",
+          "label": "positive",
+          "score": 0.3146067415730337,
+          "name": "sh"
+        },
+        {
+          "pid": 2501477,
+          "role": "attacker",
+          "label": "positive",
+          "score": 0.2808988764044944,
+          "name": "sh"
+        },
+        {
+          "pid": 2501484,
+          "role": "target",
+          "label": "positive",
+          "score": 0.24719101123595505,
+          "name": "sh"
+        },
+        {
+          "pid": 2501483,
+          "role": "target",
+          "label": "positive",
+          "score": 0.06179775280898876,
+          "name": "sh"
+        }
+      ]
+    }
+  ],
+  "process_samples": [
+    {
+      "sample_id": "repeat_01:5fd4b21546f1:2501482",
+      "run_id": "repeat_01",
+      "scenario_id": "env_probe",
+      "repeat_id": 1,
+      "kind": "attack",
+      "role": "target",
+      "container_id": "5fd4b21546f1",
+      "label": "positive",
+      "pid": 2501482,
+      "process_name": "sh",
+      "score": 0.3146067415730337
+    },
+    {
+      "sample_id": "repeat_01:5fd4b21546f1:2501483",
+      "run_id": "repeat_01",
+      "scenario_id": "env_probe",
+      "repeat_id": 1,
+      "kind": "attack",
+      "role": "target",
+      "container_id": "5fd4b21546f1",
+      "label": "positive",
+      "pid": 2501483,
+      "process_name": "sh",
+      "score": 0.06179775280898876
+    },
+    {
+      "sample_id": "repeat_01:5fd4b21546f1:2501484",
+      "run_id": "repeat_01",
+      "scenario_id": "env_probe",
+      "repeat_id": 1,
+      "kind": "attack",
+      "role": "target",
+      "container_id": "5fd4b21546f1",
+      "label": "positive",
+      "pid": 2501484,
+      "process_name": "sh",
+      "score": 0.24719101123595505
+    },
+    {
+      "sample_id": "repeat_01:5fd4b21546f1:2501485",
+      "run_id": "repeat_01",
+      "scenario_id": "env_probe",
+      "repeat_id": 1,
+      "kind": "attack",
+      "role": "target",
+      "container_id": "5fd4b21546f1",
+      "label": "positive",
+      "pid": 2501485,
+      "process_name": "sh",
+      "score": 1.0
+    },
+    {
+      "sample_id": "repeat_01:62948a563a9d:2501442",
+      "run_id": "repeat_01",
+      "scenario_id": "env_probe",
+      "repeat_id": 1,
+      "kind": "attack",
+      "role": "attacker",
+      "container_id": "62948a563a9d",
+      "label": "positive",
+      "pid": 2501442,
+      "process_name": "entrypoint.sh",
+      "score": 0.4887640449438202
+    },
+    {
+      "sample_id": "repeat_01:62948a563a9d:2501476",
+      "run_id": "repeat_01",
+      "scenario_id": "env_probe",
+      "repeat_id": 1,
+      "kind": "attack",
+      "role": "attacker",
+      "container_id": "62948a563a9d",
+      "label": "positive",
+      "pid": 2501476,
+      "process_name": "entrypoint.sh",
+      "score": 1.0
+    },
+    {
+      "sample_id": "repeat_01:62948a563a9d:2501477",
+      "run_id": "repeat_01",
+      "scenario_id": "env_probe",
+      "repeat_id": 1,
+      "kind": "attack",
+      "role": "attacker",
+      "container_id": "62948a563a9d",
+      "label": "positive",
+      "pid": 2501477,
+      "process_name": "sh",
+      "score": 0.2808988764044944
+    }
+  ],
+  "role_samples": [
+    {
+      "sample_id": "repeat_01:attacker:62948a563a9d",
+      "run_id": "repeat_01",
+      "scenario_id": "env_probe",
+      "repeat_id": 1,
+      "kind": "attack",
+      "role": "attacker",
+      "container_id": "62948a563a9d",
+      "label": "positive",
+      "score": 1.0
+    },
+    {
+      "sample_id": "repeat_01:target:5fd4b21546f1",
+      "run_id": "repeat_01",
+      "scenario_id": "env_probe",
+      "repeat_id": 1,
+      "kind": "attack",
+      "role": "target",
+      "container_id": "5fd4b21546f1",
+      "label": "positive",
+      "score": 1.0
+    }
+  ],
+  "scenario_samples": [
+    {
+      "sample_id": "repeat_01",
+      "run_id": "repeat_01",
+      "scenario_id": "env_probe",
+      "repeat_id": 1,
+      "kind": "attack",
+      "label": "positive",
+      "score": 1.0
+    }
+  ]
+}

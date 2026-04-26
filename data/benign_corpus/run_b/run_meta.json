@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "corpus_version": "v1",
+  "run_id": "run_b",
+  "kind": "benign_corpus_run",
+  "split_role": "train",
+  "target_service": "vuln-app",
+  "trace_out": "data/benign_corpus/run_b/trace.log",
+  "driver_log": "data/benign_corpus/run_b/driver.log",
+  "prewarm_log": "data/benign_corpus/run_b/prewarm.log",
+  "duration_seconds": 600,
+  "prewarm_seconds": 20,
+  "random_seed": 1338,
+  "training_pool": true,
+  "bootstrap_only": false,
+  "phases": [
+    {
+      "phase_id": "run_b_phase_01",
+      "profile_id": "admin_readonly",
+      "start_offset_seconds": 0.0,
+      "end_offset_seconds": 120.0,
+      "duration_seconds": 120
+    },
+    {
+      "phase_id": "run_b_phase_02",
+      "profile_id": "search_lookup_heavy",
+      "start_offset_seconds": 120.0,
+      "end_offset_seconds": 240.0,
+      "duration_seconds": 120
+    },
+    {
+      "phase_id": "run_b_phase_03",
+      "profile_id": "browse_order_steady",
+      "start_offset_seconds": 240.0,
+      "end_offset_seconds": 360.0,
+      "duration_seconds": 120
+    },
+    {
+      "phase_id": "run_b_phase_04",
+      "profile_id": "auth_churn",
+      "start_offset_seconds": 360.0,
+      "end_offset_seconds": 480.0,
+      "duration_seconds": 120
+    },
+    {
+      "phase_id": "run_b_phase_05",
+      "profile_id": "health_idle_poll",
+      "start_offset_seconds": 480.0,
+      "end_offset_seconds": 600.0,
+      "duration_seconds": 120
+    }
+  ],
+  "profile_ids": [
+    "admin_readonly",
+    "search_lookup_heavy",
+    "browse_order_steady",
+    "auth_churn",
+    "health_idle_poll"
+  ]
+}

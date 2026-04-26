@@ -1,0 +1,215 @@
+{
+  "run_id": "repeat_01",
+  "scenario_id": "path_hijack",
+  "repeat_id": 1,
+  "kind": "attack",
+  "labels": {
+    "schema_version": 1,
+    "scenario_id": "path_hijack",
+    "kind": "attack",
+    "positive_roles": [
+      "attacker",
+      "target"
+    ],
+    "negative_roles": [],
+    "containers": [
+      {
+        "role": "attacker",
+        "container_id": "33ddc519bc36d587c1354e3d3d0a59c2ea4ac98783129dc25e6f4fcc23103fcf",
+        "container_name": "drsec-bench-path_hijack-r01-attacker",
+        "label": "positive"
+      },
+      {
+        "role": "target",
+        "container_id": "7e64518fc93fe4a5e8dc689f07faf118c39b61485b1546dacde46d68e40d3065",
+        "container_name": "drsec-target",
+        "label": "positive"
+      },
+      {
+        "role": "target_dsock",
+        "container_id": "42f6a15f7dd2175a2681e85b84e9ce19ac29166fa40b95a31761ba7e59029eca",
+        "container_name": "drsec-target-dsock",
+        "label": "ignored"
+      },
+      {
+        "role": "c2",
+        "container_id": "0a1bf11994b4c1d3cca6ba56dff59a7d7aa386091417337e91db141dd7c6a44f",
+        "container_name": "drsec-c2",
+        "label": "ignored"
+      }
+    ]
+  },
+  "window_candidates": [
+    {
+      "window_file": "window_0001.json",
+      "ground_truth_positive": [
+        "repeat_01:33ddc519bc36:2516472",
+        "repeat_01:33ddc519bc36:2516515",
+        "repeat_01:33ddc519bc36:2516516",
+        "repeat_01:7e64518fc93f:2516521",
+        "repeat_01:7e64518fc93f:2516522",
+        "repeat_01:7e64518fc93f:2516523"
+      ],
+      "ground_truth_negative": [],
+      "candidate_processes": [
+        {
+          "pid": 2516515,
+          "role": "attacker",
+          "label": "positive",
+          "score": 1.0,
+          "name": "entrypoint.sh"
+        },
+        {
+          "pid": 2516523,
+          "role": "target",
+          "label": "positive",
+          "score": 1.0,
+          "name": "sh"
+        },
+        {
+          "pid": 2516516,
+          "role": "attacker",
+          "label": "positive",
+          "score": 0.4438202247191011,
+          "name": "sh"
+        },
+        {
+          "pid": 2516521,
+          "role": "target",
+          "label": "positive",
+          "score": 0.43820224719101125,
+          "name": "sh"
+        },
+        {
+          "pid": 2516522,
+          "role": "target",
+          "label": "positive",
+          "score": 0.25842696629213485,
+          "name": "sh"
+        },
+        {
+          "pid": 2516472,
+          "role": "attacker",
+          "label": "positive",
+          "score": 0.24719101123595505,
+          "name": "entrypoint.sh"
+        }
+      ]
+    }
+  ],
+  "process_samples": [
+    {
+      "sample_id": "repeat_01:33ddc519bc36:2516472",
+      "run_id": "repeat_01",
+      "scenario_id": "path_hijack",
+      "repeat_id": 1,
+      "kind": "attack",
+      "role": "attacker",
+      "container_id": "33ddc519bc36",
+      "label": "positive",
+      "pid": 2516472,
+      "process_name": "entrypoint.sh",
+      "score": 0.24719101123595505
+    },
+    {
+      "sample_id": "repeat_01:33ddc519bc36:2516515",
+      "run_id": "repeat_01",
+      "scenario_id": "path_hijack",
+      "repeat_id": 1,
+      "kind": "attack",
+      "role": "attacker",
+      "container_id": "33ddc519bc36",
+      "label": "positive",
+      "pid": 2516515,
+      "process_name": "entrypoint.sh",
+      "score": 1.0
+    },
+    {
+      "sample_id": "repeat_01:33ddc519bc36:2516516",
+      "run_id": "repeat_01",
+      "scenario_id": "path_hijack",
+      "repeat_id": 1,
+      "kind": "attack",
+      "role": "attacker",
+      "container_id": "33ddc519bc36",
+      "label": "positive",
+      "pid": 2516516,
+      "process_name": "sh",
+      "score": 0.4438202247191011
+    },
+    {
+      "sample_id": "repeat_01:7e64518fc93f:2516521",
+      "run_id": "repeat_01",
+      "scenario_id": "path_hijack",
+      "repeat_id": 1,
+      "kind": "attack",
+      "role": "target",
+      "container_id": "7e64518fc93f",
+      "label": "positive",
+      "pid": 2516521,
+      "process_name": "sh",
+      "score": 0.43820224719101125
+    },
+    {
+      "sample_id": "repeat_01:7e64518fc93f:2516522",
+      "run_id": "repeat_01",
+      "scenario_id": "path_hijack",
+      "repeat_id": 1,
+      "kind": "attack",
+      "role": "target",
+      "container_id": "7e64518fc93f",
+      "label": "positive",
+      "pid": 2516522,
+      "process_name": "sh",
+      "score": 0.25842696629213485
+    },
+    {
+      "sample_id": "repeat_01:7e64518fc93f:2516523",
+      "run_id": "repeat_01",
+      "scenario_id": "path_hijack",
+      "repeat_id": 1,
+      "kind": "attack",
+      "role": "target",
+      "container_id": "7e64518fc93f",
+      "label": "positive",
+      "pid": 2516523,
+      "process_name": "sh",
+      "score": 1.0
+    }
+  ],
+  "role_samples": [
+    {
+      "sample_id": "repeat_01:attacker:33ddc519bc36",
+      "run_id": "repeat_01",
+      "scenario_id": "path_hijack",
+      "repeat_id": 1,
+      "kind": "attack",
+      "role": "attacker",
+      "container_id": "33ddc519bc36",
+      "label": "positive",
+      "score": 1.0
+    },
+    {
+      "sample_id": "repeat_01:target:7e64518fc93f",
+      "run_id": "repeat_01",
+      "scenario_id": "path_hijack",
+      "repeat_id": 1,
+      "kind": "attack",
+      "role": "target",
+      "container_id": "7e64518fc93f",
+      "label": "positive",
+      "score": 1.0
+    }
+  ],
+  "scenario_samples": [
+    {
+      "sample_id": "repeat_01",
+      "run_id": "repeat_01",
+      "scenario_id": "path_hijack",
+      "repeat_id": 1,
+      "kind": "attack",
+      "label": "positive",
+      "score": 1.0
+    }
+  ]
+}

@@ -1,0 +1,194 @@
+{
+  "run_id": "repeat_02",
+  "scenario_id": "docker_list",
+  "repeat_id": 2,
+  "kind": "attack",
+  "labels": {
+    "schema_version": 1,
+    "scenario_id": "docker_list",
+    "kind": "attack",
+    "positive_roles": [
+      "attacker",
+      "target_dsock"
+    ],
+    "negative_roles": [],
+    "containers": [
+      {
+        "role": "attacker",
+        "container_id": "2eb64edf19137ff9009f58b2ffcd650915b621ef8036a1a2d2238eee2a8ebcf7",
+        "container_name": "drsec-bench-docker_list-r02-attacker",
+        "label": "positive"
+      },
+      {
+        "role": "target",
+        "container_id": "2618cc95c18e494ddab4658e6b96d0f75335137c102444f60775c826672c86e3",
+        "container_name": "drsec-target",
+        "label": "ignored"
+      },
+      {
+        "role": "target_dsock",
+        "container_id": "0af770781f019b0e97c2446a109edd2621f62ac6090c6641a2da1ce681dae511",
+        "container_name": "drsec-target-dsock",
+        "label": "positive"
+      },
+      {
+        "role": "c2",
+        "container_id": "449a913fbc2d0c601c9739280a74081449f4d4d4772b2bf50cfca103f3a3e995",
+        "container_name": "drsec-c2",
+        "label": "ignored"
+      }
+    ]
+  },
+  "window_candidates": [
+    {
+      "window_file": "window_0001.json",
+      "ground_truth_positive": [
+        "repeat_02:0af770781f01:2475546",
+        "repeat_02:0af770781f01:2475547",
+        "repeat_02:2eb64edf1913:2475486",
+        "repeat_02:2eb64edf1913:2475541",
+        "repeat_02:2eb64edf1913:2475542"
+      ],
+      "ground_truth_negative": [],
+      "candidate_processes": [
+        {
+          "pid": 2475541,
+          "role": "attacker",
+          "label": "positive",
+          "score": 1.0,
+          "name": "entrypoint.sh"
+        },
+        {
+          "pid": 2475486,
+          "role": "attacker",
+          "label": "positive",
+          "score": 0.4887640449438202,
+          "name": "entrypoint.sh"
+        },
+        {
+          "pid": 2475546,
+          "role": "target_dsock",
+          "label": "positive",
+          "score": 0.21348314606741572,
+          "name": "sh"
+        },
+        {
+          "pid": 2475547,
+          "role": "target_dsock",
+          "label": "positive",
+          "score": 0.02247191011235955,
+          "name": "sh"
+        },
+        {
+          "pid": 2475542,
+          "role": "attacker",
+          "label": "positive",
+          "score": 0.0,
+          "name": "sh"
+        }
+      ]
+    }
+  ],
+  "process_samples": [
+    {
+      "sample_id": "repeat_02:0af770781f01:2475546",
+      "run_id": "repeat_02",
+      "scenario_id": "docker_list",
+      "repeat_id": 2,
+      "kind": "attack",
+      "role": "target_dsock",
+      "container_id": "0af770781f01",
+      "label": "positive",
+      "pid": 2475546,
+      "process_name": "sh",
+      "score": 0.21348314606741572
+    },
+    {
+      "sample_id": "repeat_02:0af770781f01:2475547",
+      "run_id": "repeat_02",
+      "scenario_id": "docker_list",
+      "repeat_id": 2,
+      "kind": "attack",
+      "role": "target_dsock",
+      "container_id": "0af770781f01",
+      "label": "positive",
+      "pid": 2475547,
+      "process_name": "sh",
+      "score": 0.02247191011235955
+    },
+    {
+      "sample_id": "repeat_02:2eb64edf1913:2475486",
+      "run_id": "repeat_02",
+      "scenario_id": "docker_list",
+      "repeat_id": 2,
+      "kind": "attack",
+      "role": "attacker",
+      "container_id": "2eb64edf1913",
+      "label": "positive",
+      "pid": 2475486,
+      "process_name": "entrypoint.sh",
+      "score": 0.4887640449438202
+    },
+    {
+      "sample_id": "repeat_02:2eb64edf1913:2475541",
+      "run_id": "repeat_02",
+      "scenario_id": "docker_list",
+      "repeat_id": 2,
+      "kind": "attack",
+      "role": "attacker",
+      "container_id": "2eb64edf1913",
+      "label": "positive",
+      "pid": 2475541,
+      "process_name": "entrypoint.sh",
+      "score": 1.0
+    },
+    {
+      "sample_id": "repeat_02:2eb64edf1913:2475542",
+      "run_id": "repeat_02",
+      "scenario_id": "docker_list",
+      "repeat_id": 2,
+      "kind": "attack",
+      "role": "attacker",
+      "container_id": "2eb64edf1913",
+      "label": "positive",
+      "pid": 2475542,
+      "process_name": "sh",
+      "score": 0.0
+    }
+  ],
+  "role_samples": [
+    {
+      "sample_id": "repeat_02:attacker:2eb64edf1913",
+      "run_id": "repeat_02",
+      "scenario_id": "docker_list",
+      "repeat_id": 2,
+      "kind": "attack",
+      "role": "attacker",
+      "container_id": "2eb64edf1913",
+      "label": "positive",
+      "score": 1.0
+    },
+    {
+      "sample_id": "repeat_02:target_dsock:0af770781f01",
+      "run_id": "repeat_02",
+      "scenario_id": "docker_list",
+      "repeat_id": 2,
+      "kind": "attack",
+      "role": "target_dsock",
+      "container_id": "0af770781f01",
+      "label": "positive",
+      "score": 0.21348314606741572
+    }
+  ],
+  "scenario_samples": [
+    {
+      "sample_id": "repeat_02",
+      "run_id": "repeat_02",
+      "scenario_id": "docker_list",
+      "repeat_id": 2,
+      "kind": "attack",
+      "label": "positive",
+      "score": 1.0
+    }
+  ]
+}

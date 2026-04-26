@@ -1,0 +1,80 @@
+You are a security analyst. Write a grounded incident report.
+Rules:
+1) Only reference entities that appear in AllowedEntities.
+2) Only reference technique IDs in AllowedTechniques.
+3) Provide a verdict (Malicious/Benign/Unknown) and recommended actions.
+Output Markdown with sections: Summary, Evidence, ATT&CK Mapping, Impact, Recommended Actions, Confidence.
+
+TargetAlert: window_0001 / python pid=2437533
+AllowedEntities:
+{"paths": ["/bin/ping", "/usr/bin/curl"], "ips": [], "iocs": ["python"]}
+AllowedTechniques: T1059.013, T1133, T1204, T1485, T1498, T1562.001, T1609, T1611, T1612
+
+SimilarCases:
+- case_id=case_1773562992_de4c929e pid=124721 name=sh score=298.974 doc=.../curl -[EX x1
+- case_id=case_1773574052_deeee78f pid=125468 name=sh score=298.974 doc=.../busybox
+- case_id=case_1773562932_4cfe8a86 pid=124720 name=sh score=298.974 doc=process=sh pid=124720
+Attack Provenance Graph (reconstructed from top rare paths):
+nodes=3 edges=2
+sh -[WR x2]-> fd:3...
+
+BBK:
+- path_score=1.000 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+- path_score=1.000 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+- path_score=1.000 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+
+EvidenceGraph:
+Attack Provenance Graph (reconstructed from top rare paths):
+nodes=6 edges=3
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/bin/ping -[EX x1]-> /bin/ping
+python -[WR x1]-> fd:4_pid:2437533
+
+RarePaths:
+- score=1.000 path=python WR-> fd:4_pid:2437533 WR<- python WR-> fd:4_pid:2437533 WR<- python WR-> fd:4_pid:2437533 WR<- python WR-> fd:4_pid:2437533 WR<- python WR-> fd:4_pid:2437533 WR<- python
+- score=1.000 path=/bin/ping EX-> /bin/ping EX<- /bin/ping EX-> /bin/ping EX<- /bin/ping EX-> /bin/ping EX<- /bin/ping EX-> /bin/ping EX<- /bin/ping EX-> /bin/ping EX<- /bin/ping
+- score=1.000 path=/usr/bin/curl EX-> /usr/bin/curl EX<- /usr/bin/curl EX-> /usr/bin/curl EX<- /usr/bin/curl EX-> /usr/bin/curl EX<- /usr/bin/curl EX-> /usr/bin/curl EX<- /usr/bin/curl EX-> /usr/bin/curl EX<- /usr/bin/curl
+
+IOCList:
+### IOCs
+
+#### IOCs.Files
+*   `/usr/bin/curl`
+*   `/bin/ping`
+
+#### IOCs.Network
+*   `fd:4_pid:2437533`
+*   `fd:1_pid:2437533`
+*   `fd:3_pid:2437533`
+*   `fd:1_pid:2439110`
+*   `fd:2_pid:2439110`
+*   `fd:3_pid:2439110`
+*   `fd:5_pid:2439110`
+*   `fd:3_pid:2439101`
+*   `fd:5_pid:2439101`
+*   `fd:7_pid:2439101`
+*   `fd:6_pid:2439101`
+*   `fd:4_pid:2439101`
+
+#### IOCs.Processes
+*   `python pid=2437533`
+*   `sh pid=2439110`
+*   `sh pid=2439101`
+*   `pid:2437533`
+*   `pid:2439110`
+*   `pid:2439101`
+
+StageMapping:
+| Stage | TechniqueID | Confidence | EvidenceSnippet |
+|-------|-------------|------------|-----------------|
+| Execution | T1059.013 | Medium | `/usr/bin/curl` and `/bin/ping` show repeated execution patterns, aligning with command-line interfaces. |
+| Execution | T1204 | Medium | The repeated execution of `python`, `curl`, and `ping` suggests user or system-initiated execution of malicious content. |
+| Persistence | T1133 | Low | The use of `python` writing to a file descriptor (`fd:4_pid:2437533`) could indicate external service interaction, though evidence is indirect. |
+| Defense Evasion | T1562.001 | Low | TIK mentions "Disable or Modify Tools" targeting a file, which aligns with disabling security tools, but direct evidence from the graph is weak. |
+| Impact | T1498 | High | TIK explicitly lists "Network Denial of Service" as an adversary targeting the host, supported by the repetitive `/bin/ping` execution patterns. |
+| Impact | T1485 | Medium | TIK explicitly lists "Data Destruction" as an adversary using `sh` to target a file, indicating potential data destruction intent. |
+| Initial Access | Unknown | - | No direct evidence in the provided data maps to allowed initial access techniques. |
+| Privilege Escalation | Unknown | - | While TIK mentions "Escape to Host," no allowed technique ID directly matches this TIK description. |
+| Lateral Movement | Unknown | - | No direct evidence in the provided data maps to allowed lateral movement techniques. |
+
+**Note:** The mapping is based on correlating the provenance graph nodes/edges with the provided TIK descriptions and the allowed techniques. Confidence levels are assigned based on the specificity and directness of the evidence. Techniques like T1609, T1611, and T1612 from the suggested chain are not mapped due to insufficient direct evidence in the provided evidence snippets.

@@ -1,0 +1,28 @@
+You are an APT investigator. Map the evidence to ATT&CK tactics/techniques.
+Rules: You may only reference technique IDs present in AllowedTechniques. If uncertain, write Unknown.
+Output a Markdown table: Stage | TechniqueID | Confidence | EvidenceSnippet.
+
+AllowedTechniques: T1133, T1204, T1543.005, T1552.001, T1609, T1610, T1611, T1612
+SuggestedChain: T1204 -> T1609 -> T1133 -> T1543.005 -> T1611 -> T1612 -> T1610 -> T1552.001
+
+Evidence:
+Attack Provenance Graph (reconstructed from top rare paths):
+nodes=6 edges=3
+/bin/busybox -[EX x2]-> /bin/busybox
+/usr/bin/curl -[EX x1]-> /usr/bin/curl
+/bin/ping -[EX x1]-> /bin/ping
+
+- score=1.000 path=/bin/ping EX-> /bin/ping EX<- /bin/ping EX-> /bin/ping EX<- /bin/ping EX-> /bin/ping EX<- /bin/ping EX-> /bin/ping EX<- /bin/ping EX-> /bin/ping EX<- /bin/ping
+- score=1.000 path=/usr/bin/curl EX-> /usr/bin/curl EX<- /usr/bin/curl EX-> /usr/bin/curl EX<- /usr/bin/curl EX-> /usr/bin/curl EX<- /usr/bin/curl EX-> /usr/bin/curl EX<- /usr/bin/curl EX-> /usr/bin/curl EX<- /usr/bin/curl
+- score=1.000 path=/bin/busybox EX-> /bin/busybox EX<- /bin/busybox EX-> /bin/busybox EX<- /bin/busybox EX-> /bin/busybox EX<- /bin/busybox EX-> /bin/busybox EX<- /bin/busybox EX-> /bin/busybox EX<- /bin/busybox
+
+TIK:
+- [TIK] User Execution | Adversary uses exec targets file (Tech: User Execution, Tactic: Execution)
+- [TIK] Credentials In Files | Adversary targets container (Tech: Credentials In Files, Tactic: Credential Access)
+- [TIK] Build Image on Host | Adversary targets host (Tech: Build Image on Host, Tactic: Defense Evasion)
+- [TIK] External Remote Services | Adversary uses sh targets kubelet (Tech: External Remote Services, Tactic: Persistence)
+- [TIK] Container Service | Adversary uses docker targets node (Tech: Container Service, Tactic: Persistence)
+- [TIK] Escape to Host | Adversary uses exec targets file (Tech: Escape to Host, Tactic: Privilege Escalation)
+- [TIK] Deploy Container | Adversary targets host (Tech: Deploy Container, Tactic: Defense Evasion)
+- [TIK] Container Administration Command | Adversary uses exec targets container (Tech: Container Administration Command, Tactic: Execution)
+- [TIK] Credentials In Files | Adversary targets container (Tech: Credentials In Files, Tactic: Credential Access)

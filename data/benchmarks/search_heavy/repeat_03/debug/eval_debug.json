@@ -1,0 +1,1904 @@
+{
+  "run_id": "repeat_03",
+  "scenario_id": "search_heavy",
+  "repeat_id": 3,
+  "kind": "benign",
+  "labels": {
+    "schema_version": 1,
+    "scenario_id": "search_heavy",
+    "kind": "benign",
+    "positive_roles": [],
+    "negative_roles": [
+      "benign"
+    ],
+    "containers": [
+      {
+        "role": "benign",
+        "container_id": "dd1c9ec5cd674c43cca6d11321a99e37fa18f34e68237759df52748e5e4124c3",
+        "container_name": "drsec-bench-search_heavy-r03-benign",
+        "label": "negative"
+      },
+      {
+        "role": "target",
+        "container_id": "2ba9b19b1a92fb9e921344f34dafc1108cabc6328087b8b25828fb4b7d1a8511",
+        "container_name": "drsec-target",
+        "label": "ignored"
+      },
+      {
+        "role": "target_dsock",
+        "container_id": "61afb8879b418f0877d67163adec4d8e4e01874a83b558e21d97215d4cee4baa",
+        "container_name": "drsec-target-dsock",
+        "label": "ignored"
+      },
+      {
+        "role": "c2",
+        "container_id": "5b2616dd00acddcfd6facad4cc3534ff879406c79fdb63d8a063cbb0b02b4929",
+        "container_name": "drsec-c2",
+        "label": "ignored"
+      }
+    ]
+  },
+  "window_candidates": [
+    {
+      "window_file": "window_0001.json",
+      "ground_truth_positive": [],
+      "ground_truth_negative": [
+        "repeat_03:dd1c9ec5cd67:2697506",
+        "repeat_03:dd1c9ec5cd67:2697548",
+        "repeat_03:dd1c9ec5cd67:2697549",
+        "repeat_03:dd1c9ec5cd67:2697550",
+        "repeat_03:dd1c9ec5cd67:2697551",
+        "repeat_03:dd1c9ec5cd67:2697552",
+        "repeat_03:dd1c9ec5cd67:2697556",
+        "repeat_03:dd1c9ec5cd67:2697567",
+        "repeat_03:dd1c9ec5cd67:2697582",
+        "repeat_03:dd1c9ec5cd67:2697591",
+        "repeat_03:dd1c9ec5cd67:2697639",
+        "repeat_03:dd1c9ec5cd67:2697640",
+        "repeat_03:dd1c9ec5cd67:2697641",
+        "repeat_03:dd1c9ec5cd67:2697667",
+        "repeat_03:dd1c9ec5cd67:2697670",
+        "repeat_03:dd1c9ec5cd67:2697673",
+        "repeat_03:dd1c9ec5cd67:2697682",
+        "repeat_03:dd1c9ec5cd67:2697734",
+        "repeat_03:dd1c9ec5cd67:2697735",
+        "repeat_03:dd1c9ec5cd67:2697736",
+        "repeat_03:dd1c9ec5cd67:2697745",
+        "repeat_03:dd1c9ec5cd67:2697751",
+        "repeat_03:dd1c9ec5cd67:2697754",
+        "repeat_03:dd1c9ec5cd67:2697760",
+        "repeat_03:dd1c9ec5cd67:2697824",
+        "repeat_03:dd1c9ec5cd67:2697825",
+        "repeat_03:dd1c9ec5cd67:2697826",
+        "repeat_03:dd1c9ec5cd67:2697829",
+        "repeat_03:dd1c9ec5cd67:2697841",
+        "repeat_03:dd1c9ec5cd67:2697844",
+        "repeat_03:dd1c9ec5cd67:2697847",
+        "repeat_03:dd1c9ec5cd67:2697899",
+        "repeat_03:dd1c9ec5cd67:2697900",
+        "repeat_03:dd1c9ec5cd67:2697901",
+        "repeat_03:dd1c9ec5cd67:2697904",
+        "repeat_03:dd1c9ec5cd67:2697912",
+        "repeat_03:dd1c9ec5cd67:2697919",
+        "repeat_03:dd1c9ec5cd67:2697922",
+        "repeat_03:dd1c9ec5cd67:2697971",
+        "repeat_03:dd1c9ec5cd67:2697972",
+        "repeat_03:dd1c9ec5cd67:2697973",
+        "repeat_03:dd1c9ec5cd67:2697979",
+        "repeat_03:dd1c9ec5cd67:2697982",
+        "repeat_03:dd1c9ec5cd67:2697991",
+        "repeat_03:dd1c9ec5cd67:2697997",
+        "repeat_03:dd1c9ec5cd67:2698028",
+        "repeat_03:dd1c9ec5cd67:2698029",
+        "repeat_03:dd1c9ec5cd67:2698030",
+        "repeat_03:dd1c9ec5cd67:2698039",
+        "repeat_03:dd1c9ec5cd67:2698056",
+        "repeat_03:dd1c9ec5cd67:2698060",
+        "repeat_03:dd1c9ec5cd67:2698063",
+        "repeat_03:dd1c9ec5cd67:2698094",
+        "repeat_03:dd1c9ec5cd67:2698095",
+        "repeat_03:dd1c9ec5cd67:2698096",
+        "repeat_03:dd1c9ec5cd67:2698108",
+        "repeat_03:dd1c9ec5cd67:2698111",
+        "repeat_03:dd1c9ec5cd67:2698114",
+        "repeat_03:dd1c9ec5cd67:2698123",
+        "repeat_03:dd1c9ec5cd67:2698167",
+        "repeat_03:dd1c9ec5cd67:2698168",
+        "repeat_03:dd1c9ec5cd67:2698169",
+        "repeat_03:dd1c9ec5cd67:2698174",
+        "repeat_03:dd1c9ec5cd67:2698177",
+        "repeat_03:dd1c9ec5cd67:2698183",
+        "repeat_03:dd1c9ec5cd67:2698192",
+        "repeat_03:dd1c9ec5cd67:2698223",
+        "repeat_03:dd1c9ec5cd67:2698224",
+        "repeat_03:dd1c9ec5cd67:2698225",
+        "repeat_03:dd1c9ec5cd67:2698228",
+        "repeat_03:dd1c9ec5cd67:2698250",
+        "repeat_03:dd1c9ec5cd67:2698255",
+        "repeat_03:dd1c9ec5cd67:2698258",
+        "repeat_03:dd1c9ec5cd67:2698280",
+        "repeat_03:dd1c9ec5cd67:2698281",
+        "repeat_03:dd1c9ec5cd67:2698282",
+        "repeat_03:dd1c9ec5cd67:2698294",
+        "repeat_03:dd1c9ec5cd67:2698297",
+        "repeat_03:dd1c9ec5cd67:2698300",
+        "repeat_03:dd1c9ec5cd67:2698303",
+        "repeat_03:dd1c9ec5cd67:2698334",
+        "repeat_03:dd1c9ec5cd67:2698335",
+        "repeat_03:dd1c9ec5cd67:2698336",
+        "repeat_03:dd1c9ec5cd67:2698339",
+        "repeat_03:dd1c9ec5cd67:2698342",
+        "repeat_03:dd1c9ec5cd67:2698345",
+        "repeat_03:dd1c9ec5cd67:2698348"
+      ],
+      "candidate_processes": [
+        {
+          "pid": 2697548,
+          "role": "benign",
+          "label": "negative",
+          "score": 1.0,
+          "name": "entrypoint.sh"
+        },
+        {
+          "pid": 2697549,
+          "role": "benign",
+          "label": "negative",
+          "score": 1.0,
+          "name": "sh"
+        },
+        {
+          "pid": 2697550,
+          "role": "benign",
+          "label": "negative",
+          "score": 1.0,
+          "name": "sh"
+        },
+        {
+          "pid": 2697591,
+          "role": "benign",
+          "label": "negative",
+          "score": 1.0,
+          "name": "sh"
+        },
+        {
+          "pid": 2697639,
+          "role": "benign",
+          "label": "negative",
+          "score": 1.0,
+          "name": "sh"
+        },
+        {
+          "pid": 2697682,
+          "role": "benign",
+          "label": "negative",
+          "score": 1.0,
+          "name": "sh"
+        },
+        {
+          "pid": 2697734,
+          "role": "benign",
+          "label": "negative",
+          "score": 1.0,
+          "name": "sh"
+        },
+        {
+          "pid": 2697760,
+          "role": "benign",
+          "label": "negative",
+          "score": 1.0,
+          "name": "sh"
+        },
+        {
+          "pid": 2697824,
+          "role": "benign",
+          "label": "negative",
+          "score": 1.0,
+          "name": "sh"
+        },
+        {
+          "pid": 2697847,
+          "role": "benign",
+          "label": "negative",
+          "score": 1.0,
+          "name": "sh"
+        },
+        {
+          "pid": 2697899,
+          "role": "benign",
+          "label": "negative",
+          "score": 1.0,
+          "name": "sh"
+        },
+        {
+          "pid": 2697922,
+          "role": "benign",
+          "label": "negative",
+          "score": 1.0,
+          "name": "sh"
+        },
+        {
+          "pid": 2697971,
+          "role": "benign",
+          "label": "negative",
+          "score": 1.0,
+          "name": "sh"
+        },
+        {
+          "pid": 2697997,
+          "role": "benign",
+          "label": "negative",
+          "score": 1.0,
+          "name": "sh"
+        },
+        {
+          "pid": 2698028,
+          "role": "benign",
+          "label": "negative",
+          "score": 1.0,
+          "name": "sh"
+        },
+        {
+          "pid": 2698063,
+          "role": "benign",
+          "label": "negative",
+          "score": 1.0,
+          "name": "sh"
+        },
+        {
+          "pid": 2698094,
+          "role": "benign",
+          "label": "negative",
+          "score": 1.0,
+          "name": "sh"
+        },
+        {
+          "pid": 2698123,
+          "role": "benign",
+          "label": "negative",
+          "score": 1.0,
+          "name": "sh"
+        },
+        {
+          "pid": 2698167,
+          "role": "benign",
+          "label": "negative",
+          "score": 1.0,
+          "name": "sh"
+        },
+        {
+          "pid": 2698192,
+          "role": "benign",
+          "label": "negative",
+          "score": 1.0,
+          "name": "sh"
+        },
+        {
+          "pid": 2698223,
+          "role": "benign",
+          "label": "negative",
+          "score": 1.0,
+          "name": "sh"
+        },
+        {
+          "pid": 2698258,
+          "role": "benign",
+          "label": "negative",
+          "score": 1.0,
+          "name": "sh"
+        },
+        {
+          "pid": 2698280,
+          "role": "benign",
+          "label": "negative",
+          "score": 1.0,
+          "name": "sh"
+        },
+        {
+          "pid": 2698303,
+          "role": "benign",
+          "label": "negative",
+          "score": 1.0,
+          "name": "sh"
+        },
+        {
+          "pid": 2698334,
+          "role": "benign",
+          "label": "negative",
+          "score": 1.0,
+          "name": "sh"
+        },
+        {
+          "pid": 2698348,
+          "role": "benign",
+          "label": "negative",
+          "score": 1.0,
+          "name": "sh"
+        },
+        {
+          "pid": 2698174,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.5,
+          "name": "sh"
+        },
+        {
+          "pid": 2697904,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.4887640449438202,
+          "name": "sh"
+        },
+        {
+          "pid": 2698096,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.4887640449438202,
+          "name": "sh"
+        },
+        {
+          "pid": 2697841,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.48314606741573035,
+          "name": "sh"
+        },
+        {
+          "pid": 2697972,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.48314606741573035,
+          "name": "sh"
+        },
+        {
+          "pid": 2697826,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.449438202247191,
+          "name": "sh"
+        },
+        {
+          "pid": 2697901,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.449438202247191,
+          "name": "sh"
+        },
+        {
+          "pid": 2698282,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.449438202247191,
+          "name": "sh"
+        },
+        {
+          "pid": 2697844,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.4438202247191011,
+          "name": "sh"
+        },
+        {
+          "pid": 2697912,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.4438202247191011,
+          "name": "sh"
+        },
+        {
+          "pid": 2697979,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.4438202247191011,
+          "name": "sh"
+        },
+        {
+          "pid": 2698030,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.4438202247191011,
+          "name": "sh"
+        },
+        {
+          "pid": 2698108,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.4438202247191011,
+          "name": "sh"
+        },
+        {
+          "pid": 2698183,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.4438202247191011,
+          "name": "sh"
+        },
+        {
+          "pid": 2698225,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.4438202247191011,
+          "name": "sh"
+        },
+        {
+          "pid": 2698297,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.4438202247191011,
+          "name": "sh"
+        },
+        {
+          "pid": 2698169,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.43820224719101125,
+          "name": "sh"
+        },
+        {
+          "pid": 2698177,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.43820224719101125,
+          "name": "sh"
+        },
+        {
+          "pid": 2697552,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.42696629213483145,
+          "name": "sh"
+        },
+        {
+          "pid": 2697736,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.42696629213483145,
+          "name": "sh"
+        },
+        {
+          "pid": 2697825,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.42696629213483145,
+          "name": "sh"
+        },
+        {
+          "pid": 2697556,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.42134831460674155,
+          "name": "sh"
+        },
+        {
+          "pid": 2698255,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.4157303370786517,
+          "name": "sh"
+        },
+        {
+          "pid": 2698345,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.4157303370786517,
+          "name": "sh"
+        },
+        {
+          "pid": 2698336,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.38202247191011235,
+          "name": "sh"
+        },
+        {
+          "pid": 2697973,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.3651685393258427,
+          "name": "sh"
+        },
+        {
+          "pid": 2698281,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.3595505617977528,
+          "name": "sh"
+        },
+        {
+          "pid": 2697582,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.33146067415730335,
+          "name": "sh"
+        },
+        {
+          "pid": 2698228,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.33146067415730335,
+          "name": "sh"
+        },
+        {
+          "pid": 2698250,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.3258426966292135,
+          "name": "sh"
+        },
+        {
+          "pid": 2697641,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.3146067415730337,
+          "name": "sh"
+        },
+        {
+          "pid": 2697751,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.3089887640449438,
+          "name": "sh"
+        },
+        {
+          "pid": 2697667,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.30337078651685395,
+          "name": "sh"
+        },
+        {
+          "pid": 2697745,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.2808988764044944,
+          "name": "sh"
+        },
+        {
+          "pid": 2698335,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.2696629213483146,
+          "name": "sh"
+        },
+        {
+          "pid": 2697829,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.2640449438202247,
+          "name": "sh"
+        },
+        {
+          "pid": 2698060,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.2640449438202247,
+          "name": "sh"
+        },
+        {
+          "pid": 2697670,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.25842696629213485,
+          "name": "sh"
+        },
+        {
+          "pid": 2697735,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.25842696629213485,
+          "name": "sh"
+        },
+        {
+          "pid": 2698029,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.25842696629213485,
+          "name": "sh"
+        },
+        {
+          "pid": 2698300,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.25842696629213485,
+          "name": "sh"
+        },
+        {
+          "pid": 2697919,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.24719101123595505,
+          "name": "sh"
+        },
+        {
+          "pid": 2697982,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.24719101123595505,
+          "name": "sh"
+        },
+        {
+          "pid": 2697991,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.24719101123595505,
+          "name": "sh"
+        },
+        {
+          "pid": 2698168,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.24719101123595505,
+          "name": "sh"
+        },
+        {
+          "pid": 2698111,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.24157303370786518,
+          "name": "sh"
+        },
+        {
+          "pid": 2697640,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.2303370786516854,
+          "name": "sh"
+        },
+        {
+          "pid": 2698339,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.2303370786516854,
+          "name": "sh"
+        },
+        {
+          "pid": 2698114,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.2247191011235955,
+          "name": "sh"
+        },
+        {
+          "pid": 2697754,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.14606741573033707,
+          "name": "sh"
+        },
+        {
+          "pid": 2698224,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.11797752808988764,
+          "name": "sh"
+        },
+        {
+          "pid": 2697551,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.10674157303370786,
+          "name": "sh"
+        },
+        {
+          "pid": 2698039,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.10674157303370786,
+          "name": "sh"
+        },
+        {
+          "pid": 2698056,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.056179775280898875,
+          "name": "sh"
+        },
+        {
+          "pid": 2698095,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.05056179775280899,
+          "name": "sh"
+        },
+        {
+          "pid": 2697506,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.0449438202247191,
+          "name": "entrypoint.sh"
+        },
+        {
+          "pid": 2698294,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.0449438202247191,
+          "name": "sh"
+        },
+        {
+          "pid": 2697900,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.033707865168539325,
+          "name": "sh"
+        },
+        {
+          "pid": 2697673,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.02247191011235955,
+          "name": "sh"
+        },
+        {
+          "pid": 2697567,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.0,
+          "name": "sh"
+        },
+        {
+          "pid": 2698342,
+          "role": "benign",
+          "label": "negative",
+          "score": 0.0,
+          "name": "sh"
+        }
+      ]
+    }
+  ],
+  "process_samples": [
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2697506",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2697506,
+      "process_name": "entrypoint.sh",
+      "score": 0.0449438202247191
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2697548",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2697548,
+      "process_name": "entrypoint.sh",
+      "score": 1.0
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2697549",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2697549,
+      "process_name": "sh",
+      "score": 1.0
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2697550",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2697550,
+      "process_name": "sh",
+      "score": 1.0
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2697551",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2697551,
+      "process_name": "sh",
+      "score": 0.10674157303370786
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2697552",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2697552,
+      "process_name": "sh",
+      "score": 0.42696629213483145
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2697556",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2697556,
+      "process_name": "sh",
+      "score": 0.42134831460674155
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2697567",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2697567,
+      "process_name": "sh",
+      "score": 0.0
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2697582",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2697582,
+      "process_name": "sh",
+      "score": 0.33146067415730335
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2697591",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2697591,
+      "process_name": "sh",
+      "score": 1.0
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2697639",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2697639,
+      "process_name": "sh",
+      "score": 1.0
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2697640",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2697640,
+      "process_name": "sh",
+      "score": 0.2303370786516854
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2697641",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2697641,
+      "process_name": "sh",
+      "score": 0.3146067415730337
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2697667",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2697667,
+      "process_name": "sh",
+      "score": 0.30337078651685395
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2697670",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2697670,
+      "process_name": "sh",
+      "score": 0.25842696629213485
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2697673",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2697673,
+      "process_name": "sh",
+      "score": 0.02247191011235955
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2697682",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2697682,
+      "process_name": "sh",
+      "score": 1.0
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2697734",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2697734,
+      "process_name": "sh",
+      "score": 1.0
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2697735",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2697735,
+      "process_name": "sh",
+      "score": 0.25842696629213485
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2697736",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2697736,
+      "process_name": "sh",
+      "score": 0.42696629213483145
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2697745",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2697745,
+      "process_name": "sh",
+      "score": 0.2808988764044944
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2697751",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2697751,
+      "process_name": "sh",
+      "score": 0.3089887640449438
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2697754",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2697754,
+      "process_name": "sh",
+      "score": 0.14606741573033707
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2697760",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2697760,
+      "process_name": "sh",
+      "score": 1.0
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2697824",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2697824,
+      "process_name": "sh",
+      "score": 1.0
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2697825",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2697825,
+      "process_name": "sh",
+      "score": 0.42696629213483145
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2697826",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2697826,
+      "process_name": "sh",
+      "score": 0.449438202247191
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2697829",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2697829,
+      "process_name": "sh",
+      "score": 0.2640449438202247
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2697841",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2697841,
+      "process_name": "sh",
+      "score": 0.48314606741573035
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2697844",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2697844,
+      "process_name": "sh",
+      "score": 0.4438202247191011
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2697847",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2697847,
+      "process_name": "sh",
+      "score": 1.0
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2697899",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2697899,
+      "process_name": "sh",
+      "score": 1.0
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2697900",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2697900,
+      "process_name": "sh",
+      "score": 0.033707865168539325
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2697901",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2697901,
+      "process_name": "sh",
+      "score": 0.449438202247191
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2697904",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2697904,
+      "process_name": "sh",
+      "score": 0.4887640449438202
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2697912",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2697912,
+      "process_name": "sh",
+      "score": 0.4438202247191011
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2697919",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2697919,
+      "process_name": "sh",
+      "score": 0.24719101123595505
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2697922",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2697922,
+      "process_name": "sh",
+      "score": 1.0
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2697971",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2697971,
+      "process_name": "sh",
+      "score": 1.0
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2697972",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2697972,
+      "process_name": "sh",
+      "score": 0.48314606741573035
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2697973",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2697973,
+      "process_name": "sh",
+      "score": 0.3651685393258427
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2697979",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2697979,
+      "process_name": "sh",
+      "score": 0.4438202247191011
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2697982",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2697982,
+      "process_name": "sh",
+      "score": 0.24719101123595505
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2697991",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2697991,
+      "process_name": "sh",
+      "score": 0.24719101123595505
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2697997",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2697997,
+      "process_name": "sh",
+      "score": 1.0
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2698028",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2698028,
+      "process_name": "sh",
+      "score": 1.0
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2698029",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2698029,
+      "process_name": "sh",
+      "score": 0.25842696629213485
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2698030",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2698030,
+      "process_name": "sh",
+      "score": 0.4438202247191011
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2698039",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2698039,
+      "process_name": "sh",
+      "score": 0.10674157303370786
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2698056",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2698056,
+      "process_name": "sh",
+      "score": 0.056179775280898875
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2698060",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2698060,
+      "process_name": "sh",
+      "score": 0.2640449438202247
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2698063",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2698063,
+      "process_name": "sh",
+      "score": 1.0
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2698094",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2698094,
+      "process_name": "sh",
+      "score": 1.0
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2698095",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2698095,
+      "process_name": "sh",
+      "score": 0.05056179775280899
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2698096",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2698096,
+      "process_name": "sh",
+      "score": 0.4887640449438202
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2698108",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2698108,
+      "process_name": "sh",
+      "score": 0.4438202247191011
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2698111",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2698111,
+      "process_name": "sh",
+      "score": 0.24157303370786518
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2698114",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2698114,
+      "process_name": "sh",
+      "score": 0.2247191011235955
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2698123",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2698123,
+      "process_name": "sh",
+      "score": 1.0
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2698167",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2698167,
+      "process_name": "sh",
+      "score": 1.0
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2698168",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2698168,
+      "process_name": "sh",
+      "score": 0.24719101123595505
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2698169",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2698169,
+      "process_name": "sh",
+      "score": 0.43820224719101125
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2698174",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2698174,
+      "process_name": "sh",
+      "score": 0.5
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2698177",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2698177,
+      "process_name": "sh",
+      "score": 0.43820224719101125
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2698183",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2698183,
+      "process_name": "sh",
+      "score": 0.4438202247191011
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2698192",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2698192,
+      "process_name": "sh",
+      "score": 1.0
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2698223",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2698223,
+      "process_name": "sh",
+      "score": 1.0
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2698224",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2698224,
+      "process_name": "sh",
+      "score": 0.11797752808988764
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2698225",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2698225,
+      "process_name": "sh",
+      "score": 0.4438202247191011
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2698228",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2698228,
+      "process_name": "sh",
+      "score": 0.33146067415730335
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2698250",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2698250,
+      "process_name": "sh",
+      "score": 0.3258426966292135
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2698255",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2698255,
+      "process_name": "sh",
+      "score": 0.4157303370786517
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2698258",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2698258,
+      "process_name": "sh",
+      "score": 1.0
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2698280",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2698280,
+      "process_name": "sh",
+      "score": 1.0
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2698281",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2698281,
+      "process_name": "sh",
+      "score": 0.3595505617977528
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2698282",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2698282,
+      "process_name": "sh",
+      "score": 0.449438202247191
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2698294",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2698294,
+      "process_name": "sh",
+      "score": 0.0449438202247191
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2698297",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2698297,
+      "process_name": "sh",
+      "score": 0.4438202247191011
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2698300",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2698300,
+      "process_name": "sh",
+      "score": 0.25842696629213485
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2698303",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2698303,
+      "process_name": "sh",
+      "score": 1.0
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2698334",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2698334,
+      "process_name": "sh",
+      "score": 1.0
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2698335",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2698335,
+      "process_name": "sh",
+      "score": 0.2696629213483146
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2698336",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2698336,
+      "process_name": "sh",
+      "score": 0.38202247191011235
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2698339",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2698339,
+      "process_name": "sh",
+      "score": 0.2303370786516854
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2698342",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2698342,
+      "process_name": "sh",
+      "score": 0.0
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2698345",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2698345,
+      "process_name": "sh",
+      "score": 0.4157303370786517
+    },
+    {
+      "sample_id": "repeat_03:dd1c9ec5cd67:2698348",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "pid": 2698348,
+      "process_name": "sh",
+      "score": 1.0
+    }
+  ],
+  "role_samples": [
+    {
+      "sample_id": "repeat_03:benign:dd1c9ec5cd67",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "role": "benign",
+      "container_id": "dd1c9ec5cd67",
+      "label": "negative",
+      "score": 1.0
+    }
+  ],
+  "scenario_samples": [
+    {
+      "sample_id": "repeat_03",
+      "run_id": "repeat_03",
+      "scenario_id": "search_heavy",
+      "repeat_id": 3,
+      "kind": "benign",
+      "label": "negative",
+      "score": 1.0
+    }
+  ]
+}

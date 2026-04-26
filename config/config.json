@@ -1,0 +1,23 @@
+{
+    "llm": {
+        "provider": "deepseek",
+        "providers": {
+            "mistral": {
+                "api_type": "mistral",
+                "base_url": "https://api.mistral.ai/v1",
+                "api_key": "",
+                "api_key_env": "MISTRAL_API_KEY",
+                "model": "mistral-large-latest"
+            },
+            "deepseek": {
+                "api_type": "deepseek",
+                "base_url": "https://api.deepseek.com/v1",
+                "api_key": "sk-45e7b48979ec4575a2bae6659d4aa6d9",
+                "api_key_env": "DEEPSEEK_API_KEY",
+                "model": "deepseek-chat",
+                "timeout_seconds": 120,
+                "max_retries": 1
+            }
+        }
+    }
+}

@@ -1,0 +1,72 @@
+You are a security analyst. Write a grounded incident report.
+Rules:
+1) Only reference entities that appear in AllowedEntities.
+2) Only reference technique IDs in AllowedTechniques.
+3) Provide a verdict (Malicious/Benign/Unknown) and recommended actions.
+Output Markdown with sections: Summary, Evidence, ATT&CK Mapping, Impact, Recommended Actions, Confidence.
+
+TargetProcess: sh pid=125830
+AllowedEntities:
+{"paths": ["/bin/busybox", "/bin/sleep"], "ips": [], "iocs": ["sh"]}
+AllowedTechniques: None
+
+SimilarCases:
+- case_id=case_1773572377_1e0e0451 pid=125391 name=sh score=298.974 doc=process=sh pid=125391
+Attack Provenance Graph (reconstructed from top rare paths):
+nodes=3 edges=2
+sh -[WR x2]-> fd:3...
+- case_id=case_1773567591_27941104 pid=125015 name=sh score=298.974 doc=.../curl -[EX x1
+- case_id=case_1773569010_32da74b0 pid=125144 name=sh score=298.974 doc=process=sh pid=125144
+Attack Provenance Graph (reconstructed from top rare paths):
+nodes=3 edges=2
+sh -[WR x2]-> fd:3...
+
+BBK:
+- path_score=298.974 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+- path_score=298.974 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+- path_score=298.974 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+- path_score=298.974 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+- path_score=298.974 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+
+EvidenceGraph:
+Attack Provenance Graph (reconstructed from top rare paths):
+nodes=12 edges=11
+/bin/sleep -[EX x1]-> /bin/sleep
+/bin/sleep -[EX x1]-> /bin/sleep
+/bin/sleep -[EX x1]-> /bin/sleep
+/bin/sleep -[EX x1]-> /bin/sleep
+/bin/sleep -[EX x1]-> /bin/sleep
+/bin/sleep -[EX x1]-> /bin/sleep
+/bin/sleep -[EX x1]-> /bin/sleep
+/bin/sleep -[EX x1]-> /bin/sleep
+/bin/sleep -[EX x1]-> /bin/sleep
+/bin/sleep -[EX x1]-> /bin/sleep
+/bin/sleep -[EX x1]-> /bin/sleep
+
+RarePaths:
+- score=298.974 path=/bin/sleep EX-> /bin/sleep EX<- /bin/sleep EX-> /bin/sleep EX<- /bin/sleep EX-> /bin/sleep EX<- /bin/sleep EX-> /bin/sleep EX<- /bin/sleep EX-> /bin/sleep EX<- /bin/sleep
+
+IOCList:
+### IOCs
+
+#### IOCs.Files
+*   `/bin/sleep`
+*   `/bin/busybox`
+
+#### IOCs.Network
+*(No network indicators literally appear in the provided Evidence.)*
+
+#### IOCs.Processes
+*   `sh`
+*   `/bin/sleep`
+*   `/bin/busybox`
+
+StageMapping:
+Based on the provided evidence and the rule that only technique IDs present in AllowedTechniques can be referenced, and given that AllowedTechniques is specified as "None," I cannot map any of the observed activity to a specific ATT&CK technique ID.
+
+The evidence shows a provenance graph consisting of repeated executions of `/bin/sleep`. While this pattern could be indicative of a tactic like **Execution** (e.g., for timing, delays, or persistence loops) or **Discovery** (e.g., a simple heartbeat or test for system responsiveness), I cannot assign a TechniqueID.
+
+| Stage | TechniqueID | Confidence | EvidenceSnippet |
+| :---- | :---------- | :--------- | :-------------- |
+| Execution | Unknown | Low | Repeated `/bin/sleep` execution chain reconstructed from provenance graph. |
+| Persistence / Execution | Unknown | Low | Cyclic pattern of `/bin/sleep` executing itself multiple times. |

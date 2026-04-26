@@ -1,0 +1,66 @@
+You are a security analyst. Write a grounded incident report.
+Rules:
+1) Only reference entities that appear in AllowedEntities.
+2) Only reference technique IDs in AllowedTechniques.
+3) Provide a verdict (Malicious/Benign/Unknown) and recommended actions.
+Output Markdown with sections: Summary, Evidence, ATT&CK Mapping, Impact, Recommended Actions, Confidence.
+
+TargetProcess: python pid=124118
+AllowedEntities:
+{"paths": ["/usr/local/bin/python3.14"], "ips": [], "iocs": ["python"]}
+AllowedTechniques: None
+
+SimilarCases:
+None
+
+BBK:
+- path_score=298.974 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+- path_score=269.076 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+- path_score=269.076 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+- path_score=269.076 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+- path_score=269.076 min_support=1.000e-09 avg_support=1.000e-09 supports=[1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09, 1.000e-09]
+
+EvidenceGraph:
+Attack Provenance Graph (reconstructed from top rare paths):
+nodes=7 edges=6
+/usr/local/bin/python3.14 -[WR x305]-> fd:3_pid:124118
+/usr/local/bin/python3.14 -[WR x11]-> fd:4_pid:124118
+/usr/local/bin/python3.14 -[SD x2]-> pid:124118->unknown:0
+/usr/local/bin/python3.14 -[WR x2]-> fd:1_pid:124118
+/usr/local/bin/python3.14 -[WR x2]-> fd:2_pid:124118
+/usr/local/bin/python3.14 -[EX x1]-> /usr/local/bin/python3.14
+
+RarePaths:
+- score=298.974 path=/usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14
+- score=269.076 path=/usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14
+- score=269.076 path=/usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 WR-> fd:3_pid:124118
+- score=269.076 path=/usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 WR-> fd:4_pid:124118
+- score=269.076 path=/usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 WR-> fd:1_pid:124118
+- score=269.076 path=/usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 SD-> pid:124118->unknown:0
+- score=269.076 path=/usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 WR-> fd:2_pid:124118
+- score=239.179 path=/usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14
+- score=209.281 path=/usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14
+- score=209.281 path=/usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 EX-> /usr/local/bin/python3.14 EX<- /usr/local/bin/python3.14 WR-> fd:3_pid:124118
+
+IOCList:
+### IOCs
+
+#### IOCs.Files
+*   `/usr/local/bin/python3.14`
+
+#### IOCs.Network
+*   *(No network indicators literally appear in the provided evidence.)*
+
+#### IOCs.Processes
+*   `pid:124118`
+*   `/usr/local/bin/python3.14`
+
+StageMapping:
+| Stage | TechniqueID | Confidence | EvidenceSnippet |
+|-------|-------------|------------|-----------------|
+| Execution | Unknown | High | `/usr/local/bin/python3.14 -[EX x1]-> /usr/local/bin/python3.14` |
+| Persistence / Privilege Escalation | Unknown | Medium | `/usr/local/bin/python3.14 -[SD x2]-> pid:124118->unknown:0` |
+| Defense Evasion / Exfiltration | Unknown | Medium | `/usr/local/bin/python3.14 -[WR x305]-> fd:3_pid:124118` |
+| Defense Evasion / Exfiltration | Unknown | Low | `/usr/local/bin/python3.14 -[WR x11]-> fd:4_pid:124118` |
+| Defense Evasion / Exfiltration | Unknown | Low | `/usr/local/bin/python3.14 -[WR x2]-> fd:1_pid:124118` |
+| Defense Evasion / Exfiltration | Unknown | Low | `/usr/local/bin/python3.14 -[WR x2]-> fd:2_pid:124118` |
