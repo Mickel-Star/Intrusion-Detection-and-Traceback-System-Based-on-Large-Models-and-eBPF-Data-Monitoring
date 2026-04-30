@@ -12,7 +12,12 @@ from types import SimpleNamespace
 from typing import Dict, Any, List, Optional
 
 from src.analysis.llm_client import get_llm_client, MockLLMClient
-from src.common.defaults import DEFAULT_ALERT_THRESHOLD, DEFAULT_TOP_EVIDENCE_ITEMS, DEFAULT_WINDOW_SECONDS
+from src.common.defaults import (
+    DEFAULT_ALERT_THRESHOLD,
+    DEFAULT_TIME_BIN_SECONDS,
+    DEFAULT_TOP_EVIDENCE_ITEMS,
+    DEFAULT_WINDOW_SECONDS,
+)
 from src.knowledge.logic_graph_builder import LogicGraphBuilder
 from src.knowledge.benign_behavior_kb import BenignBehaviorKnowledgeBase
 from src.knowledge.kb_paths import KB_PATHS
@@ -642,6 +647,7 @@ INSTRUCTIONS:
         update_bbk: bool = False,
         persist_windows_dir: str | None = None,
         window_seconds: int = DEFAULT_WINDOW_SECONDS,
+        time_bin_seconds: int = DEFAULT_TIME_BIN_SECONDS,
     ) -> List[WindowAlert]:
         """主检测接口：按窗口产出 0 或 1 条窗口级告警。"""
         from src.process.log_parser import TraceeLogParser
@@ -650,7 +656,10 @@ INSTRUCTIONS:
         logs = parser.parse_log_file(log_file)
         reducer = StreamingReducer(
             mapper=self.provenance_mapper,
-            config=StreamingReductionConfig(window_seconds=int(window_seconds), time_bin_seconds=1),
+            config=StreamingReductionConfig(
+                window_seconds=int(window_seconds),
+                time_bin_seconds=int(time_bin_seconds),
+            ),
         )
 
         alerts: List[WindowAlert] = []
@@ -718,6 +727,7 @@ INSTRUCTIONS:
         update_bbk: bool = False,
         persist_windows_dir: str | None = None,
         window_seconds: int = DEFAULT_WINDOW_SECONDS,
+        time_bin_seconds: int = DEFAULT_TIME_BIN_SECONDS,
     ) -> List[Dict[str, Any]]:
         """兼容接口：返回窗口内命中的进程证据列表，不再作为主告警输出。"""
         from src.process.log_parser import TraceeLogParser
@@ -726,7 +736,10 @@ INSTRUCTIONS:
         logs = parser.parse_log_file(log_file)
         reducer = StreamingReducer(
             mapper=self.provenance_mapper,
-            config=StreamingReductionConfig(window_seconds=int(window_seconds), time_bin_seconds=1),
+            config=StreamingReductionConfig(
+                window_seconds=int(window_seconds),
+                time_bin_seconds=int(time_bin_seconds),
+            ),
         )
 
         suspicious_nodes: List[Dict[str, Any]] = []

@@ -5,7 +5,7 @@ from typing import Any, Dict, Iterable, Iterator, List, Optional, Tuple
 
 import networkx as nx
 
-from src.common.defaults import DEFAULT_WINDOW_SECONDS
+from src.common.defaults import DEFAULT_TIME_BIN_SECONDS, DEFAULT_WINDOW_SECONDS
 from src.process.log_parser import TraceeLogParser
 from src.process.streaming_reduction import StreamingReductionConfig, StreamingReducer
 
@@ -13,7 +13,7 @@ from src.process.streaming_reduction import StreamingReductionConfig, StreamingR
 @dataclass(frozen=True)
 class RealtimeConfig:
     window_seconds: int = DEFAULT_WINDOW_SECONDS
-    time_bin_seconds: int = 1
+    time_bin_seconds: int = DEFAULT_TIME_BIN_SECONDS
     poll_interval_seconds: float = 0.2
     start_at_end: bool = True
 

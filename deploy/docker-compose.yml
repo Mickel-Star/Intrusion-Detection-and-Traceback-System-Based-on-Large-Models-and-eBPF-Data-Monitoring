@@ -39,7 +39,7 @@ services:
     command:  # 利用 app.py /ping 接口的命令注入漏洞，让容器主动连接到 C2 服务器，回传敏感数据
       - sh
       - -lc
-      - "python - <<'PY'\nimport socket\ns=socket.socket(); s.bind(('0.0.0.0',4444)); s.listen(1)\ns.settimeout(60)\ntry:\n  c,addr=s.accept()\n  data=c.recv(4096)\n  print('C2 received:', data.decode('utf-8','ignore'))\n  c.close()\nexcept Exception as e:\n  print('C2 listener timeout')\nPY\nsleep 2"
+      - "python - <<'PY'\nimport socket\ns=socket.socket(); s.bind(('0.0.0.0',4444)); s.listen(1)\ns.settimeout(240)\ntry:\n  c,addr=s.accept()\n  data=c.recv(4096)\n  print('C2 received:', data.decode('utf-8','ignore'))\n  c.close()\nexcept Exception as e:\n  print('C2 listener timeout')\nPY\nsleep 2"
     networks:
       - drsec-net
 

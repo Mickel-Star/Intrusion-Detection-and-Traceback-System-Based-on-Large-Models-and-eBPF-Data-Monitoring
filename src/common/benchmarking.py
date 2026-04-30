@@ -36,6 +36,30 @@ def sanitize_name(value: str) -> str:
     return text or "unknown"
 
 
+def normalize_command_variant(raw: Any, index: int, scenario_id: str) -> Dict[str, Any]:
+    if isinstance(raw, dict):
+        command = str(raw.get("command") or raw.get("attack_command") or "").strip()
+        variant_id = str(raw.get("variant_id") or raw.get("id") or f"variant_{int(index):02d}").strip()
+        command_template_id = str(raw.get("command_template_id") or f"{scenario_id}.{variant_id}").strip()
+        parameters = raw.get("parameters") if isinstance(raw.get("parameters"), dict) else {}
+        description = str(raw.get("description") or "").strip()
+    else:
+        command = str(raw or "").strip()
+        variant_id = f"variant_{int(index):02d}"
+        command_template_id = f"{scenario_id}.inline_{int(index):02d}"
+        parameters = {}
+        description = ""
+    if not command:
+        raise ValueError(f"{scenario_id}: command variant {index} is missing command")
+    return {
+        "variant_id": variant_id,
+        "command_template_id": command_template_id,
+        "parameters": dict(parameters),
+        "command": command,
+        "description": description,
+    }
+
+
 def role_label(role: str, positive_roles: Sequence[str], negative_roles: Sequence[str]) -> str:
     if role in set(positive_roles or []):
         return POSITIVE_LABEL
@@ -83,10 +107,34 @@ def validate_scenario_manifest(payload: Dict[str, Any]) -> Dict[str, Any]:
 
         target_service = str(raw.get("target_service") or "").strip()
         command = str(raw.get("command") or "").strip()
+        command_variants = [
+            normalize_command_variant(item, idx, scenario_id)
+            for idx, item in enumerate(list(raw.get("command_variants") or []), start=1)
+        ]
+        variant_metadata = list(raw.get("variant_metadata") or [])
+        for idx, variant in enumerate(command_variants, start=1):
+            meta = variant_metadata[idx - 1] if idx <= len(variant_metadata) and isinstance(variant_metadata[idx - 1], dict) else {}
+            if not meta:
+                continue
+            if meta.get("variant_id") or meta.get("id"):
+                variant["variant_id"] = str(meta.get("variant_id") or meta.get("id") or "").strip()
+            if meta.get("command_template_id"):
+                variant["command_template_id"] = str(meta.get("command_template_id") or "").strip()
+            if isinstance(meta.get("parameters"), dict):
+                variant["parameters"] = dict(meta.get("parameters") or {})
+            if meta.get("description"):
+                variant["description"] = str(meta.get("description") or "").strip()
+        first_variant_command = str(command_variants[0]["command"]) if command_variants else ""
+        attack_command = str(raw.get("attack_command") or command or first_variant_command).strip()
         duration_seconds = int(raw.get("duration_seconds") or 0)
+        warmup_seconds = int(raw.get("warmup_seconds") or 0)
+        attack_seconds = int(raw.get("attack_seconds") or 0)
+        cooldown_seconds = int(raw.get("cooldown_seconds") or 0)
+        if duration_seconds <= 0 and (warmup_seconds or attack_seconds or cooldown_seconds):
+            duration_seconds = int(warmup_seconds + attack_seconds + cooldown_seconds)
         if not target_service:
             raise ValueError(f"{scenario_id}: target_service is required")
-        if not command:
+        if not attack_command:
             raise ValueError(f"{scenario_id}: command is required")
         if duration_seconds <= 0:
             raise ValueError(f"{scenario_id}: duration_seconds must be > 0")
@@ -106,12 +154,21 @@ def validate_scenario_manifest(payload: Dict[str, Any]) -> Dict[str, Any]:
                 "id": scenario_id,
                 "kind": kind,
                 "target_service": target_service,
-                "command": command,
+                "command": command or attack_command,
+                "attack_command": attack_command,
+                "command_variants": command_variants,
+                "warmup_command": str(raw.get("warmup_command") or "").strip(),
+                "cooldown_command": str(raw.get("cooldown_command") or "").strip(),
                 "duration_seconds": duration_seconds,
+                "warmup_seconds": warmup_seconds,
+                "attack_seconds": attack_seconds,
+                "cooldown_seconds": cooldown_seconds,
                 "driver_role": driver_role,
                 "positive_roles": positive_roles,
                 "negative_roles": negative_roles,
                 "description": str(raw.get("description") or "").strip(),
+                "family_id": str(raw.get("family_id") or scenario_id).strip(),
+                "benchmark_split": str(raw.get("benchmark_split") or "").strip(),
             }
         )
 

@@ -32,6 +32,7 @@ from src.common.defaults import (
     DEFAULT_BBK_MIN_TRAIN_WINDOWS,
     DEFAULT_BBK_PROFILE_IMBALANCE_RATIO,
     DEFAULT_BBK_TRAIN_WINDOW_SECONDS,
+    DEFAULT_TIME_BIN_SECONDS,
     DEFAULT_WINDOW_SECONDS,
 )
 from src.common.io import read_json, write_json
@@ -90,6 +91,7 @@ def build_bbk(
     logs_dir: str = "",
     persist_windows_dir: str = "",
     window_seconds: int = DEFAULT_BBK_TRAIN_WINDOW_SECONDS,
+    time_bin_seconds: int = DEFAULT_TIME_BIN_SECONDS,
 ) -> None:
     """构建 BBK，并以 manifest 为桥梁执行两阶段 GMAE 训练。"""
 
@@ -122,7 +124,11 @@ def build_bbk(
             source_context = _hydrate_source_runtime_context(source, logs)
             fit_for_bbk = _source_participates_in_bbk_fit(source_context, source_mode=source_mode)
             source_window_idx = 0
-            for g, metas in _iter_bbk_windows(logs, window_seconds=int(window_seconds)):
+            for g, metas in _iter_bbk_windows(
+                logs,
+                window_seconds=int(window_seconds),
+                time_bin_seconds=int(time_bin_seconds),
+            ):
                 source_window_idx += 1
                 window_idx += 1
                 window_id = f"window_{window_idx:04d}"
@@ -170,7 +176,10 @@ def build_bbk(
         windows_dir=windows_dir,
         persist_windows=persist_windows,
         window_seconds=int(window_seconds),
-        reduction_config=_bbk_reduction_config_payload(window_seconds=int(window_seconds)),
+        reduction_config=_bbk_reduction_config_payload(
+            window_seconds=int(window_seconds),
+            time_bin_seconds=int(time_bin_seconds),
+        ),
         records=manifest_records,
     )
 
@@ -564,7 +573,11 @@ def _init_gmae_runtime() -> dict[str, Any]:
         }
 
 
-def _iter_bbk_windows(logs: Iterable[dict[str, Any]], window_seconds: int = DEFAULT_WINDOW_SECONDS):
+def _iter_bbk_windows(
+    logs: Iterable[dict[str, Any]],
+    window_seconds: int = DEFAULT_WINDOW_SECONDS,
+    time_bin_seconds: int = DEFAULT_TIME_BIN_SECONDS,
+):
     """按 streaming reduction 逻辑把日志切成训练窗口。"""
 
     from src.process.provenance_model import ProvenanceEventMapper
@@ -572,15 +585,21 @@ def _iter_bbk_windows(logs: Iterable[dict[str, Any]], window_seconds: int = DEFA
 
     reducer = StreamingReducer(
         mapper=ProvenanceEventMapper(),
-        config=StreamingReductionConfig(window_seconds=int(window_seconds), time_bin_seconds=1),
+        config=StreamingReductionConfig(
+            window_seconds=int(window_seconds),
+            time_bin_seconds=int(time_bin_seconds),
+        ),
     )
     yield from reducer.ingest_logs(logs)
 
 
-def _bbk_reduction_config_payload(window_seconds: int) -> dict[str, Any]:
+def _bbk_reduction_config_payload(window_seconds: int, time_bin_seconds: int = DEFAULT_TIME_BIN_SECONDS) -> dict[str, Any]:
     from src.process.streaming_reduction import StreamingReductionConfig
 
-    return StreamingReductionConfig(window_seconds=int(window_seconds), time_bin_seconds=1).to_dict()
+    return StreamingReductionConfig(
+        window_seconds=int(window_seconds),
+        time_bin_seconds=int(time_bin_seconds),
+    ).to_dict()
 
 
 def _resolve_gmae_device(torch_module) -> str:

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -17,6 +18,7 @@ from src.common.defaults import (
     DEFAULT_BBK_TRAIN_WINDOW_SECONDS,
     DEFAULT_BENIGN_CORPUS_DIR,
     DEFAULT_BENIGN_HOLDOUT_RUN_ID,
+    DEFAULT_TIME_BIN_SECONDS,
 )
 from src.common.io import read_json, write_json
 from src.process.log_parser import TraceeLogParser
@@ -24,10 +26,15 @@ from src.process.streaming_reduction import StreamingReductionConfig, StreamingR
 from src.process.window_io import dump_window_graph
 
 
-def materialize_windows(trace_path: Path, windows_dir: Path, window_seconds: int) -> int:
+def materialize_windows(trace_path: Path, windows_dir: Path, window_seconds: int, time_bin_seconds: int) -> int:
     parser = TraceeLogParser()
     logs = parser.parse_log_file(str(trace_path))
-    reducer = StreamingReducer(config=StreamingReductionConfig(window_seconds=int(window_seconds), time_bin_seconds=1))
+    reducer = StreamingReducer(
+        config=StreamingReductionConfig(
+            window_seconds=int(window_seconds),
+            time_bin_seconds=int(time_bin_seconds),
+        )
+    )
     windows_dir.mkdir(parents=True, exist_ok=True)
 
     for stale in sorted(windows_dir.glob("window_*.json")):
@@ -40,12 +47,33 @@ def materialize_windows(trace_path: Path, windows_dir: Path, window_seconds: int
     return count
 
 
+def _window_index(window_id: str) -> int:
+    match = re.search(r"(\d+)$", str(window_id or ""))
+    if not match:
+        return 0
+    return int(match.group(1))
+
+
+def _phase_for_offset(phases: list[dict[str, Any]], offset_seconds: float) -> dict[str, Any]:
+    for phase in phases:
+        start = float(phase.get("start_offset_seconds") or 0.0)
+        end = float(phase.get("end_offset_seconds") or 0.0)
+        if start <= float(offset_seconds) < end:
+            return dict(phase)
+    return {}
+
+
+def _increment(mapping: dict[str, int], key: str) -> None:
+    mapping[str(key)] = int(mapping.get(str(key), 0)) + 1
+
+
 def evaluate_holdout_run(
     *,
     corpus_dir: Path,
     run_id: str,
     threshold: float,
     window_seconds: int,
+    time_bin_seconds: int,
 ) -> dict[str, Any]:
     run_dir = corpus_dir / run_id
     trace_path = run_dir / "trace.log"
@@ -57,21 +85,55 @@ def evaluate_holdout_run(
 
     run_meta = read_json(str(run_meta_path)) or {}
     split_role = str(run_meta.get("split_role") or "").strip().lower()
-    if split_role and split_role != "holdout":
+    if split_role != "holdout":
         raise ValueError(f"requested run is not marked holdout: {run_id} ({split_role})")
+    warnings: list[str] = []
+    meta_window_seconds = int(run_meta.get("window_seconds") or 0)
+    meta_time_bin_seconds = int(run_meta.get("time_bin_seconds") or 0)
+    if meta_window_seconds and int(meta_window_seconds) != int(window_seconds):
+        warnings.append(
+            f"window_seconds mismatch: run_meta={meta_window_seconds} requested={int(window_seconds)}"
+        )
+    if meta_time_bin_seconds and int(meta_time_bin_seconds) != int(time_bin_seconds):
+        warnings.append(
+            f"time_bin_seconds mismatch: run_meta={meta_time_bin_seconds} requested={int(time_bin_seconds)}"
+        )
 
     windows_dir = run_dir / f"windows_{int(window_seconds):02d}s"
-    total_windows = materialize_windows(trace_path, windows_dir, window_seconds=int(window_seconds))
+    total_windows = materialize_windows(
+        trace_path,
+        windows_dir,
+        window_seconds=int(window_seconds),
+        time_bin_seconds=int(time_bin_seconds),
+    )
 
     engine = AnalysisEngine()
     alerts = engine.detect_window_alerts_from_windows(str(windows_dir), threshold=float(threshold))
     false_positive_windows = int(len(alerts))
     duration_seconds = int(run_meta.get("duration_seconds") or (total_windows * int(window_seconds)))
-    alerts_per_minute = (
-        float(false_positive_windows) / max(float(duration_seconds) / 60.0, 1e-9)
+    false_alarms_per_hour = (
+        float(false_positive_windows) / max(float(duration_seconds) / 3600.0, 1e-9)
         if duration_seconds > 0
         else 0.0
     )
+    phases = list(run_meta.get("phases") or [])
+    false_positives_by_profile: dict[str, int] = {}
+    false_positives_by_phase: dict[str, int] = {}
+    total_windows_by_profile: dict[str, int] = {}
+    total_windows_by_phase: dict[str, int] = {}
+    for idx in range(1, int(total_windows) + 1):
+        offset = float(idx - 1) * float(window_seconds)
+        phase = _phase_for_offset(phases, offset)
+        profile_id = str(phase.get("profile_id") or "unknown")
+        phase_id = str(phase.get("phase_id") or "unknown")
+        _increment(total_windows_by_profile, profile_id)
+        _increment(total_windows_by_phase, phase_id)
+    for alert in alerts:
+        idx = _window_index(str(alert.window_id))
+        offset = float(max(idx - 1, 0)) * float(window_seconds)
+        phase = _phase_for_offset(phases, offset)
+        _increment(false_positives_by_profile, str(phase.get("profile_id") or "unknown"))
+        _increment(false_positives_by_phase, str(phase.get("phase_id") or "unknown"))
 
     return {
         "schema_version": 1,
@@ -81,7 +143,9 @@ def evaluate_holdout_run(
         "trace_out": str(trace_path),
         "windows_dir": str(windows_dir),
         "window_seconds": int(window_seconds),
+        "time_bin_seconds": int(time_bin_seconds),
         "threshold": float(threshold),
+        "configuration_warnings": warnings,
         "duration_seconds": int(duration_seconds),
         "total_windows": int(total_windows),
         "false_positive_windows": int(false_positive_windows),
@@ -90,7 +154,12 @@ def evaluate_holdout_run(
             if total_windows > 0
             else 0.0
         ),
-        "alerts_per_minute": float(alerts_per_minute),
+        "false_alarms_per_hour": float(false_alarms_per_hour),
+        "alerts_per_minute": float(false_alarms_per_hour) / 60.0,
+        "false_positives_by_profile": dict(sorted(false_positives_by_profile.items())),
+        "false_positives_by_phase": dict(sorted(false_positives_by_phase.items())),
+        "total_windows_by_profile": dict(sorted(total_windows_by_profile.items())),
+        "total_windows_by_phase": dict(sorted(total_windows_by_phase.items())),
         "alert_window_ids": [str(alert.window_id) for alert in alerts],
         "alert_scores": {
             str(alert.window_id): float(alert.window_score)
@@ -105,9 +174,10 @@ def main() -> None:
     ap.add_argument("--run-id", default=DEFAULT_BENIGN_HOLDOUT_RUN_ID)
     ap.add_argument("--threshold", type=float, default=DEFAULT_ALERT_THRESHOLD)
     ap.add_argument("--window-seconds", type=int, default=DEFAULT_BBK_TRAIN_WINDOW_SECONDS)
+    ap.add_argument("--time-bin-seconds", type=int, default=DEFAULT_TIME_BIN_SECONDS)
     ap.add_argument(
         "--output",
-        default="data/benchmarks/benign_holdout/run_d_metrics.json",
+        default="data/benchmarks_v3/benign_holdout/run_d_metrics.json",
         help="JSON summary output path",
     )
     args = ap.parse_args()
@@ -117,18 +187,21 @@ def main() -> None:
         run_id=str(args.run_id),
         threshold=float(args.threshold),
         window_seconds=int(args.window_seconds),
+        time_bin_seconds=int(args.time_bin_seconds),
     )
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     write_json(str(output_path), summary)
+    for warning in summary.get("configuration_warnings") or []:
+        print(f"[benign-holdout] warning: {warning}", file=sys.stderr)
 
     print(
-        "[benign-holdout] run=%s false_positive_windows=%d total_windows=%d alerts_per_minute=%.4f output=%s"
+        "[benign-holdout] run=%s false_positive_windows=%d total_windows=%d false_alarms_per_hour=%.4f output=%s"
         % (
             summary["run_id"],
             int(summary["false_positive_windows"]),
             int(summary["total_windows"]),
-            float(summary["alerts_per_minute"]),
+            float(summary["false_alarms_per_hour"]),
             os.path.abspath(str(output_path)),
         )
     )

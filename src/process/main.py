@@ -17,6 +17,7 @@ import signal
 from src.common.defaults import (
     DEFAULT_ALERT_THRESHOLD,
     DEFAULT_BBK_TRAIN_WINDOW_SECONDS,
+    DEFAULT_TIME_BIN_SECONDS,
     DEFAULT_TOP_EVIDENCE_ITEMS,
     DEFAULT_WINDOW_SECONDS,
 )
@@ -94,6 +95,7 @@ def main() -> None:
     analyze_parser.add_argument('log_file', help='Tracee日志文件路径')
     analyze_parser.add_argument('--threshold', type=float, default=DEFAULT_ALERT_THRESHOLD, help='窗口告警阈值（窗口分数，0-1）')
     analyze_parser.add_argument('--window-seconds', type=int, default=DEFAULT_WINDOW_SECONDS, help='窗口长度（秒）')
+    analyze_parser.add_argument('--time-bin-seconds', type=int, default=DEFAULT_TIME_BIN_SECONDS, help='边时间分桶长度（秒）')
     analyze_parser.add_argument('--debug-dump-dir', default='data/processed/debug', help='调试信息输出目录')
     analyze_parser.add_argument('--print-attack-graph', action='store_true', default=True, help='打印攻击溯源图重构结果')
     analyze_parser.add_argument('--print-llm-context', action='store_true', default=True, help='打印输入给LLM的上下文（截断展示）')
@@ -108,8 +110,9 @@ def main() -> None:
     # build_bbk 命令
     build_bbk_parser = subparsers.add_parser('build_bbk', help='构建/更新 BBK（Benign Behavior Knowledge）基线库')
     build_bbk_parser.add_argument('log_file', nargs='?', default='', help='可选：单个良性Tracee日志文件路径（兼容 bootstrap 模式）')
-    build_bbk_parser.add_argument('--logs-dir', default='', help='推荐：benign corpus 目录，结构为 data/benign_corpus/<run_id>/trace.log')
-    build_bbk_parser.add_argument('--window-seconds', type=int, default=DEFAULT_BBK_TRAIN_WINDOW_SECONDS, help='训练窗口长度（秒，默认 10s）')
+    build_bbk_parser.add_argument('--logs-dir', default='', help='推荐：benign corpus 目录，结构为 data/benign_corpus_v3/<run_id>/trace.log')
+    build_bbk_parser.add_argument('--window-seconds', type=int, default=DEFAULT_BBK_TRAIN_WINDOW_SECONDS, help='训练窗口长度（秒，默认 30s）')
+    build_bbk_parser.add_argument('--time-bin-seconds', type=int, default=DEFAULT_TIME_BIN_SECONDS, help='边时间分桶长度（秒）')
     build_bbk_parser.add_argument('--persist-windows-dir', default='', help='可选：持久化窗口图的输出目录')
 
     build_ark_parser = subparsers.add_parser('build_ark', help='构建 ARK（Attack Representation Knowledge）逻辑图')
@@ -126,6 +129,7 @@ def main() -> None:
     realtime_parser.add_argument('log_file', help='Tracee 输出文件路径（持续增长）')
     realtime_parser.add_argument('--threshold', type=float, default=DEFAULT_ALERT_THRESHOLD, help='窗口告警阈值（窗口分数，0-1）')
     realtime_parser.add_argument('--window-seconds', type=int, default=DEFAULT_WINDOW_SECONDS, help='窗口长度（秒）')
+    realtime_parser.add_argument('--time-bin-seconds', type=int, default=DEFAULT_TIME_BIN_SECONDS, help='边时间分桶长度（秒）')
     realtime_parser.add_argument('--poll-interval', type=float, default=0.2, help='轮询间隔（秒）')
     realtime_parser.add_argument('--start-at-end', action='store_true', default=True, help='从文件末尾开始追踪（默认）')
     realtime_parser.add_argument('--start-from-begin', action='store_true', default=False, help='从文件开头回放并实时追踪')
@@ -166,6 +170,7 @@ def main() -> None:
             args.threshold,
             persist_windows_dir=(args.persist_windows_dir or None),
             window_seconds=int(args.window_seconds),
+            time_bin_seconds=int(args.time_bin_seconds),
         )
         
         if not alerts:
@@ -228,6 +233,7 @@ def main() -> None:
             logs_dir=str(args.logs_dir or ""),
             persist_windows_dir=str(args.persist_windows_dir or ""),
             window_seconds=int(args.window_seconds),
+            time_bin_seconds=int(args.time_bin_seconds),
         )
 
     elif args.command == 'build_ark':
@@ -293,6 +299,7 @@ def main() -> None:
 
         cfg = RealtimeConfig(
             window_seconds=int(args.window_seconds),
+            time_bin_seconds=int(args.time_bin_seconds),
             poll_interval_seconds=float(args.poll_interval),
             start_at_end=bool(start_at_end),
         )

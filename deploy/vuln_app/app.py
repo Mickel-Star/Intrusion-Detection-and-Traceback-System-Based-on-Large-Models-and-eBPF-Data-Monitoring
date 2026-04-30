@@ -262,6 +262,61 @@ def me():
     return jsonify({"user": dict(u) if u else {"username": username}, "recent_orders": [dict(r) for r in recent]})
 
 
+@app.route("/api/admin/audit")
+def admin_audit():
+    username = _get_session_username()
+    if not username:
+        return jsonify({"error": "unauthorized"}), 401
+    try:
+        limit = min(max(int(request.args.get("limit") or 10), 1), 100)
+    except Exception:
+        limit = 10
+
+    conn = _db()
+    try:
+        user = conn.execute("SELECT username, role FROM users WHERE username = ?", (username,)).fetchone()
+        if not user or str(user["role"]) != "admin":
+            _audit("admin_audit_denied", {"username": username})
+            return jsonify({"error": "forbidden"}), 403
+        rows = conn.execute(
+            "SELECT id, event, meta_json, created_at FROM audit_logs ORDER BY id DESC LIMIT ?",
+            (limit,),
+        ).fetchall()
+    finally:
+        conn.close()
+
+    _audit("admin_audit_view", {"username": username, "limit": limit})
+    return jsonify({"events": [dict(r) for r in rows], "limit": limit})
+
+
+@app.route("/api/report/export")
+def report_export():
+    q = str(request.args.get("q") or "").strip().lower()
+    try:
+        limit = min(max(int(request.args.get("limit") or 20), 1), 200)
+    except Exception:
+        limit = 20
+
+    like = f"%{q}%"
+    conn = _db()
+    try:
+        rows = conn.execute(
+            """
+            SELECT customer, item, status, COUNT(*) AS order_count, SUM(quantity) AS total_quantity
+            FROM orders
+            WHERE lower(customer) LIKE ? OR lower(item) LIKE ? OR lower(status) LIKE ?
+            GROUP BY customer, item, status
+            ORDER BY order_count DESC, customer ASC, item ASC
+            LIMIT ?
+            """,
+            (like, like, like, limit),
+        ).fetchall()
+    finally:
+        conn.close()
+
+    _audit("report_export", {"q": q, "limit": limit, "rows": len(rows)})
+    return jsonify({"q": q, "limit": limit, "rows": [dict(r) for r in rows]})
+
 
 @app.route('/ping')
 def ping():

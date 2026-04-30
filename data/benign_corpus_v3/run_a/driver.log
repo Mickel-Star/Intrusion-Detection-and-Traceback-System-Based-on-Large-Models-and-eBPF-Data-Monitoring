@@ -1,0 +1,3 @@
+phase_start id=run_a_phase_01 profile=health_idle_poll duration=900.0 seed=1338
+role_start phase=run_a_phase_01 role=foreground_user profile=health_idle_poll duration=900.0 seed=133801
+role_start phase=run_a_phase_01 role=background_worker profile=background_worker duration=900.0 seed=133802

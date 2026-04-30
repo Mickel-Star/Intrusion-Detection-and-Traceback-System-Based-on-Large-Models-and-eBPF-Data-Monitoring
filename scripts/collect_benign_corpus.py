@@ -7,6 +7,7 @@ import json
 import math
 import subprocess
 import sys
+import threading
 import time
 import urllib.request
 from pathlib import Path
@@ -16,7 +17,11 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
-from src.common.defaults import DEFAULT_BENIGN_CORPUS_DIR
+from src.common.defaults import (
+    DEFAULT_BBK_TRAIN_WINDOW_SECONDS,
+    DEFAULT_BENIGN_CORPUS_DIR,
+    DEFAULT_TIME_BIN_SECONDS,
+)
 from src.common.io import read_json, write_json
 
 
@@ -40,6 +45,7 @@ DEFAULT_EVENTS = [
     "security_socket_connect",
     "security_socket_accept",
 ]
+DEFAULT_CORPUS_VERSION = "v3"
 
 
 def run_cmd(
@@ -156,7 +162,35 @@ def stop_tracee(tracee_proc: subprocess.Popen[str], tracee_name: str, trace_fp: 
     trace_fp.close()
 
 
-def normalize_phases(run: dict[str, Any]) -> list[dict[str, Any]]:
+def normalize_driver_roles(phase: dict[str, Any], default_driver_roles: Sequence[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
+    phase_profile_id = str(phase.get("profile_id") or "").strip()
+    raw_roles = list(phase.get("driver_roles") or default_driver_roles or [])
+    if not raw_roles:
+        raw_roles = [
+            {"driver_role": "foreground_user", "profile_id": "$phase"},
+            {"driver_role": "background_worker", "profile_id": "background_worker"},
+        ]
+
+    roles: list[dict[str, Any]] = []
+    seen = set()
+    for raw in raw_roles:
+        if not isinstance(raw, dict):
+            raise ValueError(f"driver role entry must be an object: {raw!r}")
+        driver_role = str(raw.get("driver_role") or raw.get("role") or "").strip()
+        if not driver_role:
+            raise ValueError(f"driver_role is required for phase profile={phase_profile_id}")
+        profile_id = str(raw.get("profile_id") or "").strip()
+        if not profile_id or profile_id == "$phase":
+            profile_id = phase_profile_id
+        key = (driver_role, profile_id)
+        if key in seen:
+            continue
+        seen.add(key)
+        roles.append({"driver_role": driver_role, "profile_id": profile_id})
+    return roles
+
+
+def normalize_phases(run: dict[str, Any], default_driver_roles: Sequence[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
     phases = []
     start_offset = 0.0
     for idx, phase in enumerate(list(run.get("phases") or []), start=1):
@@ -174,6 +208,7 @@ def normalize_phases(run: dict[str, Any]) -> list[dict[str, Any]]:
                 "start_offset_seconds": float(start_offset),
                 "end_offset_seconds": float(end_offset),
                 "duration_seconds": int(duration),
+                "driver_roles": normalize_driver_roles(phase, default_driver_roles),
             }
         )
         start_offset = end_offset
@@ -181,13 +216,16 @@ def normalize_phases(run: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def expected_distribution(config: dict[str, Any]) -> dict[str, Any]:
-    window_seconds = int(config.get("window_seconds") or 15)
+    window_seconds = int(config.get("window_seconds") or DEFAULT_BBK_TRAIN_WINDOW_SECONDS)
+    time_bin_seconds = int(config.get("time_bin_seconds") or DEFAULT_TIME_BIN_SECONDS)
+    default_driver_roles = list(config.get("driver_roles") or [])
     run_summaries = []
     profile_windows: dict[str, int] = {}
     role_windows: dict[str, int] = {}
+    driver_role_windows: dict[str, int] = {}
     train_profile_windows: dict[str, int] = {}
     for run in list(config.get("runs") or []):
-        phases = normalize_phases(run)
+        phases = normalize_phases(run, default_driver_roles)
         role = str(run.get("split_role") or "train")
         run_windows = 0
         for phase in phases:
@@ -195,6 +233,10 @@ def expected_distribution(config: dict[str, Any]) -> dict[str, Any]:
             run_windows += windows
             profile_id = str(phase["profile_id"])
             profile_windows[profile_id] = int(profile_windows.get(profile_id, 0)) + windows
+            for driver_role in list(phase.get("driver_roles") or []):
+                role_id = str(driver_role.get("driver_role") or "")
+                if role_id:
+                    driver_role_windows[role_id] = int(driver_role_windows.get(role_id, 0)) + windows
             if role == "train":
                 train_profile_windows[profile_id] = int(train_profile_windows.get(profile_id, 0)) + windows
         role_windows[role] = int(role_windows.get(role, 0)) + run_windows
@@ -216,11 +258,14 @@ def expected_distribution(config: dict[str, Any]) -> dict[str, Any]:
     }
     return {
         "window_seconds": int(window_seconds),
+        "time_bin_seconds": int(time_bin_seconds),
         "total_expected_windows": int(sum(role_windows.values())),
         "role_expected_windows": dict(sorted(role_windows.items())),
+        "driver_role_expected_windows": dict(sorted(driver_role_windows.items())),
         "profile_expected_windows": dict(sorted(profile_windows.items())),
         "train_profile_expected_windows": dict(sorted(train_profile_windows.items())),
         "train_profile_imbalance": profile_imbalance,
+        "validation_targets": dict(config.get("validation_targets") or {}),
         "runs": run_summaries,
     }
 
@@ -230,18 +275,24 @@ def validate_distribution(summary: dict[str, Any]) -> list[str]:
     role_windows = dict(summary.get("role_expected_windows") or {})
     profile_windows = dict(summary.get("profile_expected_windows") or {})
     train_imbalance = dict(summary.get("train_profile_imbalance") or {})
-    if int(role_windows.get("train", 0)) < 200:
-        errors.append("expected train windows below v2 target: < 200")
-    if int(role_windows.get("calibration", 0)) < 50:
-        errors.append("expected calibration windows below v2 target: < 50")
-    if int(role_windows.get("holdout", 0)) < 80:
-        errors.append("expected holdout windows below v2 target: < 80")
+    targets = dict(summary.get("validation_targets") or {})
+    min_train_windows = int(targets.get("min_train_windows", 200))
+    min_calibration_windows = int(targets.get("min_calibration_windows", 50))
+    min_holdout_windows = int(targets.get("min_holdout_windows", 80))
+    min_profile_windows = int(targets.get("min_profile_windows", 50))
+    max_train_profile_ratio = float(targets.get("max_train_profile_ratio", 0.4))
+    if int(role_windows.get("train", 0)) < min_train_windows:
+        errors.append(f"expected train windows below target: < {min_train_windows}")
+    if int(role_windows.get("calibration", 0)) < min_calibration_windows:
+        errors.append(f"expected calibration windows below target: < {min_calibration_windows}")
+    if int(role_windows.get("holdout", 0)) < min_holdout_windows:
+        errors.append(f"expected holdout windows below target: < {min_holdout_windows}")
     for profile_id, count in sorted(profile_windows.items()):
-        if int(count) < 50:
-            errors.append(f"profile expected windows below v2 target: {profile_id}={count} < 50")
+        if int(count) < min_profile_windows:
+            errors.append(f"profile expected windows below target: {profile_id}={count} < {min_profile_windows}")
     for profile_id, ratio in sorted(train_imbalance.items()):
-        if float(ratio) > 0.4:
-            errors.append(f"train profile imbalance above 40%: {profile_id}={ratio:.3f}")
+        if float(ratio) > max_train_profile_ratio:
+            errors.append(f"train profile imbalance above target: {profile_id}={ratio:.3f} > {max_train_profile_ratio:.3f}")
     return errors
 
 
@@ -249,15 +300,65 @@ def validate_profile_catalog(config: dict[str, Any], profile_module) -> list[str
     catalog = dict(profile_module.profile_catalog())
     known = set(str(key) for key in catalog)
     errors = []
+    default_driver_roles = list(config.get("driver_roles") or [])
     for run in list(config.get("runs") or []):
-        for phase in normalize_phases(run):
+        for phase in normalize_phases(run, default_driver_roles):
             profile_id = str(phase["profile_id"])
             if profile_id not in known:
                 errors.append(f"unknown profile_id in config: {profile_id}")
+            for role in list(phase.get("driver_roles") or []):
+                role_profile_id = str(role.get("profile_id") or "")
+                driver_role = str(role.get("driver_role") or "")
+                if driver_role == "background_worker" and role_profile_id == "background_worker":
+                    continue
+                if role_profile_id not in known:
+                    errors.append(f"unknown role profile_id in config: {role_profile_id}")
     prewarm_profile = str(config.get("prewarm_profile") or "")
     if prewarm_profile and prewarm_profile not in known:
         errors.append(f"unknown prewarm_profile in config: {prewarm_profile}")
     return errors
+
+
+def _metric_counter_payload() -> dict[str, int]:
+    return {
+        "request_count": 0,
+        "success_count": 0,
+        "http_error_count": 0,
+        "exception_count": 0,
+        "timeout_count": 0,
+    }
+
+
+def _add_metric_counts(dst: dict[str, Any], src: dict[str, Any]) -> None:
+    for key in ("request_count", "success_count", "http_error_count", "exception_count", "timeout_count"):
+        dst[key] = int(dst.get(key, 0)) + int(src.get(key, 0) or 0)
+
+
+def summarize_driver_metrics(role_metrics: list[dict[str, Any]]) -> dict[str, Any]:
+    aggregate: dict[str, Any] = _metric_counter_payload()
+    by_role_profile: dict[str, dict[str, Any]] = {}
+    by_profile: dict[str, dict[str, Any]] = {}
+    by_phase: dict[str, dict[str, Any]] = {}
+    for raw in role_metrics:
+        metric = dict(raw or {})
+        _add_metric_counts(aggregate, metric)
+        driver_role = str(metric.get("driver_role") or "")
+        profile_id = str(metric.get("profile_id") or "")
+        phase_id = str(metric.get("phase_id") or "")
+        role_profile_key = f"{driver_role}:{profile_id}"
+        _add_metric_counts(by_role_profile.setdefault(role_profile_key, _metric_counter_payload()), metric)
+        _add_metric_counts(by_profile.setdefault(profile_id, _metric_counter_payload()), metric)
+        _add_metric_counts(by_phase.setdefault(phase_id, _metric_counter_payload()), metric)
+
+    return {
+        "schema_version": 1,
+        "metric_type": "benign_driver_request_metrics",
+        "aggregate": aggregate,
+        "by_role_profile": dict(sorted(by_role_profile.items())),
+        "by_profile": dict(sorted(by_profile.items())),
+        "by_phase": dict(sorted(by_phase.items())),
+        "role_metrics": role_metrics,
+    }
 
 
 def run_phases(
@@ -267,23 +368,103 @@ def run_phases(
     base_url: str,
     seed: int,
     log_path: Path,
-) -> None:
+    metrics_path: Path | None = None,
+) -> dict[str, Any]:
     log_path.parent.mkdir(parents=True, exist_ok=True)
+    role_metrics: list[dict[str, Any]] = []
     with log_path.open("w", encoding="utf-8") as fp:
         for idx, phase in enumerate(phases, start=1):
-            profile_id = str(phase["profile_id"])
             duration = float(phase["duration_seconds"])
             phase_seed = int(seed) + idx
-            fp.write(f"phase_start id={phase['phase_id']} profile={profile_id} duration={duration} seed={phase_seed}\n")
+            fp.write(f"phase_start id={phase['phase_id']} profile={phase['profile_id']} duration={duration} seed={phase_seed}\n")
             fp.flush()
-            profile_module.run_profile(
-                profile_id,
-                base_url=str(base_url),
-                duration_seconds=duration,
-                seed=phase_seed,
+            lock = threading.Lock()
+            errors: list[BaseException] = []
+            threads: list[threading.Thread] = []
+
+            def run_role(role_cfg: dict[str, Any], role_idx: int) -> None:
+                driver_role = str(role_cfg.get("driver_role") or "foreground_user")
+                role_profile_id = str(role_cfg.get("profile_id") or phase["profile_id"])
+                role_seed = int(phase_seed) * 100 + int(role_idx)
+                try:
+                    with lock:
+                        fp.write(
+                            f"role_start phase={phase['phase_id']} role={driver_role} "
+                            f"profile={role_profile_id} duration={duration} seed={role_seed}\n"
+                        )
+                        fp.flush()
+                    if driver_role == "background_worker" and hasattr(profile_module, "run_background_worker"):
+                        result = profile_module.run_background_worker(
+                            base_url=str(base_url),
+                            duration_seconds=duration,
+                            seed=role_seed,
+                            phase_profile_id=str(phase["profile_id"]),
+                        )
+                    else:
+                        result = profile_module.run_profile(
+                            role_profile_id,
+                            base_url=str(base_url),
+                            duration_seconds=duration,
+                            seed=role_seed,
+                        )
+                    metrics_payload = result if isinstance(result, dict) else {}
+                    metrics_payload.update(
+                        {
+                            "phase_id": str(phase["phase_id"]),
+                            "phase_profile_id": str(phase["profile_id"]),
+                            "driver_role": driver_role,
+                            "profile_id": role_profile_id,
+                            "seed": int(role_seed),
+                        }
+                    )
+                    with lock:
+                        role_metrics.append(dict(metrics_payload))
+                        fp.write(
+                            "role_metrics "
+                            + json.dumps(metrics_payload, ensure_ascii=False, sort_keys=True)
+                            + "\n"
+                        )
+                        fp.flush()
+                    with lock:
+                        fp.write(f"role_end phase={phase['phase_id']} role={driver_role} profile={role_profile_id}\n")
+                        fp.flush()
+                except BaseException as exc:
+                    with lock:
+                        errors.append(exc)
+
+            role_configs = list(phase.get("driver_roles") or [{"driver_role": "foreground_user", "profile_id": phase["profile_id"]}])
+            for role_idx, role_cfg in enumerate(role_configs, start=1):
+                thread = threading.Thread(target=run_role, args=(dict(role_cfg), role_idx), daemon=True)
+                thread.start()
+                threads.append(thread)
+            for thread in threads:
+                thread.join()
+            if errors:
+                raise RuntimeError(f"phase failed: {phase['phase_id']} ({errors[0]})") from errors[0]
+            fp.write(f"phase_end id={phase['phase_id']} profile={phase['profile_id']}\n")
+            fp.flush()
+    summary = summarize_driver_metrics(role_metrics)
+    if metrics_path is not None:
+        write_json(str(metrics_path), summary)
+    return summary
+
+
+def _phase_role_schedule(phases: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    schedule: list[dict[str, Any]] = []
+    for phase in phases:
+        for role_cfg in list(phase.get("driver_roles") or []):
+            schedule.append(
+                {
+                    "phase_id": str(phase.get("phase_id") or ""),
+                    "profile_id": str(phase.get("profile_id") or ""),
+                    "driver_role": str(role_cfg.get("driver_role") or ""),
+                    "role_profile_id": str(role_cfg.get("profile_id") or ""),
+                    "start_offset_seconds": float(phase.get("start_offset_seconds") or 0.0),
+                    "end_offset_seconds": float(phase.get("end_offset_seconds") or 0.0),
+                    "duration_seconds": int(phase.get("duration_seconds") or 0),
+                }
             )
-            fp.write(f"phase_end id={phase['phase_id']} profile={profile_id}\n")
-            fp.flush()
+    return schedule
 
 
 def collect_run(
@@ -303,69 +484,107 @@ def collect_run(
     run_id = str(run.get("run_id") or "").strip()
     if not run_id:
         raise ValueError("run_id is required")
-    phases = normalize_phases(run)
+    default_driver_roles = list(config.get("driver_roles") or [])
+    phases = normalize_phases(run, default_driver_roles)
     run_dir = corpus_dir / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
 
     trace_path = run_dir / "trace.log"
     driver_log_path = run_dir / "driver.log"
+    driver_metrics_path = run_dir / "driver_metrics.json"
     prewarm_log_path = run_dir / "prewarm.log"
+    prewarm_metrics_path = run_dir / "prewarm_driver_metrics.json"
     run_meta_path = run_dir / "run_meta.json"
 
     wait_for_health(health_url, timeout_seconds=int(target.get("health_timeout_seconds") or 60))
     prewarm_seconds = int(config.get("prewarm_seconds") or 0)
     prewarm_profile = str(config.get("prewarm_profile") or phases[0]["profile_id"])
+    prewarm_metrics: dict[str, Any] = {}
     if prewarm_seconds > 0:
+        prewarm_phases = normalize_phases(
+            {
+                "run_id": run_id,
+                "phases": [
+                    {
+                        "phase_id": f"{run_id}_prewarm",
+                        "profile_id": prewarm_profile,
+                        "duration_seconds": int(prewarm_seconds),
+                        "driver_roles": [{"driver_role": "foreground_user", "profile_id": prewarm_profile}],
+                    }
+                ],
+            },
+            default_driver_roles=[],
+        )
         run_phases(
             profile_module=profile_module,
-            phases=[
-                {
-                    "phase_id": f"{run_id}_prewarm",
-                    "profile_id": prewarm_profile,
-                    "start_offset_seconds": 0.0,
-                    "end_offset_seconds": float(prewarm_seconds),
-                    "duration_seconds": int(prewarm_seconds),
-                }
-            ],
+            phases=prewarm_phases,
             base_url=base_url,
             seed=int(base_seed),
             log_path=prewarm_log_path,
+            metrics_path=prewarm_metrics_path,
         )
+        prewarm_metrics = read_json(str(prewarm_metrics_path)) or {}
 
     tracee_name = f"drsec-tracee-benign-corpus-{run_id}"
     run_cmd(["docker", "rm", "-f", tracee_name], capture=True, check=False)
     tracee_proc, trace_fp = start_tracee(trace_path, tracee_name, config)
     try:
         time.sleep(float(config.get("tracee_settle_seconds") or 3.0))
-        run_phases(
+        driver_metrics = run_phases(
             profile_module=profile_module,
             phases=phases,
             base_url=base_url,
             seed=int(base_seed),
             log_path=driver_log_path,
+            metrics_path=driver_metrics_path,
         )
         time.sleep(float(config.get("tracee_flush_seconds") or 3.0))
     finally:
         stop_tracee(tracee_proc, tracee_name, trace_fp)
 
+    split_role = str(run.get("split_role") or "train")
+    split_semantics = {
+        "train": "BBK/GMAE training only; do not report final benign FPR on this split.",
+        "calibration": "Threshold or score calibration only; do not train GMAE on this split.",
+        "holdout": "Final benign false-positive evaluation only; do not use for training, calibration, or threshold selection.",
+    }
+    container_roles = dict(config.get("container_roles") or {})
+    trace_scope = dict(config.get("trace_scope") or {})
+    if not trace_scope:
+        trace_scope = {
+            "scope_expression": list((config.get("tracee") or {}).get("scopes") or []),
+            "events": list((config.get("tracee") or {}).get("events") or []),
+        }
     payload = {
-        "schema_version": 2,
-        "corpus_version": str(config.get("corpus_version") or "v2"),
+        "schema_version": 3,
+        "corpus_version": str(config.get("corpus_version") or DEFAULT_CORPUS_VERSION),
         "run_id": run_id,
         "kind": "benign_corpus_run",
-        "split_role": str(run.get("split_role") or "train"),
+        "split_role": split_role,
+        "split_semantics": split_semantics.get(split_role, ""),
         "target_service": str(target.get("name") or ""),
         "target_base_url": base_url,
+        "target_container": dict(container_roles.get("target_container") or {}),
+        "supporting_containers": list(container_roles.get("supporting_containers") or []),
+        "driver_host": dict(container_roles.get("driver_host") or {}),
+        "trace_scope": trace_scope,
         "trace_out": str(trace_path),
         "driver_log": str(driver_log_path),
+        "driver_metrics": str(driver_metrics_path),
+        "driver_metrics_summary": dict((driver_metrics or {}).get("aggregate") or {}),
         "prewarm_log": str(prewarm_log_path),
+        "prewarm_driver_metrics": str(prewarm_metrics_path),
+        "prewarm_driver_metrics_summary": dict((prewarm_metrics or {}).get("aggregate") or {}),
         "duration_seconds": int(sum(int(phase["duration_seconds"]) for phase in phases)),
         "prewarm_seconds": int(prewarm_seconds),
         "random_seed": int(base_seed),
         "training_pool": bool(run.get("training_pool", True)),
         "bootstrap_only": bool(run.get("bootstrap_only", False)),
-        "window_seconds": int(config.get("window_seconds") or 15),
+        "window_seconds": int(config.get("window_seconds") or DEFAULT_BBK_TRAIN_WINDOW_SECONDS),
+        "time_bin_seconds": int(config.get("time_bin_seconds") or DEFAULT_TIME_BIN_SECONDS),
+        "driver_roles": list(config.get("driver_roles") or []),
         "phases": phases,
+        "phase_role_schedule": _phase_role_schedule(phases),
         "profile_ids": [str(phase["profile_id"]) for phase in phases],
     }
     write_json(str(run_meta_path), payload)
@@ -382,15 +601,25 @@ def write_corpus_manifest(
 ) -> None:
     catalog = dict(profile_module.profile_catalog())
     payload = {
-        "schema_version": 2,
-        "corpus_version": str(config.get("corpus_version") or "v2"),
+        "schema_version": 3,
+        "corpus_version": str(config.get("corpus_version") or DEFAULT_CORPUS_VERSION),
         "collection_mode": "external_service",
         "recommended_build_command": (
             f"python -m src.process.main build_bbk --logs-dir {corpus_dir} "
-            f"--window-seconds {int(config.get('window_seconds') or 15)}"
+            f"--window-seconds {int(config.get('window_seconds') or DEFAULT_BBK_TRAIN_WINDOW_SECONDS)} "
+            f"--time-bin-seconds {int(config.get('time_bin_seconds') or DEFAULT_TIME_BIN_SECONDS)}"
         ),
-        "window_seconds": int(config.get("window_seconds") or 15),
+        "window_seconds": int(config.get("window_seconds") or DEFAULT_BBK_TRAIN_WINDOW_SECONDS),
+        "time_bin_seconds": int(config.get("time_bin_seconds") or DEFAULT_TIME_BIN_SECONDS),
         "target": dict(config.get("target") or {}),
+        "dataset_split_semantics": {
+            "train": "Use for BBK/GMAE training only.",
+            "calibration": "Use for threshold or score calibration only.",
+            "holdout": "Use only for final benign FPR/false-alarms-per-hour reporting.",
+        },
+        "container_roles": dict(config.get("container_roles") or {}),
+        "trace_scope": dict(config.get("trace_scope") or {}),
+        "driver_roles": list(config.get("driver_roles") or []),
         "profiles": [
             {"profile_id": profile_id, **dict(meta or {})}
             for profile_id, meta in sorted(catalog.items())
@@ -402,7 +631,16 @@ def write_corpus_manifest(
                 "split_role": str(run_meta.get("split_role") or ""),
                 "duration_seconds": int(run_meta.get("duration_seconds") or 0),
                 "trace_out": str(run_meta.get("trace_out") or ""),
+                "driver_log": str(run_meta.get("driver_log") or ""),
+                "driver_metrics": str(run_meta.get("driver_metrics") or ""),
+                "split_semantics": str(run_meta.get("split_semantics") or ""),
+                "target_container": dict(run_meta.get("target_container") or {}),
+                "supporting_containers": list(run_meta.get("supporting_containers") or []),
+                "driver_host": dict(run_meta.get("driver_host") or {}),
+                "trace_scope": dict(run_meta.get("trace_scope") or {}),
+                "driver_roles": list(run_meta.get("driver_roles") or []),
                 "phases": list(run_meta.get("phases") or []),
+                "phase_role_schedule": list(run_meta.get("phase_role_schedule") or []),
             }
             for run_meta in run_metas
         ],
