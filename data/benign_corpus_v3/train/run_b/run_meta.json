@@ -1,0 +1,642 @@
+{
+  "actors": [
+    {
+      "actor": "admin_user",
+      "arrival_rate_per_min": 6.0,
+      "enabled": true,
+      "think_time": {
+        "distribution": "uniform",
+        "max_seconds": 12,
+        "min_seconds": 4
+      },
+      "virtual_users": 1
+    },
+    {
+      "actor": "background_worker",
+      "arrival_rate_per_min": 6.0,
+      "enabled": true,
+      "think_time": {
+        "distribution": "lognormal",
+        "max_seconds": 18,
+        "min_seconds": 3,
+        "mu": 1.2,
+        "sigma": 0.45
+      },
+      "virtual_users": 1
+    },
+    {
+      "actor": "foreground_user",
+      "arrival_rate_per_min": 30.0,
+      "enabled": true,
+      "think_time": {
+        "distribution": "uniform",
+        "max_seconds": 5,
+        "min_seconds": 1
+      },
+      "virtual_users": 3
+    },
+    {
+      "actor": "health_checker",
+      "arrival_rate_per_min": 12.0,
+      "enabled": true,
+      "think_time": {
+        "distribution": "uniform",
+        "max_seconds": 10,
+        "min_seconds": 3
+      },
+      "virtual_users": 1
+    },
+    {
+      "actor": "readonly_user",
+      "arrival_rate_per_min": 45.0,
+      "enabled": true,
+      "think_time": {
+        "distribution": "uniform",
+        "max_seconds": 6,
+        "min_seconds": 1
+      },
+      "virtual_users": 3
+    }
+  ],
+  "auth_model": {
+    "admin_driver_level_state_machine": false,
+    "admin_login_endpoint": "real /api/login with bob admin user",
+    "bearer_token_session": true,
+    "driver_state_machine": true,
+    "real_session_cookie": false
+  },
+  "base_url": "http://172.18.0.2:5000",
+  "collection": {
+    "allow_skip_tracee": true,
+    "compose_file": "deploy/docker-compose.yml",
+    "readiness_timeout_seconds": 60,
+    "skip_compose_up": false,
+    "trace_log_name": "trace.log",
+    "tracee_enabled": true,
+    "tracee_events": "sched_process_exec,execve,openat,read,write,close,connect,accept,sendto,recvfrom,fork,clone,vfork,mmap,security_socket_connect,security_socket_accept",
+    "tracee_flush_seconds": 3,
+    "tracee_image": "aquasec/tracee:latest",
+    "tracee_output_format": "table",
+    "tracee_runtime_log_name": "tracee_runtime.log",
+    "tracee_settle_seconds": 3
+  },
+  "dataset": "benign_corpus_v3",
+  "duration_seconds": 4500,
+  "endpoint_map": [
+    {
+      "driver_level": false,
+      "fallback_for": "",
+      "fallback_reason": "",
+      "method": "GET",
+      "name": "admin_audit",
+      "note": "",
+      "path": "/api/admin/audit",
+      "real": true
+    },
+    {
+      "driver_level": false,
+      "fallback_for": "",
+      "fallback_reason": "",
+      "method": "GET",
+      "name": "admin_inspection",
+      "note": "",
+      "path": "/api/search",
+      "real": true
+    },
+    {
+      "driver_level": false,
+      "fallback_for": "",
+      "fallback_reason": "",
+      "method": "POST",
+      "name": "admin_login",
+      "note": "bob is initialized as admin in deploy/vuln_app/app.py",
+      "path": "/api/login",
+      "real": true
+    },
+    {
+      "driver_level": false,
+      "fallback_for": "",
+      "fallback_reason": "",
+      "method": "GET",
+      "name": "cache_warmup",
+      "note": "",
+      "path": "/api/items",
+      "real": true
+    },
+    {
+      "driver_level": false,
+      "fallback_for": "",
+      "fallback_reason": "",
+      "method": "GET",
+      "name": "catalog",
+      "note": "",
+      "path": "/api/items",
+      "real": true
+    },
+    {
+      "driver_level": false,
+      "fallback_for": "",
+      "fallback_reason": "",
+      "method": "GET",
+      "name": "health",
+      "note": "",
+      "path": "/health",
+      "real": true
+    },
+    {
+      "driver_level": false,
+      "fallback_for": "/api/items/{item_id}",
+      "fallback_reason": "demo app has only a catalog list endpoint, so driver selects an item from the list response",
+      "method": "GET",
+      "name": "item_detail",
+      "note": "",
+      "path": "/api/items",
+      "real": false
+    },
+    {
+      "driver_level": false,
+      "fallback_for": "legal backup-like read endpoint",
+      "fallback_reason": "demo app has no backup API, so read-only aggregate export is used as the legal near-miss behavior",
+      "method": "GET",
+      "name": "legal_backup_read",
+      "note": "",
+      "path": "/api/report/export",
+      "real": false
+    },
+    {
+      "driver_level": false,
+      "fallback_for": "",
+      "fallback_reason": "",
+      "method": "POST",
+      "name": "login",
+      "note": "",
+      "path": "/api/login",
+      "real": true
+    },
+    {
+      "driver_level": false,
+      "fallback_for": "",
+      "fallback_reason": "",
+      "method": "POST",
+      "name": "logout",
+      "note": "",
+      "path": "/api/logout",
+      "real": true
+    },
+    {
+      "driver_level": true,
+      "fallback_for": "metrics push or legal long-connection endpoint",
+      "fallback_reason": "demo app has no metrics ingestion or websocket route, so this is recorded as a driver-level benign action",
+      "method": "DRIVER",
+      "name": "metrics_push",
+      "note": "",
+      "path": "",
+      "real": false
+    },
+    {
+      "driver_level": false,
+      "fallback_for": "",
+      "fallback_reason": "",
+      "method": "POST",
+      "name": "order_checkout",
+      "note": "",
+      "path": "/api/order",
+      "real": true
+    },
+    {
+      "driver_level": false,
+      "fallback_for": "readonly order history endpoint",
+      "fallback_reason": "demo app exposes recent orders through /api/me for authenticated users",
+      "method": "GET",
+      "name": "order_read",
+      "note": "",
+      "path": "/api/me",
+      "real": false
+    },
+    {
+      "driver_level": false,
+      "fallback_for": "",
+      "fallback_reason": "",
+      "method": "GET",
+      "name": "order_status",
+      "note": "",
+      "path": "/api/order/{order_id}",
+      "real": true
+    },
+    {
+      "driver_level": false,
+      "fallback_for": "",
+      "fallback_reason": "",
+      "method": "GET",
+      "name": "periodic_sync",
+      "note": "",
+      "path": "/api/search",
+      "real": true
+    },
+    {
+      "driver_level": false,
+      "fallback_for": "readiness/liveness endpoint",
+      "fallback_reason": "demo app exposes /health but no separate readiness or liveness route",
+      "method": "GET",
+      "name": "readiness",
+      "note": "",
+      "path": "/health",
+      "real": false
+    },
+    {
+      "driver_level": false,
+      "fallback_for": "",
+      "fallback_reason": "",
+      "method": "GET",
+      "name": "report_export",
+      "note": "",
+      "path": "/api/report/export",
+      "real": true
+    },
+    {
+      "driver_level": false,
+      "fallback_for": "report status read endpoint",
+      "fallback_reason": "demo app has report export but no separate report status route",
+      "method": "GET",
+      "name": "report_status",
+      "note": "",
+      "path": "/api/report/export",
+      "real": false
+    },
+    {
+      "driver_level": false,
+      "fallback_for": "",
+      "fallback_reason": "",
+      "method": "GET",
+      "name": "search",
+      "note": "",
+      "path": "/api/search",
+      "real": true
+    },
+    {
+      "driver_level": false,
+      "fallback_for": "",
+      "fallback_reason": "",
+      "method": "GET",
+      "name": "session_read",
+      "note": "",
+      "path": "/api/me",
+      "real": true
+    },
+    {
+      "driver_level": false,
+      "fallback_for": "",
+      "fallback_reason": "",
+      "method": "GET",
+      "name": "static",
+      "note": "",
+      "path": "/",
+      "real": true
+    }
+  ],
+  "fallback_endpoints": [
+    {
+      "driver_level": "false",
+      "endpoint": "item_detail",
+      "fallback_for": "/api/items/{item_id}",
+      "path": "/api/items",
+      "reason": "demo app has only a catalog list endpoint, so driver selects an item from the list response"
+    },
+    {
+      "driver_level": "false",
+      "endpoint": "legal_backup_read",
+      "fallback_for": "legal backup-like read endpoint",
+      "path": "/api/report/export",
+      "reason": "demo app has no backup API, so read-only aggregate export is used as the legal near-miss behavior"
+    },
+    {
+      "driver_level": "true",
+      "endpoint": "metrics_push",
+      "fallback_for": "metrics push or legal long-connection endpoint",
+      "path": "",
+      "reason": "demo app has no metrics ingestion or websocket route, so this is recorded as a driver-level benign action"
+    },
+    {
+      "driver_level": "false",
+      "endpoint": "order_read",
+      "fallback_for": "readonly order history endpoint",
+      "path": "/api/me",
+      "reason": "demo app exposes recent orders through /api/me for authenticated users"
+    },
+    {
+      "driver_level": "false",
+      "endpoint": "readiness",
+      "fallback_for": "readiness/liveness endpoint",
+      "path": "/health",
+      "reason": "demo app exposes /health but no separate readiness or liveness route"
+    },
+    {
+      "driver_level": "false",
+      "endpoint": "report_status",
+      "fallback_for": "report status read endpoint",
+      "path": "/api/report/export",
+      "reason": "demo app has report export but no separate report status route"
+    }
+  ],
+  "missing_endpoints": [
+    "/api/items/{item_id}",
+    "legal backup-like read endpoint",
+    "metrics push or legal long-connection endpoint",
+    "readonly order history endpoint",
+    "readiness/liveness endpoint",
+    "report status read endpoint"
+  ],
+  "notes": [
+    "The workload driver records benign request events; Tracee, window activity, and manifest artifacts are produced by orchestration scripts.",
+    "The vulnerable demo app uses bearer tokens in Authorization headers, not real session cookies.",
+    "background_worker uses public/read-only endpoints and driver-level simulation for metrics_push; no service token is configured.",
+    "The driver does not call /ping or benchmark attack paths."
+  ],
+  "output_dir": "/home/yzx/DRSEC_v2/data/benign_corpus_v3/train/run_b",
+  "output_files": {
+    "driver_log": "/home/yzx/DRSEC_v2/data/benign_corpus_v3/train/run_b/driver.log",
+    "request_events": "/home/yzx/DRSEC_v2/data/benign_corpus_v3/train/run_b/request_events.jsonl",
+    "run_meta": "/home/yzx/DRSEC_v2/data/benign_corpus_v3/train/run_b/run_meta.json",
+    "workload_summary": "/home/yzx/DRSEC_v2/data/benign_corpus_v3/train/run_b/workload_summary.json"
+  },
+  "phase": "formal_benign_collection_v3",
+  "phase_role_schedule": [
+    {
+      "driver_role": "admin_user",
+      "duration_seconds": 900,
+      "end_offset_seconds": 900.0,
+      "phase_id": "admin_readonly_mixed",
+      "profile_id": "admin_readonly_mixed",
+      "role_profile_id": "admin_readonly_mixed",
+      "start_offset_seconds": 0.0
+    },
+    {
+      "driver_role": "background_worker",
+      "duration_seconds": 900,
+      "end_offset_seconds": 900.0,
+      "phase_id": "admin_readonly_mixed",
+      "profile_id": "admin_readonly_mixed",
+      "role_profile_id": "admin_readonly_mixed",
+      "start_offset_seconds": 0.0
+    },
+    {
+      "driver_role": "foreground_user",
+      "duration_seconds": 900,
+      "end_offset_seconds": 900.0,
+      "phase_id": "admin_readonly_mixed",
+      "profile_id": "admin_readonly_mixed",
+      "role_profile_id": "admin_readonly_mixed",
+      "start_offset_seconds": 0.0
+    },
+    {
+      "driver_role": "health_checker",
+      "duration_seconds": 900,
+      "end_offset_seconds": 900.0,
+      "phase_id": "admin_readonly_mixed",
+      "profile_id": "admin_readonly_mixed",
+      "role_profile_id": "admin_readonly_mixed",
+      "start_offset_seconds": 0.0
+    },
+    {
+      "driver_role": "readonly_user",
+      "duration_seconds": 900,
+      "end_offset_seconds": 900.0,
+      "phase_id": "admin_readonly_mixed",
+      "profile_id": "admin_readonly_mixed",
+      "role_profile_id": "admin_readonly_mixed",
+      "start_offset_seconds": 0.0
+    },
+    {
+      "driver_role": "admin_user",
+      "duration_seconds": 1200,
+      "end_offset_seconds": 2100.0,
+      "phase_id": "report_background_mixed",
+      "profile_id": "report_background_mixed",
+      "role_profile_id": "report_background_mixed",
+      "start_offset_seconds": 900.0
+    },
+    {
+      "driver_role": "background_worker",
+      "duration_seconds": 1200,
+      "end_offset_seconds": 2100.0,
+      "phase_id": "report_background_mixed",
+      "profile_id": "report_background_mixed",
+      "role_profile_id": "report_background_mixed",
+      "start_offset_seconds": 900.0
+    },
+    {
+      "driver_role": "foreground_user",
+      "duration_seconds": 1200,
+      "end_offset_seconds": 2100.0,
+      "phase_id": "report_background_mixed",
+      "profile_id": "report_background_mixed",
+      "role_profile_id": "report_background_mixed",
+      "start_offset_seconds": 900.0
+    },
+    {
+      "driver_role": "health_checker",
+      "duration_seconds": 1200,
+      "end_offset_seconds": 2100.0,
+      "phase_id": "report_background_mixed",
+      "profile_id": "report_background_mixed",
+      "role_profile_id": "report_background_mixed",
+      "start_offset_seconds": 900.0
+    },
+    {
+      "driver_role": "readonly_user",
+      "duration_seconds": 1200,
+      "end_offset_seconds": 2100.0,
+      "phase_id": "report_background_mixed",
+      "profile_id": "report_background_mixed",
+      "role_profile_id": "report_background_mixed",
+      "start_offset_seconds": 900.0
+    },
+    {
+      "driver_role": "admin_user",
+      "duration_seconds": 900,
+      "end_offset_seconds": 3000.0,
+      "phase_id": "normal_business_mixed",
+      "profile_id": "normal_business_mixed",
+      "role_profile_id": "normal_business_mixed",
+      "start_offset_seconds": 2100.0
+    },
+    {
+      "driver_role": "background_worker",
+      "duration_seconds": 900,
+      "end_offset_seconds": 3000.0,
+      "phase_id": "normal_business_mixed",
+      "profile_id": "normal_business_mixed",
+      "role_profile_id": "normal_business_mixed",
+      "start_offset_seconds": 2100.0
+    },
+    {
+      "driver_role": "foreground_user",
+      "duration_seconds": 900,
+      "end_offset_seconds": 3000.0,
+      "phase_id": "normal_business_mixed",
+      "profile_id": "normal_business_mixed",
+      "role_profile_id": "normal_business_mixed",
+      "start_offset_seconds": 2100.0
+    },
+    {
+      "driver_role": "health_checker",
+      "duration_seconds": 900,
+      "end_offset_seconds": 3000.0,
+      "phase_id": "normal_business_mixed",
+      "profile_id": "normal_business_mixed",
+      "role_profile_id": "normal_business_mixed",
+      "start_offset_seconds": 2100.0
+    },
+    {
+      "driver_role": "readonly_user",
+      "duration_seconds": 900,
+      "end_offset_seconds": 3000.0,
+      "phase_id": "normal_business_mixed",
+      "profile_id": "normal_business_mixed",
+      "role_profile_id": "normal_business_mixed",
+      "start_offset_seconds": 2100.0
+    },
+    {
+      "driver_role": "admin_user",
+      "duration_seconds": 900,
+      "end_offset_seconds": 3900.0,
+      "phase_id": "catalog_order_mixed",
+      "profile_id": "catalog_order_mixed",
+      "role_profile_id": "catalog_order_mixed",
+      "start_offset_seconds": 3000.0
+    },
+    {
+      "driver_role": "background_worker",
+      "duration_seconds": 900,
+      "end_offset_seconds": 3900.0,
+      "phase_id": "catalog_order_mixed",
+      "profile_id": "catalog_order_mixed",
+      "role_profile_id": "catalog_order_mixed",
+      "start_offset_seconds": 3000.0
+    },
+    {
+      "driver_role": "foreground_user",
+      "duration_seconds": 900,
+      "end_offset_seconds": 3900.0,
+      "phase_id": "catalog_order_mixed",
+      "profile_id": "catalog_order_mixed",
+      "role_profile_id": "catalog_order_mixed",
+      "start_offset_seconds": 3000.0
+    },
+    {
+      "driver_role": "health_checker",
+      "duration_seconds": 900,
+      "end_offset_seconds": 3900.0,
+      "phase_id": "catalog_order_mixed",
+      "profile_id": "catalog_order_mixed",
+      "role_profile_id": "catalog_order_mixed",
+      "start_offset_seconds": 3000.0
+    },
+    {
+      "driver_role": "readonly_user",
+      "duration_seconds": 900,
+      "end_offset_seconds": 3900.0,
+      "phase_id": "catalog_order_mixed",
+      "profile_id": "catalog_order_mixed",
+      "role_profile_id": "catalog_order_mixed",
+      "start_offset_seconds": 3000.0
+    },
+    {
+      "driver_role": "admin_user",
+      "duration_seconds": 600,
+      "end_offset_seconds": 4500.0,
+      "phase_id": "maintenance_near_miss_mixed",
+      "profile_id": "maintenance_near_miss_mixed",
+      "role_profile_id": "maintenance_near_miss_mixed",
+      "start_offset_seconds": 3900.0
+    },
+    {
+      "driver_role": "background_worker",
+      "duration_seconds": 600,
+      "end_offset_seconds": 4500.0,
+      "phase_id": "maintenance_near_miss_mixed",
+      "profile_id": "maintenance_near_miss_mixed",
+      "role_profile_id": "maintenance_near_miss_mixed",
+      "start_offset_seconds": 3900.0
+    },
+    {
+      "driver_role": "foreground_user",
+      "duration_seconds": 600,
+      "end_offset_seconds": 4500.0,
+      "phase_id": "maintenance_near_miss_mixed",
+      "profile_id": "maintenance_near_miss_mixed",
+      "role_profile_id": "maintenance_near_miss_mixed",
+      "start_offset_seconds": 3900.0
+    },
+    {
+      "driver_role": "health_checker",
+      "duration_seconds": 600,
+      "end_offset_seconds": 4500.0,
+      "phase_id": "maintenance_near_miss_mixed",
+      "profile_id": "maintenance_near_miss_mixed",
+      "role_profile_id": "maintenance_near_miss_mixed",
+      "start_offset_seconds": 3900.0
+    },
+    {
+      "driver_role": "readonly_user",
+      "duration_seconds": 600,
+      "end_offset_seconds": 4500.0,
+      "phase_id": "maintenance_near_miss_mixed",
+      "profile_id": "maintenance_near_miss_mixed",
+      "role_profile_id": "maintenance_near_miss_mixed",
+      "start_offset_seconds": 3900.0
+    }
+  ],
+  "phases": [
+    {
+      "duration_seconds": 900,
+      "end_offset_seconds": 900.0,
+      "name": "admin_readonly_mixed",
+      "phase_id": "admin_readonly_mixed",
+      "profile_id": "admin_readonly_mixed",
+      "start_offset_seconds": 0.0
+    },
+    {
+      "duration_seconds": 1200,
+      "end_offset_seconds": 2100.0,
+      "name": "report_background_mixed",
+      "phase_id": "report_background_mixed",
+      "profile_id": "report_background_mixed",
+      "start_offset_seconds": 900.0
+    },
+    {
+      "duration_seconds": 900,
+      "end_offset_seconds": 3000.0,
+      "name": "normal_business_mixed",
+      "phase_id": "normal_business_mixed",
+      "profile_id": "normal_business_mixed",
+      "start_offset_seconds": 2100.0
+    },
+    {
+      "duration_seconds": 900,
+      "end_offset_seconds": 3900.0,
+      "name": "catalog_order_mixed",
+      "phase_id": "catalog_order_mixed",
+      "profile_id": "catalog_order_mixed",
+      "start_offset_seconds": 3000.0
+    },
+    {
+      "duration_seconds": 600,
+      "end_offset_seconds": 4500.0,
+      "name": "maintenance_near_miss_mixed",
+      "phase_id": "maintenance_near_miss_mixed",
+      "profile_id": "maintenance_near_miss_mixed",
+      "start_offset_seconds": 3900.0
+    }
+  ],
+  "random_seed": 20260502,
+  "rate_model": {
+    "arrival_distribution": "exponential_interarrival_with_configured_random_think_time_floor",
+    "arrival_rate_per_min_scope": "actor_total_divided_across_virtual_users"
+  },
+  "run_id": "run_b",
+  "split": "train",
+  "time_bin_seconds": 2,
+  "window_seconds": 30,
+  "workload_model": "multi_actor_arrival_rate"
+}

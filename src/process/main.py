@@ -110,10 +110,24 @@ def main() -> None:
     # build_bbk 命令
     build_bbk_parser = subparsers.add_parser('build_bbk', help='构建/更新 BBK（Benign Behavior Knowledge）基线库')
     build_bbk_parser.add_argument('log_file', nargs='?', default='', help='可选：单个良性Tracee日志文件路径（兼容 bootstrap 模式）')
-    build_bbk_parser.add_argument('--logs-dir', default='', help='推荐：benign corpus 目录，结构为 data/benign_corpus_v3/<run_id>/trace.log')
+    build_bbk_parser.add_argument(
+        '--logs-dir',
+        default='',
+        help='推荐：benign corpus 根目录；若存在 sampled_train_windows.jsonl，则按采样清单训练',
+    )
+    build_bbk_parser.add_argument(
+        '--sampled-train-windows',
+        default='',
+        help='显式指定 sampled_train_windows.jsonl；训练只消费其中 split=train 且非 empty 的窗口',
+    )
+    build_bbk_parser.add_argument(
+        '--full-window-index',
+        default='',
+        help='可选：full_window_index.jsonl，用于读取 calibration/holdout 窗口；默认使用 sampled 文件同目录下的文件',
+    )
     build_bbk_parser.add_argument('--window-seconds', type=int, default=DEFAULT_BBK_TRAIN_WINDOW_SECONDS, help='训练窗口长度（秒，默认 30s）')
     build_bbk_parser.add_argument('--time-bin-seconds', type=int, default=DEFAULT_TIME_BIN_SECONDS, help='边时间分桶长度（秒）')
-    build_bbk_parser.add_argument('--persist-windows-dir', default='', help='可选：持久化窗口图的输出目录')
+    build_bbk_parser.add_argument('--persist-windows-dir', default='', help='可选：持久化窗口图/训练 manifest 的输出目录')
 
     build_ark_parser = subparsers.add_parser('build_ark', help='构建 ARK（Attack Representation Knowledge）逻辑图')
 
@@ -231,6 +245,8 @@ def main() -> None:
         build_bbk(
             args.log_file,
             logs_dir=str(args.logs_dir or ""),
+            sampled_train_windows=str(args.sampled_train_windows or ""),
+            full_window_index=str(args.full_window_index or ""),
             persist_windows_dir=str(args.persist_windows_dir or ""),
             window_seconds=int(args.window_seconds),
             time_bin_seconds=int(args.time_bin_seconds),

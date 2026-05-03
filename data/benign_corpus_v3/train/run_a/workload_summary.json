@@ -1,0 +1,101 @@
+{
+  "driver_level_action_count": 45,
+  "duration_seconds": 4500,
+  "elapsed_seconds": 4500.0,
+  "failure_count": 0,
+  "fallback_endpoints": [
+    {
+      "driver_level": "false",
+      "endpoint": "item_detail",
+      "fallback_for": "/api/items/{item_id}",
+      "path": "/api/items",
+      "reason": "demo app has only a catalog list endpoint, so driver selects an item from the list response"
+    },
+    {
+      "driver_level": "false",
+      "endpoint": "legal_backup_read",
+      "fallback_for": "legal backup-like read endpoint",
+      "path": "/api/report/export",
+      "reason": "demo app has no backup API, so read-only aggregate export is used as the legal near-miss behavior"
+    },
+    {
+      "driver_level": "true",
+      "endpoint": "metrics_push",
+      "fallback_for": "metrics push or legal long-connection endpoint",
+      "path": "",
+      "reason": "demo app has no metrics ingestion or websocket route, so this is recorded as a driver-level benign action"
+    },
+    {
+      "driver_level": "false",
+      "endpoint": "order_read",
+      "fallback_for": "readonly order history endpoint",
+      "path": "/api/me",
+      "reason": "demo app exposes recent orders through /api/me for authenticated users"
+    },
+    {
+      "driver_level": "false",
+      "endpoint": "readiness",
+      "fallback_for": "readiness/liveness endpoint",
+      "path": "/health",
+      "reason": "demo app exposes /health but no separate readiness or liveness route"
+    },
+    {
+      "driver_level": "false",
+      "endpoint": "report_status",
+      "fallback_for": "report status read endpoint",
+      "path": "/api/report/export",
+      "reason": "demo app has report export but no separate report status route"
+    }
+  ],
+  "missing_endpoints": [
+    "/api/items/{item_id}",
+    "legal backup-like read endpoint",
+    "metrics push or legal long-connection endpoint",
+    "readonly order history endpoint",
+    "readiness/liveness endpoint",
+    "report status read endpoint"
+  ],
+  "per_action_request_count": {
+    "admin_audit": 122,
+    "admin_inspection": 83,
+    "admin_login": 25,
+    "cache_warmup": 78,
+    "catalog": 964,
+    "health_check": 432,
+    "item_detail": 895,
+    "legal_backup_read": 50,
+    "login": 431,
+    "logout": 449,
+    "metrics_push": 45,
+    "order_checkout": 175,
+    "order_read": 352,
+    "order_status": 178,
+    "periodic_sync": 76,
+    "readiness_check": 83,
+    "report_export": 92,
+    "report_status": 77,
+    "search": 996,
+    "session_read": 93,
+    "static_read": 111
+  },
+  "per_actor_request_count": {
+    "admin_user": 331,
+    "background_worker": 417,
+    "foreground_user": 1975,
+    "health_checker": 550,
+    "readonly_user": 2534
+  },
+  "per_profile_request_count": {
+    "admin_readonly_audit": 331,
+    "auth_read_session": 949,
+    "background_worker": 249,
+    "catalog_browse_search": 3207,
+    "health_idle_poll": 626,
+    "order_write_checkout": 353,
+    "report_export_batch": 92
+  },
+  "retry_count": 0,
+  "state_machine_violations_prevented": 0,
+  "success_count": 5807,
+  "total_requests": 5807
+}

@@ -1,0 +1,77 @@
+{
+  "activity_level_counts": {
+    "active": 4,
+    "burst": 148,
+    "empty": 0,
+    "idle": 0,
+    "low_activity": 0
+  },
+  "classification_policy": {
+    "burst_edge_threshold": 150,
+    "burst_request_threshold": 30,
+    "empty_edge_threshold": 0,
+    "idle_edge_threshold": 5,
+    "idle_request_threshold": 1,
+    "low_edge_threshold": 30,
+    "low_request_threshold": 5
+  },
+  "dataset": "benign_corpus_v3",
+  "end_ts": "2026-05-02T13:23:34Z",
+  "errors": [],
+  "generated_at": "2026-05-02T13:23:46.663798Z",
+  "graph_stats_source": "trace_approximation",
+  "request_event_stats": {
+    "failure_count": 0,
+    "per_actor_count": {
+      "admin_user": 331,
+      "background_worker": 417,
+      "foreground_user": 1975,
+      "health_checker": 550,
+      "readonly_user": 2534
+    },
+    "per_profile_count": {
+      "admin_readonly_audit": 331,
+      "auth_read_session": 949,
+      "background_worker": 249,
+      "catalog_browse_search": 3207,
+      "health_idle_poll": 626,
+      "order_write_checkout": 353,
+      "report_export_batch": 92
+    },
+    "request_events_total": 5807,
+    "request_lines_failed": 0,
+    "request_lines_total": 5807,
+    "retry_count": 0,
+    "success_count": 5807
+  },
+  "run_dir": "/home/yzx/DRSEC_v2/data/benign_corpus_v3/train/run_a",
+  "run_id": "run_a",
+  "split": "train",
+  "start_ts": "2026-05-02T12:07:43Z",
+  "time_bin_seconds": 2,
+  "time_bounds": {
+    "end_source": "collection_summary",
+    "start_source": "collection_summary",
+    "window_coverage_end_ts": "2026-05-02T13:23:43Z"
+  },
+  "trace_stats": {
+    "parse_error_examples": [
+      "12:07:49:705125  f064252fb2ff  deploy-vuln-app: 0      Thread-2 (proce  1      /5104    8      /5464    124708645670912  mmap                      addr: 0x0, le",
+      "12:07:49:705148  f064252fb2ff  deploy-vuln-app: 0      Thread-2 (proce  1      /5104    8      /5464    250              recvfrom                  sockfd: 4, bu",
+      "12:07:49:705489  f064252fb2ff  deploy-vuln-app: 0      Thread-2 (proce  1      /5104    8      /5464    124708645601280  mmap                      addr: 0x0, le",
+      "12:07:49:705642  f064252fb2ff  deploy-vuln-app: 0      Thread-2 (proce  1      /5104    8      /5464    124708645621760  mmap                      addr: 0x0, le",
+      "12:07:49:705701  f064252fb2ff  deploy-vuln-app: 0      Thread-2 (proce  1      /5104    8      /5464    124708645531648  mmap                      addr: 0x0, le"
+    ],
+    "trace_lines_failed": 97446,
+    "trace_lines_parsed": 25726,
+    "trace_lines_total": 123173,
+    "trace_log_exists": true,
+    "trace_log_size_bytes": 27692054
+  },
+  "warnings": [
+    "approximate_graph_stats"
+  ],
+  "window_count": 152,
+  "window_seconds": 30,
+  "windows_dir": ""
+}

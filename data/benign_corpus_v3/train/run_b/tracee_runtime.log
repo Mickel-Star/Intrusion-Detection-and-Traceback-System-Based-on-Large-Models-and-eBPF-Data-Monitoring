@@ -1,0 +1,14 @@
+compose up: docker compose -f /home/yzx/DRSEC_v2/deploy/docker-compose.yml up -d --build vuln-app
+ Container drsec-target Creating 
+ Container drsec-target Created 
+ Container drsec-target Starting 
+ Container drsec-target Started 
+Error response from daemon: No such container: tracee_benign_v3_run_b
+tracee command: docker run --name tracee_benign_v3_run_b --rm -i --privileged --pid=host --cgroupns=host --network=host -v /lib/modules:/lib/modules:ro -v /usr/src:/usr/src:ro -v /etc/os-release:/etc/os-release-host:ro -v /var/run/docker.sock:/var/run/docker.sock -v /sys/fs/cgroup:/sys/fs/cgroup:ro aquasec/tracee:latest --containers enrich=true --containers sockets.docker=/var/run/docker.sock --containers cgroupfs.path=/sys/fs/cgroup --containers cgroupfs.force=true --scope container --scope comm\!=tracee --events sched_process_exec\,execve\,openat\,read\,write\,close\,connect\,accept\,sendto\,recvfrom\,fork\,clone\,vfork\,mmap\,security_socket_connect\,security_socket_accept --output table --output option:parse-arguments 
+driver command: /home/yzx/DRSEC_v2/.venv/bin/python -m src.process.benign_workload_driver --config /home/yzx/DRSEC_v2/data/benign_corpus_v3/train/run_b/effective_config.yaml --output-dir /home/yzx/DRSEC_v2/data/benign_corpus_v3/train/run_b --duration-seconds 4500 
+tracee_benign_v3_run_b
+ Container drsec-target Stopping 
+ Container drsec-target Stopped 
+Going to remove drsec-target
+ Container drsec-target Removing 
+ Container drsec-target Removed 

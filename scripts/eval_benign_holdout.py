@@ -75,7 +75,7 @@ def evaluate_holdout_run(
     window_seconds: int,
     time_bin_seconds: int,
 ) -> dict[str, Any]:
-    run_dir = corpus_dir / run_id
+    run_dir = resolve_holdout_run_dir(corpus_dir, run_id)
     trace_path = run_dir / "trace.log"
     run_meta_path = run_dir / "run_meta.json"
     if not trace_path.exists():
@@ -84,7 +84,7 @@ def evaluate_holdout_run(
         raise FileNotFoundError(f"holdout run_meta not found: {run_meta_path}")
 
     run_meta = read_json(str(run_meta_path)) or {}
-    split_role = str(run_meta.get("split_role") or "").strip().lower()
+    split_role = str(run_meta.get("split_role") or run_meta.get("split") or "").strip().lower()
     if split_role != "holdout":
         raise ValueError(f"requested run is not marked holdout: {run_id} ({split_role})")
     warnings: list[str] = []
@@ -99,13 +99,18 @@ def evaluate_holdout_run(
             f"time_bin_seconds mismatch: run_meta={meta_time_bin_seconds} requested={int(time_bin_seconds)}"
         )
 
-    windows_dir = run_dir / f"windows_{int(window_seconds):02d}s"
-    total_windows = materialize_windows(
-        trace_path,
-        windows_dir,
-        window_seconds=int(window_seconds),
-        time_bin_seconds=int(time_bin_seconds),
-    )
+    existing_windows_dir = run_dir / "windows"
+    if existing_windows_dir.is_dir() and list(existing_windows_dir.glob("window_*.json")):
+        windows_dir = existing_windows_dir
+        total_windows = len(list(existing_windows_dir.glob("window_*.json")))
+    else:
+        windows_dir = run_dir / f"windows_{int(window_seconds):02d}s"
+        total_windows = materialize_windows(
+            trace_path,
+            windows_dir,
+            window_seconds=int(window_seconds),
+            time_bin_seconds=int(time_bin_seconds),
+        )
 
     engine = AnalysisEngine()
     alerts = engine.detect_window_alerts_from_windows(str(windows_dir), threshold=float(threshold))
@@ -166,6 +171,24 @@ def evaluate_holdout_run(
             for alert in alerts
         },
     }
+
+
+def resolve_holdout_run_dir(corpus_dir: Path, run_id: str) -> Path:
+    requested = Path(str(run_id))
+    candidates: list[Path] = []
+    if requested.is_absolute():
+        candidates.append(requested)
+    else:
+        candidates.extend(
+            [
+                corpus_dir / "holdout" / requested,
+                corpus_dir / requested,
+            ]
+        )
+    for candidate in candidates:
+        if candidate.is_dir():
+            return candidate
+    return candidates[0]
 
 
 def main() -> None:

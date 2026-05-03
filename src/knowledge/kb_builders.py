@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import json
 import math
 import os
 import random
@@ -89,6 +90,8 @@ def build_bbk(
     log_file: str = "",
     *,
     logs_dir: str = "",
+    sampled_train_windows: str = "",
+    full_window_index: str = "",
     persist_windows_dir: str = "",
     window_seconds: int = DEFAULT_BBK_TRAIN_WINDOW_SECONDS,
     time_bin_seconds: int = DEFAULT_TIME_BIN_SECONDS,
@@ -96,6 +99,22 @@ def build_bbk(
     """构建 BBK，并以 manifest 为桥梁执行两阶段 GMAE 训练。"""
 
     KB_PATHS.ensure_layout()
+
+    sampled_index_path = _resolve_sampled_train_windows_path(
+        log_file=log_file,
+        logs_dir=logs_dir,
+        sampled_train_windows=sampled_train_windows,
+    )
+    if sampled_index_path:
+        _build_bbk_from_sampled_train_windows(
+            sampled_train_windows_path=sampled_index_path,
+            full_window_index_path=str(full_window_index or ""),
+            logs_dir=str(logs_dir or ""),
+            persist_windows_dir=str(persist_windows_dir or ""),
+            window_seconds=int(window_seconds),
+            time_bin_seconds=int(time_bin_seconds),
+        )
+        return
 
     from src.knowledge.benign_behavior_kb import BenignBehaviorKnowledgeBase
     from src.process.log_parser import TraceeLogParser
@@ -240,6 +259,461 @@ def build_ark() -> None:
     payload = nx.node_link_data(graph, edges="links")
     write_json(KB_PATHS.ark_graph_path, payload)
     print(f"✅ ARK 逻辑图已保存: {KB_PATHS.ark_graph_path}")
+
+
+def _resolve_sampled_train_windows_path(
+    *,
+    log_file: str,
+    logs_dir: str,
+    sampled_train_windows: str,
+) -> str:
+    explicit = str(sampled_train_windows or "").strip()
+    if explicit:
+        path = Path(explicit).expanduser().resolve()
+        if not path.exists() or not path.is_file():
+            raise FileNotFoundError(f"sampled_train_windows.jsonl not found: {path}")
+        return str(path)
+
+    log_file_value = str(log_file or "").strip()
+    if log_file_value:
+        path = Path(log_file_value).expanduser()
+        if path.name == "sampled_train_windows.jsonl":
+            resolved = path.resolve()
+            if not resolved.exists() or not resolved.is_file():
+                raise FileNotFoundError(f"sampled_train_windows.jsonl not found: {resolved}")
+            return str(resolved)
+
+    logs_dir_value = str(logs_dir or "").strip()
+    if logs_dir_value:
+        candidate = Path(logs_dir_value).expanduser().resolve() / "sampled_train_windows.jsonl"
+        if candidate.exists() and candidate.is_file():
+            return str(candidate)
+
+    return ""
+
+
+def _build_bbk_from_sampled_train_windows(
+    *,
+    sampled_train_windows_path: str,
+    full_window_index_path: str,
+    logs_dir: str,
+    persist_windows_dir: str,
+    window_seconds: int,
+    time_bin_seconds: int,
+) -> None:
+    """从 benign manifest v3 的采样清单训练 BBK/GMAE。
+
+    训练窗口只来自 sampled_train_windows.jsonl；full_window_index.jsonl 中的
+    calibration/holdout 只进入校准/评估元数据，不参与 BBK 频次统计或 GMAE 参数更新。
+    """
+
+    from src.knowledge.benign_behavior_kb import BenignBehaviorKnowledgeBase
+    from src.process.streaming_reduction import iter_reduced_edges
+    from src.process.window_io import load_window_graph
+
+    sampled_path = Path(sampled_train_windows_path).expanduser().resolve()
+    corpus_dir = sampled_path.parent
+    logs_dir_value = str(logs_dir or "").strip()
+    if logs_dir_value:
+        logs_root = Path(logs_dir_value).expanduser().resolve()
+        if logs_root.exists() and logs_root.is_dir():
+            corpus_dir = logs_root
+
+    full_index_path = _resolve_full_window_index_path(
+        corpus_dir=corpus_dir,
+        explicit_path=full_window_index_path,
+    )
+    activity_cache: dict[str, list[dict[str, Any]]] = {}
+    warnings: list[str] = []
+
+    sampled_rows = _read_jsonl_objects(sampled_path)
+    train_records, train_skips = _records_from_window_index_rows(
+        sampled_rows,
+        corpus_dir=corpus_dir,
+        split_filter={"train"},
+        require_sampled_train=True,
+        activity_cache=activity_cache,
+        warnings=warnings,
+    )
+
+    calibration_records: list[dict[str, Any]] = []
+    holdout_records: list[dict[str, Any]] = []
+    if full_index_path:
+        full_rows = _read_jsonl_objects(Path(full_index_path))
+        eval_records, eval_skips = _records_from_window_index_rows(
+            full_rows,
+            corpus_dir=corpus_dir,
+            split_filter={"calibration", "holdout"},
+            require_sampled_train=False,
+            activity_cache=activity_cache,
+            warnings=warnings,
+        )
+        calibration_records = [
+            record for record in eval_records if _normalize_split_role(record.get("split_role") or "") == "calibration"
+        ]
+        holdout_records = [
+            record for record in eval_records if _normalize_split_role(record.get("split_role") or "") == "holdout"
+        ]
+    else:
+        eval_skips = {"missing_graph_path": 0, "missing_graph_file": 0, "empty": 0, "wrong_split": 0, "load_failed": 0}
+        warnings.append(f"full_window_index_missing:{corpus_dir / 'full_window_index.jsonl'}")
+
+    if not train_records:
+        raise RuntimeError(
+            "sampled_train_windows produced no trainable non-empty train windows; "
+            f"path={sampled_path}"
+        )
+
+    manifest_dir, persist_manifest, manifest_dir_preexisting = _prepare_gmae_manifest_dir(persist_windows_dir)
+    manifest_path = os.path.join(manifest_dir, GMAE_MANIFEST_FILENAME)
+    records = [*train_records, *calibration_records, *holdout_records]
+    total_nodes = int(sum(int(record.get("node_count") or 0) for record in records))
+    total_edges = int(sum(int(record.get("edge_count") or 0) for record in records))
+
+    store = BenignBehaviorKnowledgeBase(
+        db_path=KB_PATHS.bbk_db_path,
+        model_path=KB_PATHS.bbk_word2vec_path,
+    )
+    try:
+        print(f"📦 Stage 1/2: fitting BBK from sampled train windows ({sampled_path})")
+        for record in train_records:
+            graph = load_window_graph(str(record["path"]))
+            metas = {
+                str(node_id): dict((node_data or {}).get("meta") or {})
+                for node_id, node_data in graph.nodes(data=True)
+            }
+            store.update_from_edges(iter_reduced_edges(graph), metas)
+            store.update_word2vec_from_metas(metas)
+    finally:
+        store.close()
+
+    sources = _sources_from_manifest_records(records)
+    manifest_payload = _write_gmae_manifest(
+        manifest_path=manifest_path,
+        log_file="",
+        logs_dir=str(corpus_dir),
+        source_mode="sampled_train_windows",
+        sources=sources,
+        windows_dir=manifest_dir,
+        persist_windows=persist_manifest,
+        window_seconds=int(window_seconds),
+        reduction_config=_bbk_reduction_config_payload(
+            window_seconds=int(window_seconds),
+            time_bin_seconds=int(time_bin_seconds),
+        ),
+        records=records,
+    )
+    manifest_payload["input_files"] = {
+        "sampled_train_windows": str(sampled_path),
+        "full_window_index": str(full_index_path or ""),
+    }
+    manifest_payload["input_filtering"] = {
+        "train_source": "sampled_train_windows.jsonl",
+        "train_predicate": "split == train and activity_level != empty and graph is non-empty",
+        "calibration_source": "full_window_index.jsonl split == calibration",
+        "holdout_source": "full_window_index.jsonl split == holdout",
+        "train_skips": dict(train_skips),
+        "eval_skips": dict(eval_skips),
+        "warnings": sorted(set(warnings)),
+    }
+    write_json(manifest_path, manifest_payload)
+
+    print(
+        f"🧠 Stage 2/2: offline GMAE training on sampled train windows "
+        f"(train={len(train_records)}, calibration={len(calibration_records)}, "
+        f"holdout={len(holdout_records)}, manifest={manifest_path})"
+    )
+    runtime = _init_gmae_runtime()
+    training_result = _train_gmae_from_manifest(runtime, manifest_path)
+
+    staging_cleaned = False
+    if not persist_manifest and not bool(training_result.get("rejected_reason")):
+        try:
+            shutil.rmtree(manifest_dir)
+            staging_cleaned = True
+        except OSError:
+            staging_cleaned = False
+
+    _save_gmae_runtime(
+        runtime=runtime,
+        manifest_payload=manifest_payload,
+        training_result=training_result,
+        context={
+            "log_file": "",
+            "logs_dir": str(corpus_dir),
+            "source_mode": "sampled_train_windows",
+            "windows_dir": manifest_dir,
+            "persist_windows": bool(persist_manifest),
+            "windows_dir_preexisting": bool(manifest_dir_preexisting),
+            "staging_cleaned": bool(staging_cleaned),
+            "window_nodes_sum": int(total_nodes),
+            "window_edges_sum": int(total_edges),
+        },
+    )
+
+    if training_result.get("rejected_reason"):
+        raise RuntimeError(str(training_result["rejected_reason"]))
+
+    print(
+        "\n✅ BBK/GMAE sampled-train pipeline complete: "
+        f"train={len(train_records)}, calibration={len(calibration_records)}, "
+        f"holdout={len(holdout_records)}, skipped_train={dict(train_skips)}"
+    )
+    for warning in sorted(set(warnings))[:20]:
+        print(f"Warning: {warning}")
+
+
+def _resolve_full_window_index_path(corpus_dir: Path, explicit_path: str) -> str:
+    value = str(explicit_path or "").strip()
+    if value:
+        path = Path(value).expanduser().resolve()
+        if not path.exists() or not path.is_file():
+            raise FileNotFoundError(f"full_window_index.jsonl not found: {path}")
+        return str(path)
+
+    candidate = corpus_dir / "full_window_index.jsonl"
+    if candidate.exists() and candidate.is_file():
+        return str(candidate.resolve())
+    return ""
+
+
+def _read_jsonl_objects(path: Path) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    with path.open("r", encoding="utf-8", errors="ignore") as fp:
+        for line_no, line in enumerate(fp, start=1):
+            text = line.strip()
+            if not text:
+                continue
+            try:
+                payload = json.loads(text)
+            except json.JSONDecodeError as exc:
+                raise ValueError(f"{path}:{line_no}: invalid JSON: {exc}") from exc
+            if not isinstance(payload, dict):
+                raise ValueError(f"{path}:{line_no}: expected JSON object")
+            rows.append(payload)
+    return rows
+
+
+def _records_from_window_index_rows(
+    rows: list[dict[str, Any]],
+    *,
+    corpus_dir: Path,
+    split_filter: set[str],
+    require_sampled_train: bool,
+    activity_cache: dict[str, list[dict[str, Any]]],
+    warnings: list[str],
+) -> tuple[list[dict[str, Any]], dict[str, int]]:
+    from src.process.window_io import load_window_graph
+
+    records: list[dict[str, Any]] = []
+    skip_counts = {
+        "wrong_split": 0,
+        "empty": 0,
+        "missing_graph_path": 0,
+        "missing_graph_file": 0,
+        "load_failed": 0,
+    }
+    seen_train_keys: set[tuple[str, str]] = set()
+
+    for idx, raw_row in enumerate(rows, start=1):
+        row = dict(raw_row)
+        activity_row = _load_activity_row_for_window(row, corpus_dir, activity_cache, warnings)
+        merged = dict(activity_row)
+        merged.update(row)
+
+        split = str(merged.get("split") or "").strip().lower()
+        if split not in split_filter:
+            skip_counts["wrong_split"] += 1
+            continue
+        if require_sampled_train and split != "train":
+            skip_counts["wrong_split"] += 1
+            continue
+
+        activity_level = str(merged.get("activity_level") or "").strip().lower()
+        if not activity_level or activity_level == "empty":
+            skip_counts["empty"] += 1
+            continue
+
+        graph_path_value = str(merged.get("window_graph_path") or "").strip()
+        if not graph_path_value:
+            skip_counts["missing_graph_path"] += 1
+            warnings.append(f"missing_window_graph_path:{split}:{merged.get('run_id')}:{merged.get('window_id') or idx}")
+            continue
+
+        graph_path = _resolve_index_path(graph_path_value, corpus_dir)
+        if graph_path is None or not graph_path.exists() or not graph_path.is_file():
+            skip_counts["missing_graph_file"] += 1
+            warnings.append(f"missing_window_graph_file:{split}:{graph_path_value}")
+            continue
+
+        try:
+            graph = load_window_graph(str(graph_path))
+        except Exception as exc:
+            skip_counts["load_failed"] += 1
+            warnings.append(f"window_graph_load_failed:{split}:{graph_path_value}:{type(exc).__name__}")
+            continue
+
+        node_count = int(graph.number_of_nodes())
+        edge_count = int(graph.number_of_edges())
+        if node_count <= 0:
+            skip_counts["empty"] += 1
+            continue
+
+        run_id = str(merged.get("run_id") or graph_path.parent.parent.name or "").strip()
+        window_id = str(merged.get("window_id") or graph_path.stem).strip() or graph_path.stem
+        if require_sampled_train:
+            key = (run_id, window_id)
+            if key in seen_train_keys:
+                continue
+            seen_train_keys.add(key)
+
+        process_node_count = sum(1 for node_id in graph.nodes() if str(node_id).startswith("proc:"))
+        records.append(
+            {
+                "window_id": window_id,
+                "path": str(graph_path.resolve()),
+                "node_count": int(node_count),
+                "edge_count": int(edge_count),
+                "process_node_count": int(process_node_count),
+                "trainable": bool(node_count > 0),
+                "scorable": bool(node_count > 0 and process_node_count > 0),
+                "source_log_file": _resolved_optional_index_path(merged.get("trace_log_path"), corpus_dir),
+                "source_run_id": run_id,
+                "source_profile": _row_source_profile(merged),
+                "source_phase_id": str(merged.get("dominant_phase") or merged.get("source_phase_id") or ""),
+                "split_role": _normalize_split_role(split) or split,
+                "window_start_ns": 0,
+                "window_end_ns": 0,
+                "window_sequence": int(_safe_int(merged.get("window_sequence"), 0)),
+                "activity_level": activity_level,
+                "window_activity_path": _resolved_optional_index_path(merged.get("window_activity_path"), corpus_dir),
+                "run_meta_path": _resolved_optional_index_path(merged.get("run_meta_path"), corpus_dir),
+                "request_count": int(_safe_int(merged.get("request_count"), 0)),
+                "raw_event_count": int(_safe_int(merged.get("raw_event_count"), 0)),
+                "source_manifest_row": int(idx),
+            }
+        )
+
+    return records, skip_counts
+
+
+def _load_activity_row_for_window(
+    row: dict[str, Any],
+    corpus_dir: Path,
+    activity_cache: dict[str, list[dict[str, Any]]],
+    warnings: list[str],
+) -> dict[str, Any]:
+    activity_path_value = str(row.get("window_activity_path") or "").strip()
+    if not activity_path_value:
+        return {}
+
+    activity_path = _resolve_index_path(activity_path_value, corpus_dir)
+    if activity_path is None or not activity_path.exists() or not activity_path.is_file():
+        warnings.append(f"missing_window_activity_file:{activity_path_value}")
+        return {}
+
+    key = str(activity_path.resolve())
+    if key not in activity_cache:
+        try:
+            activity_cache[key] = _read_jsonl_objects(activity_path)
+        except Exception as exc:
+            warnings.append(f"window_activity_parse_failed:{activity_path_value}:{type(exc).__name__}")
+            activity_cache[key] = []
+
+    rows = activity_cache.get(key) or []
+    window_id = str(row.get("window_id") or "").strip()
+    sequence = _safe_int(row.get("window_sequence"), 0)
+    run_id = str(row.get("run_id") or "").strip()
+    for activity_row in rows:
+        if window_id and str(activity_row.get("window_id") or "").strip() == window_id:
+            return dict(activity_row)
+    if sequence > 0 and sequence <= len(rows):
+        candidate = dict(rows[sequence - 1])
+        if not run_id or str(candidate.get("run_id") or run_id).strip() == run_id:
+            return candidate
+    return {}
+
+
+def _resolve_index_path(value: str, corpus_dir: Path) -> Path | None:
+    text = str(value or "").strip()
+    if not text:
+        return None
+    raw = Path(text).expanduser()
+    candidates: list[Path]
+    if raw.is_absolute():
+        candidates = [raw]
+    else:
+        candidates = [corpus_dir / raw, Path.cwd() / raw, raw]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate.resolve()
+    return candidates[0].resolve() if candidates else None
+
+
+def _resolved_optional_index_path(value: Any, corpus_dir: Path) -> str:
+    path = _resolve_index_path(str(value or ""), corpus_dir)
+    if path is None:
+        return ""
+    return str(path)
+
+
+def _row_source_profile(row: dict[str, Any]) -> str:
+    for key in ("source_profile", "dominant_profile", "primary_profile"):
+        value = str(row.get(key) or "").strip()
+        if value:
+            return value
+    profiles = row.get("dominant_profiles")
+    if isinstance(profiles, list):
+        for value in profiles:
+            text = str(value or "").strip()
+            if text:
+                return text
+    return ""
+
+
+def _safe_int(value: Any, default: int = 0) -> int:
+    try:
+        return int(value)
+    except Exception:
+        try:
+            return int(float(value))
+        except Exception:
+            return int(default)
+
+
+def _prepare_gmae_manifest_dir(persist_windows_dir: str) -> tuple[str, bool, bool]:
+    requested_dir = str(persist_windows_dir or "").strip()
+    if requested_dir:
+        abs_dir = os.path.abspath(requested_dir)
+        preexisting = os.path.isdir(abs_dir)
+        os.makedirs(abs_dir, exist_ok=True)
+        return abs_dir, True, preexisting
+
+    processed_dir = os.path.abspath(os.path.join("data", "processed"))
+    os.makedirs(processed_dir, exist_ok=True)
+    staging_dir = tempfile.mkdtemp(prefix=GMAE_STAGING_PREFIX, dir=processed_dir)
+    return staging_dir, False, False
+
+
+def _sources_from_manifest_records(records: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
+    by_key: dict[tuple[str, str], dict[str, Any]] = {}
+    for record in records:
+        run_id = str(record.get("source_run_id") or "").strip()
+        split_role = _normalize_split_role(record.get("split_role") or "") or "train"
+        if not run_id:
+            continue
+        key = (split_role, run_id)
+        if key not in by_key:
+            by_key[key] = {
+                "log_file": str(record.get("source_log_file") or ""),
+                "run_id": run_id,
+                "split_role": split_role,
+                "source_profile": str(record.get("source_profile") or ""),
+                "phases": [],
+                "training_pool": split_role == "train",
+                "bootstrap_only": False,
+            }
+    return [by_key[key] for key in sorted(by_key)]
 
 
 def _resolve_bbk_sources(log_file: str, logs_dir: str) -> tuple[list[dict[str, Any]], str]:
@@ -429,7 +903,7 @@ def _first_log_timestamp_ns(logs: Iterable[dict[str, Any]]) -> int | None:
 def _source_participates_in_bbk_fit(source: dict[str, Any], source_mode: str) -> bool:
     if str(source_mode or "") != "logs_dir":
         return True
-    return _normalize_split_role(source.get("split_role") or "") != "holdout"
+    return (_normalize_split_role(source.get("split_role") or "") or "train") == "train"
 
 
 def _graph_time_range_ns(g) -> tuple[int, int]:
@@ -642,12 +1116,8 @@ def _train_gmae_from_manifest(runtime: dict[str, Any], manifest_path: str) -> di
     split_summary = dict(split["summary"])
     quality = _evaluate_training_quality(manifest_payload, split_summary)
     has_calibration_split = int(split_summary.get("calibration_window_count") or 0) > 0
-    # 确定最优模型的评价指标：有校准集 → 用重构误差；无 → 用训练损失
-    preferred_metric = (
-        "calibration_mean_process_reconstruction_error"
-        if has_calibration_split
-        else "train_mean_total_loss"
-    )
+    # checkpoint 选择只看 train loss；calibration 只在模型选定后用于阈值/分数校准。
+    preferred_metric = "train_mean_total_loss"
 
     training_counters = {
         "trained_updates": 0,
@@ -662,9 +1132,6 @@ def _train_gmae_from_manifest(runtime: dict[str, Any], manifest_path: str) -> di
     best_metric_value = None
     best_calibration = None
     best_calibration_summary = None
-    fallback_train_best_state_dict: dict[str, Any] | None = None
-    fallback_train_best_epoch = None
-    fallback_train_best_metric_value = None
     selected_checkpoint_metric = preferred_metric
     epochs_completed = 0
 
@@ -774,30 +1241,13 @@ def _train_gmae_from_manifest(runtime: dict[str, Any], manifest_path: str) -> di
             )
             _increment_skip_counters(training_counters, epoch_counters, "empty")
 
-        # 每个 epoch 结束后都在 calibration split 上重算进程节点误差，
-        # 这样 checkpoint 选择依赖的是 epoch 级验证指标，而不是最终一次性统计。
-        calibration_result = _evaluate_gmae_calibration(runtime, split["calibration_records"])
+        # calibration 不参与模型选择；它只在最佳 train-loss checkpoint 选定后用于校准分布。
         checkpoint_metric_name = None
         checkpoint_metric_value = None
-        calibration_summary = calibration_result["summary"] if calibration_result else _empty_distribution_summary()
+        calibration_summary = _empty_distribution_summary()
         train_metric_value = float(epoch_losses["total_loss"].mean) if epoch_losses["total_loss"].count > 0 else None
 
-        # 即使主路径优先使用 calibration，也维护一份 train-loss 最优 checkpoint，
-        # 以便 calibration split 存在但本轮没有拿到有效分数时还能安全回退。
         if train_metric_value is not None and math.isfinite(train_metric_value):
-            if fallback_train_best_metric_value is None or train_metric_value < float(fallback_train_best_metric_value):
-                fallback_train_best_metric_value = float(train_metric_value)
-                fallback_train_best_epoch = int(epoch)
-                fallback_train_best_state_dict = _clone_state_dict_to_cpu(runtime["model"].state_dict())
-
-        # 规则固定为：
-        # - 有 calibration split：只用 calibration mean 选主 checkpoint。
-        # - 无 calibration split：退化为 train total loss。
-        if has_calibration_split:
-            if calibration_result and calibration_result.get("payload") and calibration_summary.get("mean") is not None:
-                checkpoint_metric_name = "calibration_mean_process_reconstruction_error"
-                checkpoint_metric_value = float(calibration_summary["mean"])
-        elif train_metric_value is not None:
             checkpoint_metric_name = "train_mean_total_loss"
             checkpoint_metric_value = float(train_metric_value)
 
@@ -807,8 +1257,6 @@ def _train_gmae_from_manifest(runtime: dict[str, Any], manifest_path: str) -> di
                 best_metric_value = float(checkpoint_metric_value)
                 best_epoch = int(epoch)
                 best_state_dict = _clone_state_dict_to_cpu(runtime["model"].state_dict())
-                best_calibration = calibration_result["payload"] if calibration_result else None
-                best_calibration_summary = calibration_summary if calibration_result else None
                 selected_checkpoint_metric = str(checkpoint_metric_name or preferred_metric)
                 is_best_checkpoint = True
 
@@ -823,30 +1271,26 @@ def _train_gmae_from_manifest(runtime: dict[str, Any], manifest_path: str) -> di
                 "train_node_recon_loss": epoch_losses["node_recon_loss"].to_dict(),
                 "train_structure_loss": epoch_losses["structure_loss"].to_dict(),
                 "calibration_process_error": calibration_summary,
+                "calibration_deferred_until_checkpoint_selected": bool(has_calibration_split),
                 "checkpoint_metric_name": checkpoint_metric_name,
                 "checkpoint_metric_value": checkpoint_metric_value,
                 "is_best_checkpoint": bool(is_best_checkpoint),
             }
         )
 
-    # 兜底逻辑：有 calibration split，但所有 epoch 都没有拿到可用 calibration 分数时，
-    # 仍然允许回退到 train-loss 最优 checkpoint，而不是整次训练直接不产出 baseline。
-    if (
-        best_state_dict is None
-        and has_calibration_split
-        and training_counters["trained_updates"] > 0
-        and fallback_train_best_state_dict is not None
-    ):
-        best_state_dict = fallback_train_best_state_dict
-        best_epoch = int(fallback_train_best_epoch) if fallback_train_best_epoch is not None else None
-        best_metric_value = float(fallback_train_best_metric_value) if fallback_train_best_metric_value is not None else None
-        best_calibration = None
-        best_calibration_summary = None
-        selected_checkpoint_metric = "train_mean_total_loss"
-        if best_epoch is not None and 1 <= best_epoch <= len(epoch_metric_summary):
-            epoch_metric_summary[best_epoch - 1]["checkpoint_metric_name"] = "train_mean_total_loss"
-            epoch_metric_summary[best_epoch - 1]["checkpoint_metric_value"] = best_metric_value
-            epoch_metric_summary[best_epoch - 1]["is_best_checkpoint"] = True
+    if best_state_dict is not None and has_calibration_split:
+        try:
+            runtime["model"].load_state_dict(best_state_dict)
+            calibration_result = _evaluate_gmae_calibration(runtime, split["calibration_records"])
+            if calibration_result:
+                best_calibration = calibration_result.get("payload")
+                best_calibration_summary = calibration_result.get("summary")
+        except Exception as exc:
+            best_calibration = None
+            best_calibration_summary = {
+                **_empty_distribution_summary(),
+                "failed_reason": _short_reason(str(exc)),
+            }
 
     training_summary = {
         "trained_updates": int(training_counters["trained_updates"]),
@@ -1299,7 +1743,7 @@ def _split_gmae_manifest(
     calibration_ratio: float,
     source_mode: str = "",
 ) -> dict[str, Any]:
-    if str(source_mode or "") == "logs_dir":
+    if str(source_mode or "") in {"logs_dir", "sampled_train_windows"}:
         return _split_gmae_manifest_run_level(records, seed=seed)
     return _split_gmae_manifest_window_level(records, seed=seed, calibration_ratio=calibration_ratio)
 
@@ -1468,7 +1912,8 @@ def _evaluate_training_quality(
 ) -> dict[str, Any]:
     source_mode = str(manifest_payload.get("source_mode") or "")
     split_strategy = str(split_summary.get("split_strategy") or "")
-    training_tier = "formal" if source_mode == "logs_dir" and split_strategy == "run_level" else "bootstrap"
+    formal_source_modes = {"logs_dir", "sampled_train_windows"}
+    training_tier = "formal" if source_mode in formal_source_modes and split_strategy == "run_level" else "bootstrap"
     errors: list[str] = []
 
     if training_tier == "formal":
