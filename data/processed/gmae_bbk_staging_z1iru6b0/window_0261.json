@@ -1,0 +1,318 @@
+{
+  "edges": [
+    {
+      "bin_idx": 1,
+      "count": 12,
+      "dst": "proc:container:9f89600d11c0:pid:203736",
+      "event_name": "mmap",
+      "event_names": [
+        "mmap"
+      ],
+      "first_ts": 43819099702000,
+      "last_ts": 43820000559000,
+      "segments": [
+        {
+          "bin": 1,
+          "count": 12
+        }
+      ],
+      "src": "file:fd:-1_container:9f89600d11c0_pid:203736",
+      "type": "Mmap"
+    },
+    {
+      "bin_idx": 2,
+      "count": 6,
+      "dst": "proc:container:9f89600d11c0:pid:203736",
+      "event_name": "mmap",
+      "event_names": [
+        "mmap"
+      ],
+      "first_ts": 43821605644000,
+      "last_ts": 43823080390000,
+      "segments": [
+        {
+          "bin": 2,
+          "count": 6
+        }
+      ],
+      "src": "file:fd:-1_container:9f89600d11c0_pid:203736",
+      "type": "Mmap"
+    },
+    {
+      "bin_idx": 3,
+      "count": 4,
+      "dst": "proc:container:9f89600d11c0:pid:203736",
+      "event_name": "mmap",
+      "event_names": [
+        "mmap"
+      ],
+      "first_ts": 43824447417000,
+      "last_ts": 43824528657000,
+      "segments": [
+        {
+          "bin": 3,
+          "count": 4
+        }
+      ],
+      "src": "file:fd:-1_container:9f89600d11c0_pid:203736",
+      "type": "Mmap"
+    },
+    {
+      "bin_idx": 4,
+      "count": 8,
+      "dst": "proc:container:9f89600d11c0:pid:203736",
+      "event_name": "mmap",
+      "event_names": [
+        "mmap"
+      ],
+      "first_ts": 43825320136000,
+      "last_ts": 43826842527000,
+      "segments": [
+        {
+          "bin": 4,
+          "count": 8
+        }
+      ],
+      "src": "file:fd:-1_container:9f89600d11c0_pid:203736",
+      "type": "Mmap"
+    },
+    {
+      "bin_idx": 5,
+      "count": 4,
+      "dst": "proc:container:9f89600d11c0:pid:203736",
+      "event_name": "mmap",
+      "event_names": [
+        "mmap"
+      ],
+      "first_ts": 43827525332000,
+      "last_ts": 43828104311000,
+      "segments": [
+        {
+          "bin": 5,
+          "count": 4
+        }
+      ],
+      "src": "file:fd:-1_container:9f89600d11c0_pid:203736",
+      "type": "Mmap"
+    },
+    {
+      "bin_idx": 6,
+      "count": 6,
+      "dst": "proc:container:9f89600d11c0:pid:203736",
+      "event_name": "mmap",
+      "event_names": [
+        "mmap"
+      ],
+      "first_ts": 43829115284000,
+      "last_ts": 43829995591000,
+      "segments": [
+        {
+          "bin": 6,
+          "count": 6
+        }
+      ],
+      "src": "file:fd:-1_container:9f89600d11c0_pid:203736",
+      "type": "Mmap"
+    },
+    {
+      "bin_idx": 7,
+      "count": 6,
+      "dst": "proc:container:9f89600d11c0:pid:203736",
+      "event_name": "mmap",
+      "event_names": [
+        "mmap"
+      ],
+      "first_ts": 43831514655000,
+      "last_ts": 43832709573000,
+      "segments": [
+        {
+          "bin": 7,
+          "count": 6
+        }
+      ],
+      "src": "file:fd:-1_container:9f89600d11c0_pid:203736",
+      "type": "Mmap"
+    },
+    {
+      "bin_idx": 8,
+      "count": 6,
+      "dst": "proc:container:9f89600d11c0:pid:203736",
+      "event_name": "mmap",
+      "event_names": [
+        "mmap"
+      ],
+      "first_ts": 43833988096000,
+      "last_ts": 43835086039000,
+      "segments": [
+        {
+          "bin": 8,
+          "count": 6
+        }
+      ],
+      "src": "file:fd:-1_container:9f89600d11c0_pid:203736",
+      "type": "Mmap"
+    },
+    {
+      "bin_idx": 9,
+      "count": 4,
+      "dst": "proc:container:9f89600d11c0:pid:203736",
+      "event_name": "mmap",
+      "event_names": [
+        "mmap"
+      ],
+      "first_ts": 43835276194000,
+      "last_ts": 43835912291000,
+      "segments": [
+        {
+          "bin": 9,
+          "count": 4
+        }
+      ],
+      "src": "file:fd:-1_container:9f89600d11c0_pid:203736",
+      "type": "Mmap"
+    },
+    {
+      "bin_idx": 10,
+      "count": 2,
+      "dst": "proc:container:9f89600d11c0:pid:203736",
+      "event_name": "mmap",
+      "event_names": [
+        "mmap"
+      ],
+      "first_ts": 43837432129000,
+      "last_ts": 43837432207000,
+      "segments": [
+        {
+          "bin": 10,
+          "count": 2
+        }
+      ],
+      "src": "file:fd:-1_container:9f89600d11c0_pid:203736",
+      "type": "Mmap"
+    },
+    {
+      "bin_idx": 11,
+      "count": 10,
+      "dst": "proc:container:9f89600d11c0:pid:203736",
+      "event_name": "mmap",
+      "event_names": [
+        "mmap"
+      ],
+      "first_ts": 43840099659000,
+      "last_ts": 43840692367000,
+      "segments": [
+        {
+          "bin": 11,
+          "count": 10
+        }
+      ],
+      "src": "file:fd:-1_container:9f89600d11c0_pid:203736",
+      "type": "Mmap"
+    },
+    {
+      "bin_idx": 12,
+      "count": 2,
+      "dst": "proc:container:9f89600d11c0:pid:203736",
+      "event_name": "mmap",
+      "event_names": [
+        "mmap"
+      ],
+      "first_ts": 43842822185000,
+      "last_ts": 43842822301000,
+      "segments": [
+        {
+          "bin": 12,
+          "count": 2
+        }
+      ],
+      "src": "file:fd:-1_container:9f89600d11c0_pid:203736",
+      "type": "Mmap"
+    },
+    {
+      "bin_idx": 13,
+      "count": 8,
+      "dst": "proc:container:9f89600d11c0:pid:203736",
+      "event_name": "mmap",
+      "event_names": [
+        "mmap"
+      ],
+      "first_ts": 43843282029000,
+      "last_ts": 43844964763000,
+      "segments": [
+        {
+          "bin": 13,
+          "count": 8
+        }
+      ],
+      "src": "file:fd:-1_container:9f89600d11c0_pid:203736",
+      "type": "Mmap"
+    },
+    {
+      "bin_idx": 14,
+      "count": 14,
+      "dst": "proc:container:9f89600d11c0:pid:203736",
+      "event_name": "mmap",
+      "event_names": [
+        "mmap"
+      ],
+      "first_ts": 43845322536000,
+      "last_ts": 43846678376000,
+      "segments": [
+        {
+          "bin": 14,
+          "count": 14
+        }
+      ],
+      "src": "file:fd:-1_container:9f89600d11c0_pid:203736",
+      "type": "Mmap"
+    },
+    {
+      "bin_idx": 15,
+      "count": 2,
+      "dst": "proc:container:9f89600d11c0:pid:203736",
+      "event_name": "mmap",
+      "event_names": [
+        "mmap"
+      ],
+      "first_ts": 43848421764000,
+      "last_ts": 43848421857000,
+      "segments": [
+        {
+          "bin": 15,
+          "count": 2
+        }
+      ],
+      "src": "file:fd:-1_container:9f89600d11c0_pid:203736",
+      "type": "Mmap"
+    }
+  ],
+  "metadata": {
+    "reduction_config": {
+      "edge_key_mode": "event_time_bin",
+      "time_bin_seconds": 2,
+      "window_seconds": 30
+    }
+  },
+  "nodes": [
+    {
+      "id": "file:fd:-1_container:9f89600d11c0_pid:203736",
+      "meta": {
+        "name": "fd:-1_container:9f89600d11c0_pid:203736",
+        "pathname": "fd:-1_container:9f89600d11c0_pid:203736",
+        "uuid": "fd:-1_container:9f89600d11c0_pid:203736"
+      }
+    },
+    {
+      "id": "proc:container:9f89600d11c0:pid:203736",
+      "meta": {
+        "container_id": "9f89600d11c0",
+        "container_image": "deploy-vuln-app:",
+        "name": "python",
+        "pathname": "",
+        "pid": 203736,
+        "pod_name": null,
+        "uuid": "container:9f89600d11c0:pid:203736"
+      }
+    }
+  ]
+}

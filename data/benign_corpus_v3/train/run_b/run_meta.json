@@ -13,7 +13,7 @@
     },
     {
       "actor": "background_worker",
-      "arrival_rate_per_min": 6.0,
+      "arrival_rate_per_min": 3.0,
       "enabled": true,
       "think_time": {
         "distribution": "lognormal",
@@ -23,6 +23,17 @@
         "sigma": 0.45
       },
       "virtual_users": 1
+    },
+    {
+      "actor": "burst_retry_user",
+      "arrival_rate_per_min": 60.0,
+      "enabled": false,
+      "think_time": {
+        "distribution": "uniform",
+        "max_seconds": 2,
+        "min_seconds": 0.5
+      },
+      "virtual_users": 2
     },
     {
       "actor": "foreground_user",
@@ -37,7 +48,7 @@
     },
     {
       "actor": "health_checker",
-      "arrival_rate_per_min": 12.0,
+      "arrival_rate_per_min": 4.0,
       "enabled": true,
       "think_time": {
         "distribution": "uniform",

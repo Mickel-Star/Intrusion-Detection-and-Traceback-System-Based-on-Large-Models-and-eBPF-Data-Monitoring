@@ -142,7 +142,7 @@ REPORT_COMMON=(
 [ "${NO_MANIFEST}" -eq 1 ] && REPORT_COMMON+=(--no-manifest)
 
 write_report() {
-  "${PYTHON_BIN}" -m src.process.formal_benign_report report "${REPORT_COMMON[@]}" --print-summary || true
+  "${PYTHON_BIN}" -m src.process.benign_manifest_builder report "${REPORT_COMMON[@]}" --print-summary || true
 }
 
 cleanup_tracee() {
@@ -164,7 +164,7 @@ trap cleanup_tracee EXIT
 
 mkdir -p "${CORPUS_DIR}"
 
-mapfile -t PLAN_LINES < <("${PYTHON_BIN}" -m src.process.formal_benign_report emit-plan "${PLAN_COMMON[@]}")
+mapfile -t PLAN_LINES < <("${PYTHON_BIN}" -m src.process.benign_manifest_builder emit-plan "${PLAN_COMMON[@]}")
 if [ "${#PLAN_LINES[@]}" -eq 0 ]; then
   echo "ERROR: no runs selected" >&2
   exit 2
@@ -194,7 +194,7 @@ for line in "${PLAN_LINES[@]}"; do
   [ "${REHEARSAL}" -eq 1 ] && WRITE_ARGS+=(--rehearsal)
   [ "${SKIP_TRACEE}" -eq 1 ] && WRITE_ARGS+=(--skip-tracee)
   [ "${SKIP_COMPOSE_UP}" -eq 1 ] && WRITE_ARGS+=(--skip-compose-up)
-  "${PYTHON_BIN}" -m src.process.formal_benign_report write-run-config "${WRITE_ARGS[@]}"
+  "${PYTHON_BIN}" -m src.process.benign_manifest_builder write-run-config "${WRITE_ARGS[@]}"
 
   SHOULD_COLLECT=1
   if [ -f "${RUN_DIR}/collection_summary.json" ] && [ "${CLEAN_RUN}" -ne 1 ]; then
@@ -236,15 +236,16 @@ for line in "${PLAN_LINES[@]}"; do
   fi
 
   if [ "${NO_WINDOW_ACTIVITY}" -ne 1 ]; then
-    WINDOW_ARGS=(
+    BUILDER_ARGS=(
       --run-dir "${RUN_DIR}"
       --window-seconds 30
       --time-bin-seconds 2
       --force
     )
-    [ "${SKIP_TRACEE}" -eq 1 ] && WINDOW_ARGS+=(--allow-missing-trace)
+    [ "${SKIP_TRACEE}" -eq 1 ] && BUILDER_ARGS+=(--allow-missing-trace)
+    echo "building window activity: ${RUN_DIR}"
     set +e
-    bash scripts/build_window_activity_v3.sh "${WINDOW_ARGS[@]}"
+    "${PYTHON_BIN}" -m src.process.window_activity_builder "${BUILDER_ARGS[@]}"
     WINDOW_EXIT=$?
     set -e
     if [ "${WINDOW_EXIT}" -ne 0 ]; then
@@ -254,7 +255,12 @@ for line in "${PLAN_LINES[@]}"; do
         write_report
         exit "${WINDOW_EXIT}"
       fi
+      continue
     fi
+
+    CHECK_WA_ARGS=(--run-dir "${RUN_DIR}")
+    echo "checking window activity: ${RUN_DIR}"
+    "${PYTHON_BIN}" scripts/check_benign_corpus_v3.py window-activity "${CHECK_WA_ARGS[@]}" || true
   fi
 done
 
@@ -266,8 +272,9 @@ if [ "${NO_MANIFEST}" -ne 1 ]; then
     --seed 20260501
     --force
   )
+  echo "building benign corpus manifest: ${CORPUS_DIR}"
   set +e
-  bash scripts/build_benign_manifest_v3.sh "${MANIFEST_ARGS[@]}"
+  "${PYTHON_BIN}" -m src.process.benign_manifest_builder "${MANIFEST_ARGS[@]}"
   MANIFEST_EXIT=$?
   set -e
   if [ "${MANIFEST_EXIT}" -ne 0 ]; then
@@ -278,6 +285,10 @@ if [ "${NO_MANIFEST}" -ne 1 ]; then
       exit "${MANIFEST_EXIT}"
     fi
   fi
+
+  CHECK_MANIFEST_ARGS=(--corpus-dir "${CORPUS_DIR}")
+  echo "checking benign corpus manifest: ${CORPUS_DIR}"
+  "${PYTHON_BIN}" scripts/check_benign_corpus_v3.py manifest "${CHECK_MANIFEST_ARGS[@]}" || true
 fi
 
 write_report
@@ -290,7 +301,7 @@ if [ "${NO_MANIFEST}" -eq 0 ] && [ "${NO_WINDOW_ACTIVITY}" -eq 0 ]; then
     CHECK_ARGS+=(--min-nonempty-windows 1)
   fi
   set +e
-  "${PYTHON_BIN}" scripts/check_formal_benign_corpus_v3.py "${CHECK_ARGS[@]}"
+  "${PYTHON_BIN}" scripts/check_benign_corpus_v3.py formal "${CHECK_ARGS[@]}"
   CHECK_EXIT=$?
   set -e
   if [ "${CHECK_EXIT}" -ne 0 ]; then

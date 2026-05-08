@@ -10,6 +10,18 @@ from typing import Any, Dict
 app = Flask(__name__)
 
 DB_PATH = os.environ.get("DRSEC_DB_PATH", "/app/data/app.db")
+SECRETS_DIR = os.path.join(os.path.dirname(DB_PATH), "secrets")
+
+
+def _init_secrets() -> None:
+    os.makedirs(SECRETS_DIR, exist_ok=True)
+    env_path = os.path.join(SECRETS_DIR, "demo.env")
+    if not os.path.exists(env_path):
+        with open(env_path, "w") as f:
+            f.write("# EBLIT dummy secret - lab only, no real credentials\n")
+            f.write("DB_PASSWORD=lab_dummy_pw_2026\n")
+            f.write("API_KEY=lab_dummy_key_eblit\n")
+            f.write("SECRET_TOKEN=lab_dummy_token_eblit\n")
 
 
 def _db() -> sqlite3.Connection:
@@ -332,4 +344,5 @@ def ping():
 
 if __name__ == '__main__':
     _init_db()
+    _init_secrets()
     app.run(host='0.0.0.0', port=5000)

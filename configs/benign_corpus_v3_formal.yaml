@@ -3,7 +3,7 @@
   "version": "v3",
   "window_seconds": 30,
   "time_bin_seconds": 2,
-  "random_seed": 20260501,
+  "random_seed": 2026,
   "corpus_dir": "data/benign_corpus_v3",
   "rehearsal_corpus_dir": "data/benign_corpus_v3_rehearsal",
   "base_url": "http://127.0.0.1:5000",
@@ -14,7 +14,7 @@
     "tracee_image": "aquasec/tracee:latest",
     "compose_file": "deploy/docker-compose.yml",
     "skip_compose_up": false,
-    "readiness_timeout_seconds": 60,
+    "readiness_timeout_seconds": 60,  # 等待vuln-app就绪的超时
     "tracee_settle_seconds": 3,
     "tracee_flush_seconds": 3,
     "tracee_output_format": "table",
@@ -68,7 +68,7 @@
     "background_worker": {
       "enabled": true,
       "virtual_users": 1,
-      "arrival_rate_per_min": 6,
+      "arrival_rate_per_min": 3,
       "start_jitter_seconds": 20,
       "think_time": {
         "distribution": "lognormal",
@@ -81,12 +81,23 @@
     "health_checker": {
       "enabled": true,
       "virtual_users": 1,
-      "arrival_rate_per_min": 12,
+      "arrival_rate_per_min": 4,
       "start_jitter_seconds": 10,
       "think_time": {
         "distribution": "uniform",
         "min_seconds": 3,
         "max_seconds": 10
+      }
+    },
+    "burst_retry_user": {
+      "enabled": false,
+      "virtual_users": 2,
+      "arrival_rate_per_min": 60,
+      "start_jitter_seconds": 5,
+      "think_time": {
+        "distribution": "uniform",
+        "min_seconds": 0.5,
+        "max_seconds": 2
       }
     }
   },
@@ -202,27 +213,40 @@
       "fallback_for": "legal backup-like read endpoint",
       "fallback_reason": "demo app has no backup API, so read-only aggregate export is used as the legal near-miss behavior"
     },
-    "metrics_push": {
+    "metrics_push": {  # 不发请求，仅记录
       "method": "DRIVER",
       "path": "",
-      "driver_level": true,
+      "driver_level": true,  # 表示该 action 不发真实 HTTP，由 driver 自身记录
       "real": false,
       "fallback_for": "metrics push or legal long-connection endpoint",
       "fallback_reason": "demo app has no metrics ingestion or websocket route, so this is recorded as a driver-level benign action"
     }
   },
   "runs": {
-    "run_a": {
+    "run_a": {  # 训练集，包含低/中/高三种密度，模拟正常业务 + 突发重试场景
       "split": "train",
       "duration_seconds": 4500,
       "output_dir": "data/benign_corpus_v3/train/run_a",
-      "random_seed": 20260501,
+      "random_seed": 2026,
       "phases": [
-        {"name": "low_load_mixed", "duration_seconds": 600},
+        {
+          "name": "low_load_mixed",
+          "duration_seconds": 600,
+          "actors": {
+            "foreground_user": {"arrival_rate_per_min": 8},
+            "readonly_user": {"arrival_rate_per_min": 10}
+          }
+        },
         {"name": "normal_business_mixed", "duration_seconds": 1200},
         {"name": "catalog_order_mixed", "duration_seconds": 900},
         {"name": "report_background_mixed", "duration_seconds": 900},
-        {"name": "burst_retry_mixed", "duration_seconds": 900}
+        {
+          "name": "burst_retry_mixed",
+          "duration_seconds": 900,
+          "actors": {
+            "burst_retry_user": {"enabled": true}
+          }
+        }
       ]
     },
     "run_b": {
@@ -231,42 +255,76 @@
       "output_dir": "data/benign_corpus_v3/train/run_b",
       "random_seed": 20260502,
       "phases": [
-        {"name": "admin_readonly_mixed", "duration_seconds": 900},
+        {
+          "name": "admin_readonly_mixed",
+          "duration_seconds": 900,
+          "actors": {
+            "foreground_user": {"arrival_rate_per_min": 10},
+            "readonly_user": {"arrival_rate_per_min": 12}
+          }
+        },
         {"name": "report_background_mixed", "duration_seconds": 1200},
         {"name": "normal_business_mixed", "duration_seconds": 900},
         {"name": "catalog_order_mixed", "duration_seconds": 900},
-        {"name": "maintenance_near_miss_mixed", "duration_seconds": 600}
+        {
+          "name": "maintenance_near_miss_mixed",
+          "duration_seconds": 600,
+          "actors": {
+            "foreground_user": {"arrival_rate_per_min": 6},
+            "readonly_user": {"arrival_rate_per_min": 8}
+          }
+        }
       ]
     },
-    "run_c": {
+    "run_c": {  # 校准集，用于阈值/分数校准，不用于训练
       "split": "calibration",
       "duration_seconds": 1800,
       "output_dir": "data/benign_corpus_v3/calibration/run_c",
       "random_seed": 20260503,
       "phases": [
         {"name": "normal_business_mixed", "duration_seconds": 600},
-        {"name": "low_load_mixed", "duration_seconds": 300},
+        {
+          "name": "low_load_mixed",
+          "duration_seconds": 300,
+          "actors": {
+            "foreground_user": {"arrival_rate_per_min": 8},
+            "readonly_user": {"arrival_rate_per_min": 10}
+          }
+        },
         {"name": "report_background_mixed", "duration_seconds": 450},
         {"name": "catalog_order_mixed", "duration_seconds": 450}
       ]
     },
-    "run_d": {
+    "run_d": {  # 最终良性 FPR 评估用
       "split": "holdout",
       "duration_seconds": 2700,
       "output_dir": "data/benign_corpus_v3/holdout/run_d",
       "random_seed": 20260504,
       "actors": {
         "background_worker": {
-          "arrival_rate_per_min": 8
+          "arrival_rate_per_min": 4
         },
         "health_checker": {
-          "arrival_rate_per_min": 8
+          "arrival_rate_per_min": 4
         }
       },
       "phases": [
-        {"name": "maintenance_near_miss_mixed", "duration_seconds": 600},
+        {
+          "name": "maintenance_near_miss_mixed",
+          "duration_seconds": 600,
+          "actors": {
+            "foreground_user": {"arrival_rate_per_min": 6},
+            "readonly_user": {"arrival_rate_per_min": 8}
+          }
+        },
         {"name": "catalog_order_mixed", "duration_seconds": 600},
-        {"name": "burst_retry_mixed", "duration_seconds": 450},
+        {
+          "name": "burst_retry_mixed",
+          "duration_seconds": 450,
+          "actors": {
+            "burst_retry_user": {"enabled": true}
+          }
+        },
         {"name": "normal_business_mixed", "duration_seconds": 600},
         {"name": "report_background_mixed", "duration_seconds": 450}
       ]
@@ -275,9 +333,9 @@
   "sampling": {
     "train": {
       "active": 1.0,
-      "burst": 1.0,
-      "low_activity": 0.5,
-      "idle": 0.1,
+      "burst": 1.0,  # 0.2
+      "low_activity": 1,
+      "idle": 0.1,  # 0.3
       "empty": 0.0
     },
     "calibration": {

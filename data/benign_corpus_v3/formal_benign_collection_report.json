@@ -1,6 +1,6 @@
 {
   "corpus_dir": "data/benign_corpus_v3",
-  "created_at": "2026-05-02T14:39:35Z",
+  "created_at": "2026-05-05T14:49:00Z",
   "dataset": "benign_corpus_v3",
   "duration_scale": 1.0,
   "errors": [],
@@ -12,40 +12,41 @@
     "sampled_train_windows": "sampled_train_windows.jsonl"
   },
   "paper_ready_statistics": {
-    "active_window_fraction": 0.9967105263157895,
-    "benign_calibration_windows": 0,
-    "benign_holdout_windows": 0,
-    "benign_train_full_windows": 304,
-    "benign_train_sampled_windows": 303,
-    "idle_empty_window_fraction": 0.003289473684210526,
+    "active_window_fraction": 0.9916839916839917,
+    "benign_calibration_windows": 67,
+    "benign_holdout_windows": 100,
+    "benign_train_full_windows": 314,
+    "benign_train_sampled_windows": 313,
+    "idle_empty_window_fraction": 0.002079002079002079,
     "success_rate": 1.0,
-    "total_requests": 11685
+    "total_requests": 15420
   },
   "profile_coverage": {
     "per_phase_window_count": {
       "admin_readonly_mixed": 30,
-      "burst_retry_mixed": 30,
-      "catalog_order_mixed": 60,
-      "low_load_mixed": 20,
-      "maintenance_near_miss_mixed": 20,
-      "normal_business_mixed": 70,
-      "report_background_mixed": 70
+      "burst_retry_mixed": 45,
+      "catalog_order_mixed": 95,
+      "low_load_mixed": 30,
+      "maintenance_near_miss_mixed": 39,
+      "normal_business_mixed": 110,
+      "report_background_mixed": 100
     },
     "per_profile_window_count": {
-      "admin_readonly_audit": 34,
-      "auth_read_session": 258,
-      "background_worker": 19,
-      "catalog_browse_search": 304,
-      "health_idle_poll": 225,
-      "order_write_checkout": 67,
-      "report_export_batch": 3
+      "admin_readonly_audit": 216,
+      "auth_read_session": 387,
+      "background_worker": 35,
+      "catalog_browse_search": 473,
+      "health_idle_poll": 149,
+      "order_write_checkout": 173,
+      "report_export_batch": 7
     },
     "per_role_window_count": {
-      "admin_user": 289,
-      "background_worker": 286,
-      "foreground_user": 304,
-      "health_checker": 303,
-      "readonly_user": 303
+      "admin_user": 452,
+      "background_worker": 397,
+      "burst_retry_user": 49,
+      "foreground_user": 473,
+      "health_checker": 418,
+      "readonly_user": 478
     }
   },
   "quality_checks": {
@@ -53,153 +54,157 @@
     "all_runs_have_request_events": true,
     "all_runs_have_window_activity": true,
     "calibration_holdout_not_sampled": true,
-    "idle_empty_fraction": 0.003289473684210526,
-    "nonempty_window_count": 304,
+    "idle_empty_fraction": 0.002079002079002079,
+    "nonempty_window_count": 480,
     "sampled_train_excludes_empty": true
   },
   "rehearsal": false,
   "runs": {
     "run_a": {
       "activity_level_counts": {
-        "active": 4,
-        "burst": 148,
+        "active": 120,
+        "burst": 37,
         "empty": 0,
         "idle": 0,
         "low_activity": 0
       },
-      "duration_seconds_actual": 4551,
+      "duration_seconds_actual": 4694,
       "duration_seconds_requested": 4500,
       "duration_seconds_source": 4500,
       "errors": [],
       "failure_count": 0,
       "output_dir": "train/run_a",
-      "request_count": 5807,
+      "request_count": 5855,
       "split": "train",
-      "status": "success",
-      "success_count": 5807,
-      "trace_log_size_bytes": 27692054,
+      "status": "skipped",
+      "success_count": 5855,
+      "trace_log_size_bytes": 28502010,
       "warnings": [
         "config base_url is loopback but compose service is not port-published; using target container IP http://172.18.0.2:5000"
       ],
-      "window_count": 152
+      "window_count": 157
     },
     "run_b": {
       "activity_level_counts": {
-        "active": 1,
-        "burst": 150,
+        "active": 155,
+        "burst": 0,
         "empty": 0,
-        "idle": 1,
-        "low_activity": 0
+        "idle": 0,
+        "low_activity": 2
       },
-      "duration_seconds_actual": 4534,
+      "duration_seconds_actual": 4693,
       "duration_seconds_requested": 4500,
       "duration_seconds_source": 4500,
       "errors": [],
       "failure_count": 0,
       "output_dir": "train/run_b",
-      "request_count": 5878,
+      "request_count": 4469,
       "split": "train",
-      "status": "success",
-      "success_count": 5878,
-      "trace_log_size_bytes": 27988628,
+      "status": "skipped",
+      "success_count": 4469,
+      "trace_log_size_bytes": 21744171,
       "warnings": [
         "config base_url is loopback but compose service is not port-published; using target container IP http://172.18.0.2:5000"
       ],
-      "window_count": 152
+      "window_count": 157
     },
     "run_c": {
       "activity_level_counts": {
-        "active": 0,
+        "active": 67,
         "burst": 0,
         "empty": 0,
         "idle": 0,
         "low_activity": 0
       },
-      "duration_seconds_actual": 0,
+      "duration_seconds_actual": 2004,
       "duration_seconds_requested": 1800,
       "duration_seconds_source": 1800,
       "errors": [],
       "failure_count": 0,
       "output_dir": "calibration/run_c",
-      "request_count": 0,
+      "request_count": 1969,
       "split": "calibration",
-      "status": "skipped",
-      "success_count": 0,
-      "trace_log_size_bytes": 0,
-      "warnings": [],
-      "window_count": 0
+      "status": "success",
+      "success_count": 1969,
+      "trace_log_size_bytes": 9448179,
+      "warnings": [
+        "config base_url is loopback but compose service is not port-published; using target container IP http://172.18.0.2:5000"
+      ],
+      "window_count": 67
     },
     "run_d": {
       "activity_level_counts": {
-        "active": 0,
-        "burst": 0,
-        "empty": 0,
+        "active": 76,
+        "burst": 22,
+        "empty": 1,
         "idle": 0,
-        "low_activity": 0
+        "low_activity": 1
       },
-      "duration_seconds_actual": 0,
+      "duration_seconds_actual": 2985,
       "duration_seconds_requested": 2700,
       "duration_seconds_source": 2700,
       "errors": [],
       "failure_count": 0,
       "output_dir": "holdout/run_d",
-      "request_count": 0,
+      "request_count": 3127,
       "split": "holdout",
-      "status": "skipped",
-      "success_count": 0,
-      "trace_log_size_bytes": 0,
-      "warnings": [],
-      "window_count": 0
+      "status": "success",
+      "success_count": 3127,
+      "trace_log_size_bytes": 15143820,
+      "warnings": [
+        "config base_url is loopback but compose service is not port-published; using target container IP http://172.18.0.2:5000"
+      ],
+      "window_count": 100
     }
   },
   "split_summary": {
     "calibration": {
       "activity_level_counts_full": {
-        "active": 0,
+        "active": 67,
         "burst": 0,
         "empty": 0,
         "idle": 0,
         "low_activity": 0
       },
-      "full_window_count": 0,
+      "full_window_count": 67,
       "runs": [
         "run_c"
       ]
     },
     "holdout": {
       "activity_level_counts_full": {
-        "active": 0,
-        "burst": 0,
-        "empty": 0,
+        "active": 76,
+        "burst": 22,
+        "empty": 1,
         "idle": 0,
-        "low_activity": 0
+        "low_activity": 1
       },
-      "full_window_count": 0,
+      "full_window_count": 100,
       "runs": [
         "run_d"
       ]
     },
     "train": {
       "activity_level_counts_full": {
-        "active": 5,
-        "burst": 298,
-        "empty": 0,
-        "idle": 1,
-        "low_activity": 0
-      },
-      "activity_level_counts_sampled": {
-        "active": 5,
-        "burst": 298,
+        "active": 275,
+        "burst": 37,
         "empty": 0,
         "idle": 0,
-        "low_activity": 0
+        "low_activity": 2
       },
-      "full_window_count": 304,
+      "activity_level_counts_sampled": {
+        "active": 275,
+        "burst": 37,
+        "empty": 0,
+        "idle": 0,
+        "low_activity": 1
+      },
+      "full_window_count": 314,
       "runs": [
         "run_a",
         "run_b"
       ],
-      "sampled_window_count": 303
+      "sampled_window_count": 313
     }
   },
   "time_bin_seconds": 2,
@@ -207,7 +212,9 @@
   "version": "v3",
   "warnings": [
     "run_a:config base_url is loopback but compose service is not port-published; using target container IP http://172.18.0.2:5000",
-    "run_b:config base_url is loopback but compose service is not port-published; using target container IP http://172.18.0.2:5000"
+    "run_b:config base_url is loopback but compose service is not port-published; using target container IP http://172.18.0.2:5000",
+    "run_c:config base_url is loopback but compose service is not port-published; using target container IP http://172.18.0.2:5000",
+    "run_d:config base_url is loopback but compose service is not port-published; using target container IP http://172.18.0.2:5000"
   ],
   "window_seconds": 30
 }

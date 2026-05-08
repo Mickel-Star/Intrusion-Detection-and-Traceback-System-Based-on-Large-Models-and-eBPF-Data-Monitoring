@@ -527,6 +527,8 @@ class VirtualUser:
             return self.choose_readonly_action()
         if self.actor == "admin_user":
             return self.choose_admin_action()
+        if self.actor == "burst_retry_user":
+            return self.choose_burst_retry_action()
         if self.actor == "background_worker":
             return self.rng.choices(
                 ["health_check", "cache_warmup", "report_export", "periodic_sync", "legal_backup_read", "metrics_push"],
@@ -565,6 +567,41 @@ class VirtualUser:
         if self.state != "admin_login_success":
             return "admin_login"
         return self.rng.choices(["admin_audit", "admin_inspection", "report_status", "logout"], weights=[0.44, 0.24, 0.22, 0.10], k=1)[0]
+
+    def choose_burst_retry_action(self) -> str:
+        if self.state == "anonymous":
+            return "login"
+        if self.state == "login_success":
+            return self.rng.choices(
+                ["catalog", "search", "order_checkout", "order_status", "session_read", "logout"],
+                weights=[0.20, 0.20, 0.25, 0.15, 0.10, 0.10],
+                k=1,
+            )[0]
+        if self.state == "browsing":
+            return self.rng.choices(
+                ["item_detail", "order_checkout", "catalog", "search", "logout"],
+                weights=[0.25, 0.30, 0.15, 0.15, 0.15],
+                k=1,
+            )[0]
+        if self.state == "item_selected":
+            return self.rng.choices(
+                ["order_checkout", "catalog", "search", "item_detail", "logout"],
+                weights=[0.45, 0.15, 0.15, 0.15, 0.10],
+                k=1,
+            )[0]
+        if self.state == "order_created":
+            return self.rng.choices(
+                ["order_status", "catalog", "search", "logout"],
+                weights=[0.40, 0.25, 0.20, 0.15],
+                k=1,
+            )[0]
+        if self.state == "order_checked":
+            return self.rng.choices(
+                ["catalog", "search", "order_checkout", "logout"],
+                weights=[0.25, 0.25, 0.30, 0.20],
+                k=1,
+            )[0]
+        return "login"
 
     def perform_action(self, action: str, *, retry: bool = False) -> None:
         if not self.ensure_preconditions(action):
@@ -643,7 +680,7 @@ class VirtualUser:
                 reason="readonly_user is not allowed to execute order checkout",
             )
             return False
-        if self.actor in {"foreground_user", "readonly_user"} and action in PROTECTED_NORMAL_ACTIONS and self.state == "anonymous":
+        if self.actor in {"foreground_user", "readonly_user", "burst_retry_user"} and action in PROTECTED_NORMAL_ACTIONS and self.state == "anonymous":
             self.recorder.record_prevented_violation(
                 actor=self.actor,
                 vu_id=self.vu_id,
@@ -930,7 +967,7 @@ class VirtualUser:
         self.transition("anonymous")
         if self.actor == "admin_user":
             self.perform_action("admin_login", retry=True)
-        elif self.actor in {"foreground_user", "readonly_user"}:
+        elif self.actor in {"foreground_user", "readonly_user", "burst_retry_user"}:
             self.perform_action("login", retry=True)
 
     def pick_item_from_body(self, body: dict[str, Any]) -> str:
@@ -970,7 +1007,8 @@ def write_run_meta(config: dict[str, Any], endpoints: dict[str, EndpointSpec], o
             "duration_seconds": normalize_duration(end_offset - start_offset),
         }
         phases.append(phase_payload)
-        for actor_name, actor_cfg in dict(config.get("actors") or {}).items():
+        phase_actors = _resolve_phase_actors(dict(config.get("actors") or {}), raw_phase.get("actors"))
+        for actor_name, actor_cfg in phase_actors.items():
             if not isinstance(actor_cfg, dict) or not as_bool(actor_cfg.get("enabled"), True):
                 continue
             phase_role_schedule.append(
@@ -1044,6 +1082,24 @@ def write_run_meta(config: dict[str, Any], endpoints: dict[str, EndpointSpec], o
     (output_dir / "run_meta.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8")
 
 
+def _resolve_phase_actors(base_actors: dict[str, Any], phase_actors: dict[str, Any] | None) -> dict[str, Any]:
+    resolved: dict[str, Any] = {}
+    for name, cfg in base_actors.items():
+        resolved[str(name)] = dict(cfg or {})
+    if phase_actors:
+        for name, override in phase_actors.items():
+            key = str(name)
+            if key not in resolved:
+                resolved[key] = dict(override or {})
+            elif isinstance(override, dict):
+                merged = dict(resolved[key] or {})
+                merged.update(override)
+                resolved[key] = merged
+            else:
+                resolved[key] = override
+    return resolved
+
+
 def run_driver(config: dict[str, Any]) -> dict[str, Any]:
     endpoints = normalize_endpoints(dict(config.get("endpoints") or {}))
     missing, fallbacks = fallback_endpoint_summary(endpoints)
@@ -1063,7 +1119,6 @@ def run_driver(config: dict[str, Any]) -> dict[str, Any]:
     )
     client = HttpClient(str(config.get("base_url") or "http://127.0.0.1:5000"), as_float(config.get("request_timeout_seconds"), 5.0))
     duration_seconds = max(as_float(config.get("duration_seconds"), 300.0), 0.0)
-    deadline = time.monotonic() + duration_seconds
     recorder.log(
         "run_start",
         run_id=str(config.get("run_id") or "run_smoke"),
@@ -1071,45 +1126,75 @@ def run_driver(config: dict[str, Any]) -> dict[str, Any]:
         duration_seconds=duration_seconds,
     )
 
-    threads_by_actor: dict[str, list[threading.Thread]] = {}
-    try:
-        for actor_idx, (actor, actor_cfg_raw) in enumerate(dict(config.get("actors") or {}).items(), start=1):
-            actor_cfg = dict(actor_cfg_raw or {})
-            if not as_bool(actor_cfg.get("enabled"), True):
-                continue
-            virtual_users = max(as_int(actor_cfg.get("virtual_users"), 1), 1)
-            recorder.log(
-                "actor_start",
-                actor=actor,
-                virtual_users=virtual_users,
-                arrival_rate_per_min=as_float(actor_cfg.get("arrival_rate_per_min"), 1.0),
-            )
-            threads = []
-            for vu_idx in range(virtual_users):
-                vu = VirtualUser(
-                    config=config,
-                    actor=str(actor),
-                    actor_config=actor_cfg,
-                    actor_idx=actor_idx,
-                    vu_idx=vu_idx,
-                    endpoints=endpoints,
-                    recorder=recorder,
-                    client=client,
-                    deadline=deadline,
-                )
-                thread = threading.Thread(target=vu.run, name=vu.vu_id, daemon=True)
-                thread.start()
-                threads.append(thread)
-            threads_by_actor[str(actor)] = threads
+    base_actors = dict(config.get("actors") or {})
+    phases = list(config.get("phases") or [])
+    if not phases:
+        phases = [{"phase_id": "default", "duration_seconds": duration_seconds, "actors": None}]
 
-        for actor, threads in threads_by_actor.items():
-            for thread in threads:
-                thread.join()
-            recorder.log("actor_end", actor=actor, virtual_users=len(threads))
-    finally:
-        elapsed = max(duration_seconds - max(deadline - time.monotonic(), 0.0), 0.0)
+    run_start = time.monotonic()
+    try:
+        for phase in phases:
+            phase_id = str(phase.get("phase_id") or phase.get("name") or "default")
+            phase_duration = max(as_float(phase.get("duration_seconds"), 0.0), 0.0)
+            if phase_duration <= 0:
+                continue
+            phase_actors_override = phase.get("actors")
+            phase_actors = _resolve_phase_actors(base_actors, phase_actors_override)
+            phase_deadline = min(time.monotonic() + phase_duration, run_start + duration_seconds)
+            if phase_deadline <= time.monotonic():
+                continue
+
+            recorder.log(
+                "phase_start",
+                phase_id=phase_id,
+                duration_seconds=phase_duration,
+                actors=list(phase_actors.keys()),
+            )
+
+            threads_by_actor: dict[str, list[threading.Thread]] = {}
+            actor_idx = 0
+            for actor, actor_cfg_raw in phase_actors.items():
+                actor_cfg = dict(actor_cfg_raw or {})
+                if not as_bool(actor_cfg.get("enabled"), True):
+                    continue
+                actor_idx += 1
+                virtual_users = max(as_int(actor_cfg.get("virtual_users"), 1), 1)
+                recorder.log(
+                    "actor_start",
+                    actor=actor,
+                    phase_id=phase_id,
+                    virtual_users=virtual_users,
+                    arrival_rate_per_min=as_float(actor_cfg.get("arrival_rate_per_min"), 1.0),
+                )
+                threads = []
+                for vu_idx in range(virtual_users):
+                    vu = VirtualUser(
+                        config=config,
+                        actor=str(actor),
+                        actor_config=actor_cfg,
+                        actor_idx=actor_idx,
+                        vu_idx=vu_idx,
+                        endpoints=endpoints,
+                        recorder=recorder,
+                        client=client,
+                        deadline=phase_deadline,
+                    )
+                    thread = threading.Thread(target=vu.run, name=vu.vu_id, daemon=True)
+                    thread.start()
+                    threads.append(thread)
+                threads_by_actor[str(actor)] = threads
+
+            for actor, threads in threads_by_actor.items():
+                for thread in threads:
+                    thread.join()
+                recorder.log("actor_end", actor=actor, phase_id=phase_id, virtual_users=len(threads))
+
+            recorder.log("phase_end", phase_id=phase_id)
+
+        elapsed = max(duration_seconds - max((run_start + duration_seconds) - time.monotonic(), 0.0), 0.0)
         recorder.summary["elapsed_seconds"] = round(float(elapsed), 3)
         recorder.log("run_end", elapsed_seconds=round(float(elapsed), 3), summary=recorder.summary)
+    finally:
         recorder.write_summary()
         recorder.close()
     return recorder.summary

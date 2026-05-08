@@ -19,17 +19,17 @@
     "run_meta_exists": true,
     "workload_summary_exists": true
   },
-  "duration_seconds_actual": 4534,
+  "duration_seconds_actual": 4693,
   "duration_seconds_requested": 4500,
   "effective_config_path": "/home/yzx/DRSEC_v2/data/benign_corpus_v3/train/run_b/effective_config.yaml",
-  "end_ts": "2026-05-02T14:39:21Z",
+  "end_ts": "2026-05-03T12:30:15Z",
   "errors": [],
   "output_dir": "/home/yzx/DRSEC_v2/data/benign_corpus_v3/train/run_b",
   "run_id": "run_b",
   "skip_compose_up": false,
   "skip_tracee": false,
   "split": "train",
-  "start_ts": "2026-05-02T13:23:47Z",
+  "start_ts": "2026-05-03T11:12:02Z",
   "tracee": {
     "command": "docker run --name tracee_benign_v3_run_b --rm -i --privileged --pid=host --cgroupns=host --network=host -v /lib/modules:/lib/modules:ro -v /usr/src:/usr/src:ro -v /etc/os-release:/etc/os-release-host:ro -v /var/run/docker.sock:/var/run/docker.sock -v /sys/fs/cgroup:/sys/fs/cgroup:ro aquasec/tracee:latest --containers enrich=true --containers sockets.docker=/var/run/docker.sock --containers cgroupfs.path=/sys/fs/cgroup --containers cgroupfs.force=true --scope container --scope comm\\!=tracee --events sched_process_exec\\,execve\\,openat\\,read\\,write\\,close\\,connect\\,accept\\,sendto\\,recvfrom\\,fork\\,clone\\,vfork\\,mmap\\,security_socket_connect\\,security_socket_accept --output table --output option:parse-arguments ",
     "container_filter": "",
@@ -46,7 +46,7 @@
     "stop_success": true,
     "trace_log": "trace.log",
     "trace_log_exists": true,
-    "trace_log_size_bytes": 27988628,
+    "trace_log_size_bytes": 21744171,
     "tracee_runtime_log": "tracee_runtime.log"
   },
   "warnings": [

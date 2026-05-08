@@ -12,7 +12,7 @@
       "virtual_users": 1
     },
     "background_worker": {
-      "arrival_rate_per_min": 6,
+      "arrival_rate_per_min": 3,
       "enabled": true,
       "start_jitter_seconds": 20,
       "think_time": {
@@ -23,6 +23,17 @@
         "sigma": 0.45
       },
       "virtual_users": 1
+    },
+    "burst_retry_user": {
+      "arrival_rate_per_min": 60,
+      "enabled": false,
+      "start_jitter_seconds": 5,
+      "think_time": {
+        "distribution": "uniform",
+        "max_seconds": 2,
+        "min_seconds": 0.5
+      },
+      "virtual_users": 2
     },
     "foreground_user": {
       "arrival_rate_per_min": 30,
@@ -36,7 +47,7 @@
       "virtual_users": 3
     },
     "health_checker": {
-      "arrival_rate_per_min": 12,
+      "arrival_rate_per_min": 4,
       "enabled": true,
       "start_jitter_seconds": 10,
       "think_time": {
@@ -209,6 +220,14 @@
   "phase": "formal_benign_collection_v3",
   "phases": [
     {
+      "actors": {
+        "foreground_user": {
+          "arrival_rate_per_min": 10
+        },
+        "readonly_user": {
+          "arrival_rate_per_min": 12
+        }
+      },
       "duration_seconds": 900,
       "end_offset_seconds": 900.0,
       "name": "admin_readonly_mixed",
@@ -245,6 +264,14 @@
       "start_offset_seconds": 3000.0
     },
     {
+      "actors": {
+        "foreground_user": {
+          "arrival_rate_per_min": 6
+        },
+        "readonly_user": {
+          "arrival_rate_per_min": 8
+        }
+      },
       "duration_seconds": 600,
       "end_offset_seconds": 4500.0,
       "name": "maintenance_near_miss_mixed",

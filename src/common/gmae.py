@@ -483,16 +483,30 @@ class GMAEModel(nn.Module):
 
     def _structure_loss(self, g, enc_rep: torch.Tensor) -> torch.Tensor:
         num_edges = int(g.number_of_edges())
-        if num_edges <= 0:
+        num_nodes = int(g.number_of_nodes())
+        if num_edges <= 0 or num_nodes <= 1:
             return enc_rep.new_zeros(())
 
         edge_src, edge_dst = g.edges()
-        sample_size = min(10000, num_edges)
+        existing_pairs = {
+            (int(src), int(dst))
+            for src, dst in zip(edge_src.detach().cpu().tolist(), edge_dst.detach().cpu().tolist())
+        }
+        negative_capacity = max(int(num_nodes * num_nodes) - len(existing_pairs), 0)
+        if negative_capacity <= 0:
+            return enc_rep.new_zeros(())
+
+        sample_size = min(10000, num_edges, negative_capacity)
         pos_indices = torch.randperm(num_edges, device=g.device)[:sample_size]
         pos_src = edge_src[pos_indices]
         pos_dst = edge_dst[pos_indices]
 
-        neg_src, neg_dst = dgl.sampling.global_uniform_negative_sampling(g, sample_size)
+        neg_src, neg_dst = self._sample_negative_edges(
+            num_nodes=num_nodes,
+            sample_size=sample_size,
+            existing_pairs=existing_pairs,
+            device=g.device,
+        )
         paired = min(int(pos_src.shape[0]), int(neg_src.shape[0]))
         if paired <= 0:
             return enc_rep.new_zeros(())
@@ -511,6 +525,53 @@ class GMAEModel(nn.Module):
             ]
         )
         return self.recon_loss(y_pred, y)
+
+    def _sample_negative_edges(
+        self,
+        *,
+        num_nodes: int,
+        sample_size: int,
+        existing_pairs: set[tuple[int, int]],
+        device,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        if sample_size <= 0:
+            empty = torch.empty(0, dtype=torch.long, device=device)
+            return empty, empty
+
+        selected: list[tuple[int, int]] = []
+        selected_set: set[tuple[int, int]] = set()
+        max_attempts = max(int(sample_size) * 20, 100)
+        attempts = 0
+        while len(selected) < sample_size and attempts < max_attempts:
+            attempts += 1
+            src = int(torch.randint(int(num_nodes), (1,), device="cpu").item())
+            dst = int(torch.randint(int(num_nodes), (1,), device="cpu").item())
+            pair = (src, dst)
+            if pair in existing_pairs or pair in selected_set:
+                continue
+            selected.append(pair)
+            selected_set.add(pair)
+
+        if len(selected) < sample_size and int(num_nodes) * int(num_nodes) <= 1_000_000:
+            for src in range(int(num_nodes)):
+                for dst in range(int(num_nodes)):
+                    pair = (src, dst)
+                    if pair in existing_pairs or pair in selected_set:
+                        continue
+                    selected.append(pair)
+                    selected_set.add(pair)
+                    if len(selected) >= sample_size:
+                        break
+                if len(selected) >= sample_size:
+                    break
+
+        if not selected:
+            empty = torch.empty(0, dtype=torch.long, device=device)
+            return empty, empty
+
+        neg_src = torch.tensor([pair[0] for pair in selected], dtype=torch.long, device=device)
+        neg_dst = torch.tensor([pair[1] for pair in selected], dtype=torch.long, device=device)
+        return neg_src, neg_dst
 
     def compute_loss_components(self, g):
         if int(g.num_nodes()) == 0:

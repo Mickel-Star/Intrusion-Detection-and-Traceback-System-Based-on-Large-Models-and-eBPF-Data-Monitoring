@@ -17,3 +17,6 @@ dist/
 build/
 *.pdf
 config/config.json
+
+# Local third-party skill sources installed for private review/classification.
+private_skill_library/

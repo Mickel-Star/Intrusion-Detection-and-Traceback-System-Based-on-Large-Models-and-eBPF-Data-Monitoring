@@ -64,7 +64,7 @@ actors:
   background_worker:
     enabled: true
     virtual_users: 1
-    arrival_rate_per_min: 6
+    arrival_rate_per_min: 3
     start_jitter_seconds: 20
     think_time:
       distribution: lognormal
@@ -76,12 +76,40 @@ actors:
   health_checker:
     enabled: true
     virtual_users: 1
-    arrival_rate_per_min: 12
+    arrival_rate_per_min: 4
     start_jitter_seconds: 10
     think_time:
       distribution: uniform
       min_seconds: 3
       max_seconds: 10
+
+  burst_retry_user:
+    enabled: false
+    virtual_users: 2
+    arrival_rate_per_min: 60
+    start_jitter_seconds: 5
+    think_time:
+      distribution: uniform
+      min_seconds: 0.5
+      max_seconds: 2
+
+phases:
+  - name: low_load_mixed
+    duration_seconds: 60
+    actors:
+      foreground_user:
+        arrival_rate_per_min: 8
+      readonly_user:
+        arrival_rate_per_min: 10
+  - name: normal_business_mixed
+    duration_seconds: 120
+  - name: burst_retry_mixed
+    duration_seconds: 60
+    actors:
+      burst_retry_user:
+        enabled: true
+  - name: report_background_mixed
+    duration_seconds: 60
 
 endpoints:
   health:

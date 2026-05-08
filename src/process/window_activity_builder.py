@@ -11,12 +11,21 @@ from datetime import datetime, time, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
+from src.common.io import (
+    ACTIVITY_LEVELS,
+    load_mapping,
+    read_json,
+    safe_bool,
+    safe_float,
+    safe_int,
+    write_json,
+    write_jsonl,
+)
 from src.process.log_parser import TraceeLogParser
 from src.process.provenance_model import ProvenanceEventMapper
 from src.process.window_io import load_window_graph
 
 
-ACTIVITY_LEVELS = ("empty", "idle", "low_activity", "active", "burst")
 DEFAULT_POLICY: dict[str, int] = {
     "empty_edge_threshold": 0,
     "idle_request_threshold": 1,
@@ -31,47 +40,6 @@ KNOWN_WINDOWS_DIRS = ("windows", "processed_windows", "debug_windows", "persiste
 
 def utc_now() -> datetime:
     return datetime.now(timezone.utc)
-
-
-def read_json(path: Path) -> dict[str, Any]:
-    if not path.exists() or path.stat().st_size <= 0:
-        return {}
-    try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except Exception:
-        return {}
-    return payload if isinstance(payload, dict) else {}
-
-
-def load_mapping(path: Path, warnings: list[str]) -> dict[str, Any]:
-    if not path.exists() or path.stat().st_size <= 0:
-        return {}
-    text = path.read_text(encoding="utf-8")
-    try:
-        payload = json.loads(text)
-        return payload if isinstance(payload, dict) else {}
-    except Exception:
-        pass
-    try:
-        import yaml  # type: ignore
-
-        payload = yaml.safe_load(text)
-        return payload if isinstance(payload, dict) else {}
-    except Exception as exc:
-        warnings.append(f"config_parse_failed:{path}:{type(exc).__name__}")
-        return {}
-
-
-def write_json(path: Path, payload: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8")
-
-
-def write_jsonl(path: Path, rows: list[dict[str, Any]]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8") as fp:
-        for row in rows:
-            fp.write(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n")
 
 
 def format_ts(value: datetime) -> str:
@@ -237,29 +205,6 @@ def infer_phase(ts: datetime, run_start: datetime, phases: list[dict[str, Any]])
         if start <= offset < end:
             return str(phase.get("phase_id") or phase.get("profile_id") or "").strip() or None
     return None
-
-
-def safe_int(value: Any, default: int = 0) -> int:
-    try:
-        return int(value)
-    except Exception:
-        try:
-            return int(float(value))
-        except Exception:
-            return int(default)
-
-
-def safe_float(value: Any, default: float = 0.0) -> float:
-    try:
-        return float(value)
-    except Exception:
-        return float(default)
-
-
-def safe_bool(value: Any) -> bool:
-    if isinstance(value, bool):
-        return value
-    return str(value).strip().lower() in {"1", "true", "yes", "y", "on"}
 
 
 def load_request_events(path: Path, warnings: list[str]) -> tuple[list[dict[str, Any]], dict[str, Any]]:
@@ -470,7 +415,7 @@ def finalize_window(window: dict[str, Any], policy: dict[str, int], graph_stats_
     if phases:
         window["dominant_phase"] = phases.most_common(1)[0][0]
     window["active_seconds_estimate"] = float(len(active_seconds))
-    window["activity_level"] = classify_activity(window, policy)
+    window["activity_level"] = classify_activity(window, policy, graph_stats_source)
     if graph_stats_source == "trace_approximation" or (graph_stats_source == "windows_dir" and not graph_stats_from_windows_dir):
         notes = list(window.get("notes") or [])
         if "approximate_graph_stats" not in notes:
@@ -479,7 +424,7 @@ def finalize_window(window: dict[str, Any], policy: dict[str, int], graph_stats_
     return window
 
 
-def classify_activity(window: dict[str, Any], policy: dict[str, int]) -> str:
+def classify_activity(window: dict[str, Any], policy: dict[str, int], graph_stats_source: str = "trace_approximation") -> str:
     request_count = safe_int(window.get("request_count"), 0)
     edge_count = safe_int(window.get("edge_count"), 0)
     raw_event_count = safe_int(window.get("raw_event_count"), 0)
@@ -498,12 +443,16 @@ def classify_activity(window: dict[str, Any], policy: dict[str, int]) -> str:
         safe_int(per_action.get(action), 0) > 0 for action in ("report_export", "legal_backup_read")
     )
 
-    if (
-        request_count >= int(policy["burst_request_threshold"])
-        or edge_count >= int(policy["burst_edge_threshold"])
-        or "burst" in dominant_phase
-        or (safe_int(per_actor.get("burst_retry_user"), 0) > 0 and request_count > int(policy["low_request_threshold"]))
-    ):
+    is_burst_phase = "burst" in dominant_phase
+    has_burst_retry_user = safe_int(per_actor.get("burst_retry_user"), 0) > 0
+
+    if is_burst_phase:
+        return "burst"
+
+    if has_burst_retry_user and request_count > int(policy["low_request_threshold"]):
+        return "burst"
+
+    if graph_stats_source != "trace_approximation" and edge_count >= int(policy["burst_edge_threshold"]):
         return "burst"
 
     if not background_report and request_count <= int(policy["idle_request_threshold"]) and edge_count <= int(policy["idle_edge_threshold"]):

@@ -12,7 +12,7 @@
       "virtual_users": 1
     },
     "background_worker": {
-      "arrival_rate_per_min": 6,
+      "arrival_rate_per_min": 3,
       "enabled": true,
       "start_jitter_seconds": 20,
       "think_time": {
@@ -23,6 +23,17 @@
         "sigma": 0.45
       },
       "virtual_users": 1
+    },
+    "burst_retry_user": {
+      "arrival_rate_per_min": 60,
+      "enabled": false,
+      "start_jitter_seconds": 5,
+      "think_time": {
+        "distribution": "uniform",
+        "max_seconds": 2,
+        "min_seconds": 0.5
+      },
+      "virtual_users": 2
     },
     "foreground_user": {
       "arrival_rate_per_min": 30,
@@ -36,7 +47,7 @@
       "virtual_users": 3
     },
     "health_checker": {
-      "arrival_rate_per_min": 12,
+      "arrival_rate_per_min": 4,
       "enabled": true,
       "start_jitter_seconds": 10,
       "think_time": {
@@ -209,6 +220,14 @@
   "phase": "formal_benign_collection_v3",
   "phases": [
     {
+      "actors": {
+        "foreground_user": {
+          "arrival_rate_per_min": 8
+        },
+        "readonly_user": {
+          "arrival_rate_per_min": 10
+        }
+      },
       "duration_seconds": 600,
       "end_offset_seconds": 600.0,
       "name": "low_load_mixed",
@@ -245,6 +264,11 @@
       "start_offset_seconds": 2700.0
     },
     {
+      "actors": {
+        "burst_retry_user": {
+          "enabled": true
+        }
+      },
       "duration_seconds": 900,
       "end_offset_seconds": 4500.0,
       "name": "burst_retry_mixed",
@@ -254,7 +278,7 @@
       "start_offset_seconds": 3600.0
     }
   ],
-  "random_seed": 20260501,
+  "random_seed": 2026,
   "request_timeout_seconds": 5.0,
   "run_id": "run_a",
   "source_duration_seconds": 4500,

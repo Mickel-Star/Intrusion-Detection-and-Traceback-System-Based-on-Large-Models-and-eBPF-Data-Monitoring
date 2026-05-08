@@ -1,10 +1,10 @@
 {
   "activity_level_counts": {
-    "active": 1,
-    "burst": 150,
+    "active": 155,
+    "burst": 0,
     "empty": 0,
-    "idle": 1,
-    "low_activity": 0
+    "idle": 0,
+    "low_activity": 2
   },
   "classification_policy": {
     "burst_edge_threshold": 150,
@@ -16,62 +16,62 @@
     "low_request_threshold": 5
   },
   "dataset": "benign_corpus_v3",
-  "end_ts": "2026-05-02T14:39:21Z",
+  "end_ts": "2026-05-03T12:30:15Z",
   "errors": [],
-  "generated_at": "2026-05-02T14:39:34.796955Z",
+  "generated_at": "2026-05-03T12:30:29.098988Z",
   "graph_stats_source": "trace_approximation",
   "request_event_stats": {
     "failure_count": 0,
     "per_actor_count": {
-      "admin_user": 372,
-      "background_worker": 401,
-      "foreground_user": 2002,
-      "health_checker": 572,
-      "readonly_user": 2531
+      "admin_user": 408,
+      "background_worker": 276,
+      "foreground_user": 1488,
+      "health_checker": 254,
+      "readonly_user": 2043
     },
     "per_profile_count": {
-      "admin_readonly_audit": 372,
-      "auth_read_session": 902,
-      "background_worker": 235,
-      "catalog_browse_search": 3274,
-      "health_idle_poll": 647,
-      "order_write_checkout": 357,
-      "report_export_batch": 91
+      "admin_readonly_audit": 408,
+      "auth_read_session": 736,
+      "background_worker": 132,
+      "catalog_browse_search": 2506,
+      "health_idle_poll": 305,
+      "order_write_checkout": 289,
+      "report_export_batch": 93
     },
-    "request_events_total": 5878,
+    "request_events_total": 4469,
     "request_lines_failed": 0,
-    "request_lines_total": 5878,
+    "request_lines_total": 4469,
     "retry_count": 0,
-    "success_count": 5878
+    "success_count": 4469
   },
   "run_dir": "/home/yzx/DRSEC_v2/data/benign_corpus_v3/train/run_b",
   "run_id": "run_b",
   "split": "train",
-  "start_ts": "2026-05-02T13:23:47Z",
+  "start_ts": "2026-05-03T11:12:02Z",
   "time_bin_seconds": 2,
   "time_bounds": {
     "end_source": "collection_summary",
     "start_source": "collection_summary",
-    "window_coverage_end_ts": "2026-05-02T14:39:47Z"
+    "window_coverage_end_ts": "2026-05-03T12:30:32Z"
   },
   "trace_stats": {
     "parse_error_examples": [
-      "13:23:57:592518  f716865269c0  deploy-vuln-app: 0      Thread-2 (proce  1      /14931   8      /15278   125117824442368  mmap                      addr: 0x0, le",
-      "13:23:57:592548  f716865269c0  deploy-vuln-app: 0      Thread-2 (proce  1      /14931   8      /15278   252              recvfrom                  sockfd: 4, bu",
-      "13:23:57:592903  f716865269c0  deploy-vuln-app: 0      Thread-2 (proce  1      /14931   8      /15278   125117824372736  mmap                      addr: 0x0, le",
-      "13:23:57:593090  f716865269c0  deploy-vuln-app: 0      Thread-2 (proce  1      /14931   8      /15278   125117824393216  mmap                      addr: 0x0, le",
-      "13:23:57:593194  f716865269c0  deploy-vuln-app: 0      Thread-2 (proce  1      /14931   8      /15278   125117824303104  mmap                      addr: 0x0, le"
+      "11:12:13:143813  9f89600d11c0  deploy-vuln-app: 0      Thread-2 (proce  1      /203736  8      /204099  126423765098496  mmap                      addr: 0x0, le",
+      "11:12:13:143843  9f89600d11c0  deploy-vuln-app: 0      Thread-2 (proce  1      /203736  8      /204099  252              recvfrom                  sockfd: 4, bu",
+      "11:12:13:144262  9f89600d11c0  deploy-vuln-app: 0      Thread-2 (proce  1      /203736  8      /204099  126423765028864  mmap                      addr: 0x0, le",
+      "11:12:13:144474  9f89600d11c0  deploy-vuln-app: 0      Thread-2 (proce  1      /203736  8      /204099  126423765049344  mmap                      addr: 0x0, le",
+      "11:12:13:144540  9f89600d11c0  deploy-vuln-app: 0      Thread-2 (proce  1      /203736  8      /204099  126423764959232  mmap                      addr: 0x0, le"
     ],
-    "trace_lines_failed": 98428,
-    "trace_lines_parsed": 26022,
-    "trace_lines_total": 124451,
+    "trace_lines_failed": 76584,
+    "trace_lines_parsed": 20435,
+    "trace_lines_total": 97020,
     "trace_log_exists": true,
-    "trace_log_size_bytes": 27988628
+    "trace_log_size_bytes": 21744171
   },
   "warnings": [
     "approximate_graph_stats"
   ],
-  "window_count": 152,
+  "window_count": 157,
   "window_seconds": 30,
   "windows_dir": ""
 }

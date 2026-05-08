@@ -10,26 +10,24 @@ from __future__ import annotations
 
 其中 `build_bbk` 是训练主入口：
 - 阶段 1 把 benign 日志切成窗口，更新 BBK/Word2Vec，并落盘窗口 + manifest。
-- 阶段 2 基于 manifest 做离线多 epoch 训练、calibration 和 baseline 保存。
+- 阶段 2 基于 manifest 按顺序做离线 GMAE 训练并保存 baseline。
 """
 
 import copy
-import hashlib
 import json
+import logging
 import math
 import os
-import random
+import re
 import shutil
 import tempfile
-from collections import Counter, deque
+from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any, Iterable, Optional
+from typing import Any, Iterable
 
 from src.common.defaults import (
-    DEFAULT_BBK_MIN_CALIBRATION_WINDOWS,
-    DEFAULT_BBK_MIN_SOURCE_RUNS,
     DEFAULT_BBK_MIN_TRAIN_WINDOWS,
     DEFAULT_BBK_PROFILE_IMBALANCE_RATIO,
     DEFAULT_BBK_TRAIN_WINDOW_SECONDS,
@@ -43,6 +41,12 @@ from src.knowledge.kb_paths import KB_PATHS
 GMAE_MANIFEST_FILENAME = "gmae_windows_manifest.json"
 GMAE_STAGING_PREFIX = "gmae_bbk_staging_"
 GMAE_BASELINE_VERSION = 5
+DEFAULT_GMAE_EPOCHS = 30
+
+
+for _quiet_logger_name in ("gensim", "gensim.models.word2vec", "gensim.utils", "transformers"):
+    logging.getLogger(_quiet_logger_name).setLevel(logging.ERROR)
+os.environ.setdefault("TRANSFORMERS_VERBOSITY", "error")
 
 
 @dataclass
@@ -124,7 +128,7 @@ def build_bbk(
     sources, source_mode = _resolve_bbk_sources(log_file=log_file, logs_dir=logs_dir)
     parser = TraceeLogParser()
 
-    windows_dir, persist_windows, windows_dir_preexisting = _prepare_gmae_windows_dir(persist_windows_dir)
+    windows_dir, persist_windows, windows_dir_preexisting = _prepare_staging_dir(persist_windows_dir, cleanup=True)
     manifest_path = os.path.join(windows_dir, GMAE_MANIFEST_FILENAME)
     manifest_records: list[dict[str, Any]] = []
     total_nodes = 0
@@ -169,11 +173,7 @@ def build_bbk(
                     source_log_file=str(source["log_file"]),
                     source_run_id=str(source.get("run_id") or ""),
                     source_profile=str(resolved_profile.get("profile_id") or ""),
-                    source_phase_id=str(resolved_profile.get("phase_id") or ""),
                     split_role=str(source.get("split_role") or ""),
-                    window_start_ns=window_start_ns,
-                    window_end_ns=window_end_ns,
-                    window_sequence=source_window_idx,
                 )
                 manifest_records.append(record)
 
@@ -285,9 +285,13 @@ def _resolve_sampled_train_windows_path(
 
     logs_dir_value = str(logs_dir or "").strip()
     if logs_dir_value:
-        candidate = Path(logs_dir_value).expanduser().resolve() / "sampled_train_windows.jsonl"
+        logs_dir_path = Path(logs_dir_value).expanduser().resolve()
+        candidate = logs_dir_path / "sampled_train_windows.jsonl"
         if candidate.exists() and candidate.is_file():
             return str(candidate)
+        parent_candidate = logs_dir_path.parent / "sampled_train_windows.jsonl"
+        if logs_dir_path.name in {"train", "calibration", "holdout"} and parent_candidate.exists() and parent_candidate.is_file():
+            return str(parent_candidate)
 
     return ""
 
@@ -316,7 +320,7 @@ def _build_bbk_from_sampled_train_windows(
     logs_dir_value = str(logs_dir or "").strip()
     if logs_dir_value:
         logs_root = Path(logs_dir_value).expanduser().resolve()
-        if logs_root.exists() and logs_root.is_dir():
+        if logs_root.exists() and logs_root.is_dir() and logs_root == sampled_path.parent:
             corpus_dir = logs_root
 
     full_index_path = _resolve_full_window_index_path(
@@ -324,7 +328,13 @@ def _build_bbk_from_sampled_train_windows(
         explicit_path=full_window_index_path,
     )
     activity_cache: dict[str, list[dict[str, Any]]] = {}
+    trace_window_cache: dict[str, list[tuple[Any, dict[str, Any]]]] = {}
     warnings: list[str] = []
+
+    manifest_dir, persist_manifest, manifest_dir_preexisting = _prepare_staging_dir(persist_windows_dir)
+    manifest_path = os.path.join(manifest_dir, GMAE_MANIFEST_FILENAME)
+    materialized_windows_dir = os.path.join(manifest_dir, "materialized_windows")
+    os.makedirs(materialized_windows_dir, exist_ok=True)
 
     sampled_rows = _read_jsonl_objects(sampled_path)
     train_records, train_skips = _records_from_window_index_rows(
@@ -333,6 +343,10 @@ def _build_bbk_from_sampled_train_windows(
         split_filter={"train"},
         require_sampled_train=True,
         activity_cache=activity_cache,
+        trace_window_cache=trace_window_cache,
+        materialized_windows_dir=materialized_windows_dir,
+        window_seconds=int(window_seconds),
+        time_bin_seconds=int(time_bin_seconds),
         warnings=warnings,
     )
 
@@ -340,12 +354,16 @@ def _build_bbk_from_sampled_train_windows(
     holdout_records: list[dict[str, Any]] = []
     if full_index_path:
         full_rows = _read_jsonl_objects(Path(full_index_path))
-        eval_records, eval_skips = _records_from_window_index_rows(
+        eval_records, _eval_skips = _records_from_window_index_rows(
             full_rows,
             corpus_dir=corpus_dir,
             split_filter={"calibration", "holdout"},
             require_sampled_train=False,
             activity_cache=activity_cache,
+            trace_window_cache=trace_window_cache,
+            materialized_windows_dir=materialized_windows_dir,
+            window_seconds=int(window_seconds),
+            time_bin_seconds=int(time_bin_seconds),
             warnings=warnings,
         )
         calibration_records = [
@@ -355,7 +373,6 @@ def _build_bbk_from_sampled_train_windows(
             record for record in eval_records if _normalize_split_role(record.get("split_role") or "") == "holdout"
         ]
     else:
-        eval_skips = {"missing_graph_path": 0, "missing_graph_file": 0, "empty": 0, "wrong_split": 0, "load_failed": 0}
         warnings.append(f"full_window_index_missing:{corpus_dir / 'full_window_index.jsonl'}")
 
     if not train_records:
@@ -364,8 +381,6 @@ def _build_bbk_from_sampled_train_windows(
             f"path={sampled_path}"
         )
 
-    manifest_dir, persist_manifest, manifest_dir_preexisting = _prepare_gmae_manifest_dir(persist_windows_dir)
-    manifest_path = os.path.join(manifest_dir, GMAE_MANIFEST_FILENAME)
     records = [*train_records, *calibration_records, *holdout_records]
     total_nodes = int(sum(int(record.get("node_count") or 0) for record in records))
     total_edges = int(sum(int(record.get("edge_count") or 0) for record in records))
@@ -403,25 +418,10 @@ def _build_bbk_from_sampled_train_windows(
         ),
         records=records,
     )
-    manifest_payload["input_files"] = {
-        "sampled_train_windows": str(sampled_path),
-        "full_window_index": str(full_index_path or ""),
-    }
-    manifest_payload["input_filtering"] = {
-        "train_source": "sampled_train_windows.jsonl",
-        "train_predicate": "split == train and activity_level != empty and graph is non-empty",
-        "calibration_source": "full_window_index.jsonl split == calibration",
-        "holdout_source": "full_window_index.jsonl split == holdout",
-        "train_skips": dict(train_skips),
-        "eval_skips": dict(eval_skips),
-        "warnings": sorted(set(warnings)),
-    }
-    write_json(manifest_path, manifest_payload)
 
     print(
         f"🧠 Stage 2/2: offline GMAE training on sampled train windows "
-        f"(train={len(train_records)}, calibration={len(calibration_records)}, "
-        f"holdout={len(holdout_records)}, manifest={manifest_path})"
+        f"(train={len(train_records)}, manifest={manifest_path})"
     )
     runtime = _init_gmae_runtime()
     training_result = _train_gmae_from_manifest(runtime, manifest_path)
@@ -456,11 +456,9 @@ def _build_bbk_from_sampled_train_windows(
 
     print(
         "\n✅ BBK/GMAE sampled-train pipeline complete: "
-        f"train={len(train_records)}, calibration={len(calibration_records)}, "
-        f"holdout={len(holdout_records)}, skipped_train={dict(train_skips)}"
+        f"train={len(train_records)}, skipped_train={dict(train_skips)}, "
+        f"warnings={len(set(warnings))}"
     )
-    for warning in sorted(set(warnings))[:20]:
-        print(f"Warning: {warning}")
 
 
 def _resolve_full_window_index_path(corpus_dir: Path, explicit_path: str) -> str:
@@ -501,6 +499,10 @@ def _records_from_window_index_rows(
     split_filter: set[str],
     require_sampled_train: bool,
     activity_cache: dict[str, list[dict[str, Any]]],
+    trace_window_cache: dict[str, list[tuple[Any, dict[str, Any]]]],
+    materialized_windows_dir: str,
+    window_seconds: int,
+    time_bin_seconds: int,
     warnings: list[str],
 ) -> tuple[list[dict[str, Any]], dict[str, int]]:
     from src.process.window_io import load_window_graph
@@ -534,23 +536,39 @@ def _records_from_window_index_rows(
             skip_counts["empty"] += 1
             continue
 
+        graph = None
+        graph_path = None
         graph_path_value = str(merged.get("window_graph_path") or "").strip()
-        if not graph_path_value:
-            skip_counts["missing_graph_path"] += 1
-            warnings.append(f"missing_window_graph_path:{split}:{merged.get('run_id')}:{merged.get('window_id') or idx}")
-            continue
+        if graph_path_value:
+            graph_path = _resolve_index_path(graph_path_value, corpus_dir)
+            if graph_path is not None and graph_path.exists() and graph_path.is_file():
+                try:
+                    graph = load_window_graph(str(graph_path))
+                except Exception as exc:
+                    skip_counts["load_failed"] += 1
+                    warnings.append(f"window_graph_load_failed:{split}:{graph_path_value}:{type(exc).__name__}")
+                    continue
 
-        graph_path = _resolve_index_path(graph_path_value, corpus_dir)
-        if graph_path is None or not graph_path.exists() or not graph_path.is_file():
-            skip_counts["missing_graph_file"] += 1
-            warnings.append(f"missing_window_graph_file:{split}:{graph_path_value}")
-            continue
+        if graph is None:
+            materialized = _materialize_index_window_graph(
+                merged,
+                corpus_dir=corpus_dir,
+                materialized_windows_dir=materialized_windows_dir,
+                window_seconds=int(window_seconds),
+                time_bin_seconds=int(time_bin_seconds),
+                trace_window_cache=trace_window_cache,
+                warnings=warnings,
+            )
+            if materialized is not None:
+                graph_path, graph = materialized
 
-        try:
-            graph = load_window_graph(str(graph_path))
-        except Exception as exc:
-            skip_counts["load_failed"] += 1
-            warnings.append(f"window_graph_load_failed:{split}:{graph_path_value}:{type(exc).__name__}")
+        if graph is None or graph_path is None:
+            if graph_path_value:
+                skip_counts["missing_graph_file"] += 1
+                warnings.append(f"missing_window_graph_file:{split}:{graph_path_value}")
+            else:
+                skip_counts["missing_graph_path"] += 1
+                warnings.append(f"missing_window_graph_path:{split}:{merged.get('run_id')}:{merged.get('window_id') or idx}")
             continue
 
         node_count = int(graph.number_of_nodes())
@@ -580,21 +598,111 @@ def _records_from_window_index_rows(
                 "source_log_file": _resolved_optional_index_path(merged.get("trace_log_path"), corpus_dir),
                 "source_run_id": run_id,
                 "source_profile": _row_source_profile(merged),
-                "source_phase_id": str(merged.get("dominant_phase") or merged.get("source_phase_id") or ""),
                 "split_role": _normalize_split_role(split) or split,
-                "window_start_ns": 0,
-                "window_end_ns": 0,
-                "window_sequence": int(_safe_int(merged.get("window_sequence"), 0)),
-                "activity_level": activity_level,
-                "window_activity_path": _resolved_optional_index_path(merged.get("window_activity_path"), corpus_dir),
-                "run_meta_path": _resolved_optional_index_path(merged.get("run_meta_path"), corpus_dir),
-                "request_count": int(_safe_int(merged.get("request_count"), 0)),
-                "raw_event_count": int(_safe_int(merged.get("raw_event_count"), 0)),
-                "source_manifest_row": int(idx),
             }
         )
 
     return records, skip_counts
+
+
+def _materialize_index_window_graph(
+    row: dict[str, Any],
+    *,
+    corpus_dir: Path,
+    materialized_windows_dir: str,
+    window_seconds: int,
+    time_bin_seconds: int,
+    trace_window_cache: dict[str, list[tuple[Any, dict[str, Any]]]],
+    warnings: list[str],
+) -> tuple[Path, Any] | None:
+    trace_path = _resolve_index_path(str(row.get("trace_log_path") or ""), corpus_dir)
+    if trace_path is None or not trace_path.exists() or not trace_path.is_file():
+        warnings.append(f"trace_log_unavailable_for_window:{row.get('split')}:{row.get('run_id')}:{row.get('window_id')}")
+        return None
+
+    sequence = _safe_int(row.get("window_sequence"), 0)
+    if sequence <= 0:
+        sequence = _window_sequence_from_id(row.get("window_id"))
+    if sequence <= 0:
+        warnings.append(f"window_sequence_unavailable:{row.get('split')}:{row.get('run_id')}:{row.get('window_id')}")
+        return None
+
+    cache_key = f"{trace_path.resolve()}|window={int(window_seconds)}|bin={int(time_bin_seconds)}"
+    if cache_key not in trace_window_cache:
+        trace_window_cache[cache_key] = _build_windows_from_trace_log(
+            trace_path,
+            window_seconds=int(window_seconds),
+            time_bin_seconds=int(time_bin_seconds),
+            warnings=warnings,
+        )
+
+    windows = trace_window_cache.get(cache_key) or []
+    if sequence > len(windows):
+        warnings.append(
+            "trace_window_sequence_unavailable:"
+            f"{row.get('split')}:{row.get('run_id')}:{row.get('window_id')}:"
+            f"sequence={sequence}:available={len(windows)}"
+        )
+        return None
+
+    graph, _metas = windows[sequence - 1]
+    if int(graph.number_of_nodes()) <= 0:
+        return None
+
+    from src.process.window_io import dump_window_graph
+
+    run_id = _safe_path_fragment(row.get("run_id") or trace_path.parent.name or "run")
+    window_id = _safe_path_fragment(row.get("window_id") or f"w{sequence:06d}")
+    output_dir = Path(materialized_windows_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    output_path = output_dir / f"{run_id}_{window_id}.json"
+    dump_window_graph(str(output_path), graph)
+    return output_path.resolve(), graph
+
+
+def _build_windows_from_trace_log(
+    trace_path: Path,
+    *,
+    window_seconds: int,
+    time_bin_seconds: int,
+    warnings: list[str],
+) -> list[tuple[Any, dict[str, Any]]]:
+    try:
+        from src.process.log_parser import TraceeLogParser
+
+        logs = TraceeLogParser().parse_log_file(str(trace_path))
+        if not logs:
+            warnings.append(f"trace_log_parsed_no_events:{trace_path}")
+            return []
+        return list(
+            _iter_bbk_windows(
+                logs,
+                window_seconds=int(window_seconds),
+                time_bin_seconds=int(time_bin_seconds),
+            )
+        )
+    except Exception as exc:
+        warnings.append(f"trace_log_window_materialization_failed:{trace_path}:{type(exc).__name__}")
+        return []
+
+
+def _window_sequence_from_id(value: Any) -> int:
+    text = str(value or "").strip()
+    if not text:
+        return 0
+    match = re.search(r"(?:^|[_-])w(?:indow)?[_-]?0*([0-9]+)$", text, flags=re.IGNORECASE)
+    if not match:
+        match = re.search(r"0*([0-9]+)$", text)
+    if not match:
+        return 0
+    return _safe_int(match.group(1), 0)
+
+
+def _safe_path_fragment(value: Any) -> str:
+    text = str(value or "").strip()
+    if not text:
+        return "unknown"
+    return re.sub(r"[^A-Za-z0-9_.-]+", "_", text).strip("._") or "unknown"
 
 
 def _load_activity_row_for_window(
@@ -681,14 +789,15 @@ def _safe_int(value: Any, default: int = 0) -> int:
             return int(default)
 
 
-def _prepare_gmae_manifest_dir(persist_windows_dir: str) -> tuple[str, bool, bool]:
-    requested_dir = str(persist_windows_dir or "").strip()
+def _prepare_staging_dir(persist_dir: str, *, cleanup: bool = False) -> tuple[str, bool, bool]:
+    requested_dir = str(persist_dir or "").strip()
     if requested_dir:
         abs_dir = os.path.abspath(requested_dir)
         preexisting = os.path.isdir(abs_dir)
         os.makedirs(abs_dir, exist_ok=True)
+        if cleanup:
+            _cleanup_generated_window_files(abs_dir)
         return abs_dir, True, preexisting
-
     processed_dir = os.path.abspath(os.path.join("data", "processed"))
     os.makedirs(processed_dir, exist_ok=True)
     staging_dir = tempfile.mkdtemp(prefix=GMAE_STAGING_PREFIX, dir=processed_dir)
@@ -985,9 +1094,7 @@ def _init_gmae_runtime() -> dict[str, Any]:
     """初始化一次 build_bbk 运行期共享的 GMAE 上下文。"""
 
     seed = _env_int("DRSEC_GMAE_SEED", 1337)
-    epochs = max(1, _env_int("DRSEC_GMAE_EPOCHS", 10))
-    calibration_ratio = min(max(_env_float("DRSEC_GMAE_CALIBRATION_RATIO", 0.2), 0.0), 1.0)
-    debug_history_limit = max(1, _env_int("DRSEC_GMAE_DEBUG_HISTORY_LIMIT", 128))
+    epochs = max(1, _env_int("DRSEC_GMAE_EPOCHS", DEFAULT_GMAE_EPOCHS))
     config: dict[str, Any] = {}
     device = "cpu"
 
@@ -1030,8 +1137,6 @@ def _init_gmae_runtime() -> dict[str, Any]:
             "optimizer": optimizer,
             "seed": int(seed),
             "epochs": int(epochs),
-            "calibration_ratio": float(calibration_ratio),
-            "debug_history_limit": int(debug_history_limit),
             "disabled_reason": None,
         }
     except Exception as exc:
@@ -1041,8 +1146,6 @@ def _init_gmae_runtime() -> dict[str, Any]:
             "device": device,
             "seed": int(seed),
             "epochs": int(epochs),
-            "calibration_ratio": float(calibration_ratio),
-            "debug_history_limit": int(debug_history_limit),
             "disabled_reason": str(exc),
         }
 
@@ -1097,27 +1200,23 @@ def _resolve_gmae_device(torch_module) -> str:
 
 
 def _train_gmae_from_manifest(runtime: dict[str, Any], manifest_path: str) -> dict[str, Any]:
-    """基于 manifest 执行完整的多 epoch 训练与 checkpoint 选择。"""
-    manifest_payload = read_json(manifest_path)  # 读取训练数据manifest清单
+    """按 manifest 顺序训练 GMAE，并选择 train loss 最低的 checkpoint。"""
+
+    manifest_payload = read_json(manifest_path)
     records = list(manifest_payload.get("records") or [])
     manifest_summary = dict(manifest_payload.get("summary") or _summarize_manifest_records(records))
-
-    seed = int(runtime.get("seed") or 0)
-    calibration_ratio = float(runtime.get("calibration_ratio") or 0.0)
     epochs = int(runtime.get("epochs") or 0)
-    debug_history = deque(maxlen=int(runtime.get("debug_history_limit") or 128))
-    # 划分训练集和验证集
     split = _split_gmae_manifest(
         records,
-        seed=seed,
-        calibration_ratio=calibration_ratio,
         source_mode=str(manifest_payload.get("source_mode") or ""),
     )
     split_summary = dict(split["summary"])
     quality = _evaluate_training_quality(manifest_payload, split_summary)
-    has_calibration_split = int(split_summary.get("calibration_window_count") or 0) > 0
-    # checkpoint 选择只看 train loss；calibration 只在模型选定后用于阈值/分数校准。
-    preferred_metric = "train_mean_total_loss"
+    metric_name = "train_mean_total_loss"
+
+    rejected_reason: str | None = None
+    if quality["errors"] or runtime.get("disabled_reason"):
+        rejected_reason = "; ".join(str(item) for item in quality["errors"]) if quality["errors"] else None
 
     training_counters = {
         "trained_updates": 0,
@@ -1128,169 +1227,66 @@ def _train_gmae_from_manifest(runtime: dict[str, Any], manifest_path: str) -> di
     aggregate_losses = _new_loss_trackers()
     epoch_metric_summary: list[dict[str, Any]] = []
     best_state_dict: dict[str, Any] | None = None
-    best_epoch = None
-    best_metric_value = None
-    best_calibration = None
-    best_calibration_summary = None
-    selected_checkpoint_metric = preferred_metric
+    best_epoch: int | None = None
+    best_metric_value: float | None = None
     epochs_completed = 0
 
-    if quality["errors"]:
-        return {
-            "saved_baseline": False,
-            "disabled_reason": runtime.get("disabled_reason"),
-            "manifest_summary": manifest_summary,
-            "split_summary": split_summary,
-            "training_summary": {
-                **training_counters,
-                "total_loss": aggregate_losses["total_loss"].to_dict(),
-                "node_recon_loss": aggregate_losses["node_recon_loss"].to_dict(),
-                "structure_loss": aggregate_losses["structure_loss"].to_dict(),
-            },
-            "epoch_metric_summary": epoch_metric_summary,
-            "debug_history": list(debug_history),
-            "selected_checkpoint_metric": preferred_metric,
-            "best_epoch": None,
-            "best_metric_value": None,
-            "final_epoch": epochs,
-            "epochs_completed": 0,
-            "process_error_calibration": None,
-            "best_calibration_summary": None,
-            "quality_gate_errors": list(quality["errors"]),
-            "rejected_reason": "; ".join(str(item) for item in quality["errors"]),
-            "imbalance_warning": quality["imbalance_warning"],
-            "training_tier": quality["training_tier"],
-            "profile_window_distribution": dict(split_summary.get("profile_window_distribution") or {}),
-            "source_run_ids": list(split_summary.get("source_run_ids") or []),
-            "holdout_run_ids": list(split_summary.get("holdout_run_ids") or []),
-        }
-
-    if runtime.get("disabled_reason"):
-        return {
-            "saved_baseline": False,
-            "disabled_reason": runtime.get("disabled_reason"),
-            "manifest_summary": manifest_summary,
-            "split_summary": split_summary,
-            "training_summary": {
-                **training_counters,
-                "total_loss": aggregate_losses["total_loss"].to_dict(),
-                "node_recon_loss": aggregate_losses["node_recon_loss"].to_dict(),
-                "structure_loss": aggregate_losses["structure_loss"].to_dict(),
-            },
-            "epoch_metric_summary": epoch_metric_summary,
-            "debug_history": list(debug_history),
-            "selected_checkpoint_metric": preferred_metric,
-            "best_epoch": None,
-            "best_metric_value": None,
-            "final_epoch": epochs,
-            "epochs_completed": 0,
-            "process_error_calibration": None,
-            "best_calibration_summary": None,
-            "quality_gate_errors": [],
-            "rejected_reason": None,
-            "imbalance_warning": quality["imbalance_warning"],
-            "training_tier": quality["training_tier"],
-            "profile_window_distribution": dict(split_summary.get("profile_window_distribution") or {}),
-            "source_run_ids": list(split_summary.get("source_run_ids") or []),
-            "holdout_run_ids": list(split_summary.get("holdout_run_ids") or []),
-        }
-
-    for epoch in range(1, epochs + 1):
-        # 每轮初始化：当前轮计数器、损失
-        epochs_completed = epoch
-        epoch_counters = {
-            "trained_updates": 0,
-            "skipped_empty_windows": 0,
-            "skipped_nonfinite_windows": 0,
-            "failed_windows": 0,
-        }
-        epoch_losses = _new_loss_trackers()
-
-        # 同一窗口在一个 epoch 内只训练一次，但跨 epoch 会重复参与
-        for record in _epoch_train_order(split["train_records"], seed, epoch):
-            # 真正训练：单张图窗口 → 前向传播 → 算损失 → 反向更新模型
-            outcome = _train_gmae_on_window(runtime, record, epoch)
-            _append_debug_history(
-                debug_history,
-                epoch=epoch,
-                window_id=str(record.get("window_id") or ""),
-                skipped=bool(outcome["skipped"]),
-                reason=str(outcome.get("reason") or ""),
-                losses=outcome.get("losses"),
-            )
-            # 如果训练被跳过（空图/无效图/损失异常）：统计跳过次数
-            if outcome["skipped"]:
-                _increment_skip_counters(training_counters, epoch_counters, str(outcome.get("skip_kind") or "failed"))
-                continue
-
-            losses = dict(outcome["losses"])
-            training_counters["trained_updates"] += 1
-            epoch_counters["trained_updates"] += 1
-            # 训练成功：累计损失 + 计数
-            _update_loss_trackers(aggregate_losses, losses)
-            _update_loss_trackers(epoch_losses, losses)
-
-        for record in split["empty_records"]:
-            _append_debug_history(
-                debug_history,
-                epoch=epoch,
-                window_id=str(record.get("window_id") or ""),
-                skipped=True,
-                reason="empty_graph",
-                losses=None,
-            )
-            _increment_skip_counters(training_counters, epoch_counters, "empty")
-
-        # calibration 不参与模型选择；它只在最佳 train-loss checkpoint 选定后用于校准分布。
-        checkpoint_metric_name = None
-        checkpoint_metric_value = None
-        calibration_summary = _empty_distribution_summary()
-        train_metric_value = float(epoch_losses["total_loss"].mean) if epoch_losses["total_loss"].count > 0 else None
-
-        if train_metric_value is not None and math.isfinite(train_metric_value):
-            checkpoint_metric_name = "train_mean_total_loss"
-            checkpoint_metric_value = float(train_metric_value)
-
-        is_best_checkpoint = False
-        if checkpoint_metric_value is not None and math.isfinite(checkpoint_metric_value):
-            if best_metric_value is None or checkpoint_metric_value < float(best_metric_value):
-                best_metric_value = float(checkpoint_metric_value)
-                best_epoch = int(epoch)
-                best_state_dict = _clone_state_dict_to_cpu(runtime["model"].state_dict())
-                selected_checkpoint_metric = str(checkpoint_metric_name or preferred_metric)
-                is_best_checkpoint = True
-
-        epoch_metric_summary.append(
-            {
-                "epoch": int(epoch),
-                "trained_updates": int(epoch_counters["trained_updates"]),
-                "skipped_empty_windows": int(epoch_counters["skipped_empty_windows"]),
-                "skipped_nonfinite_windows": int(epoch_counters["skipped_nonfinite_windows"]),
-                "failed_windows": int(epoch_counters["failed_windows"]),
-                "train_total_loss": epoch_losses["total_loss"].to_dict(),
-                "train_node_recon_loss": epoch_losses["node_recon_loss"].to_dict(),
-                "train_structure_loss": epoch_losses["structure_loss"].to_dict(),
-                "calibration_process_error": calibration_summary,
-                "calibration_deferred_until_checkpoint_selected": bool(has_calibration_split),
-                "checkpoint_metric_name": checkpoint_metric_name,
-                "checkpoint_metric_value": checkpoint_metric_value,
-                "is_best_checkpoint": bool(is_best_checkpoint),
+    if not rejected_reason:
+        train_records = list(split["train_records"])
+        train_window_count = max(len(train_records), 1)
+        for epoch in range(1, epochs + 1):
+            epochs_completed = epoch
+            epoch_counters = {
+                "trained_updates": 0,
+                "skipped_empty_windows": 0,
+                "skipped_nonfinite_windows": 0,
+                "failed_windows": 0,
             }
-        )
+            epoch_losses = _new_loss_trackers()
 
-    if best_state_dict is not None and has_calibration_split:
-        try:
-            runtime["model"].load_state_dict(best_state_dict)
-            calibration_result = _evaluate_gmae_calibration(runtime, split["calibration_records"])
-            if calibration_result:
-                best_calibration = calibration_result.get("payload")
-                best_calibration_summary = calibration_result.get("summary")
-        except Exception as exc:
-            best_calibration = None
-            best_calibration_summary = {
-                **_empty_distribution_summary(),
-                "failed_reason": _short_reason(str(exc)),
-            }
+            for record in train_records:
+                outcome = _train_gmae_on_window(runtime, record, train_window_count=train_window_count)
+                if outcome["skipped"]:
+                    _count_gmae_skip(training_counters, epoch_counters, str(outcome.get("skip_kind") or "failed"))
+                    continue
+
+                losses = dict(outcome["losses"])
+                training_counters["trained_updates"] += 1
+                epoch_counters["trained_updates"] += 1
+                _update_loss_trackers(aggregate_losses, losses)
+                _update_loss_trackers(epoch_losses, losses)
+
+            train_metric_value = float(epoch_losses["total_loss"].mean) if epoch_losses["total_loss"].count > 0 else None
+            is_best_checkpoint = False
+            if train_metric_value is not None and math.isfinite(train_metric_value):
+                if best_metric_value is None or train_metric_value < float(best_metric_value):
+                    best_metric_value = float(train_metric_value)
+                    best_epoch = int(epoch)
+                    best_state_dict = _clone_state_dict_to_cpu(runtime["model"].state_dict())
+                    is_best_checkpoint = True
+
+            epoch_metric_summary.append(
+                {
+                    "epoch": int(epoch),
+                    "trained_updates": int(epoch_counters["trained_updates"]),
+                    "skipped_empty_windows": int(epoch_counters["skipped_empty_windows"]),
+                    "skipped_nonfinite_windows": int(epoch_counters["skipped_nonfinite_windows"]),
+                    "failed_windows": int(epoch_counters["failed_windows"]),
+                    "train_total_loss": epoch_losses["total_loss"].to_dict(),
+                    "train_node_recon_loss": epoch_losses["node_recon_loss"].to_dict(),
+                    "train_structure_loss": epoch_losses["structure_loss"].to_dict(),
+                    "checkpoint_metric_name": metric_name if train_metric_value is not None else None,
+                    "checkpoint_metric_value": train_metric_value,
+                    "is_best_checkpoint": bool(is_best_checkpoint),
+                }
+            )
+            if train_metric_value is None:
+                print(f"GMAE epoch {epoch}/{epochs}: train_loss=nan updates={epoch_counters['trained_updates']}")
+            else:
+                print(
+                    f"GMAE epoch {epoch}/{epochs}: "
+                    f"train_loss={train_metric_value:.6f} updates={epoch_counters['trained_updates']}"
+                )
 
     training_summary = {
         "trained_updates": int(training_counters["trained_updates"]),
@@ -1309,32 +1305,30 @@ def _train_gmae_from_manifest(runtime: dict[str, Any], manifest_path: str) -> di
         "split_summary": split_summary,
         "training_summary": training_summary,
         "epoch_metric_summary": epoch_metric_summary,
-        "debug_history": list(debug_history),
-        "selected_checkpoint_metric": selected_checkpoint_metric,
+        "selected_checkpoint_metric": metric_name,
         "best_epoch": best_epoch,
         "best_metric_value": best_metric_value,
         "final_epoch": epochs,
         "epochs_completed": epochs_completed,
         "state_dict": best_state_dict,
-        "process_error_calibration": best_calibration,
-        "best_calibration_summary": best_calibration_summary,
-        "quality_gate_errors": [],
-        "rejected_reason": None,
+        "quality_gate_errors": list(quality["errors"]),
+        "rejected_reason": rejected_reason,
         "imbalance_warning": quality["imbalance_warning"],
         "training_tier": quality["training_tier"],
-        "profile_window_distribution": dict(split_summary.get("profile_window_distribution") or {}),
-        "source_run_ids": list(split_summary.get("source_run_ids") or []),
-        "holdout_run_ids": list(split_summary.get("holdout_run_ids") or []),
     }
 
 
-def _train_gmae_on_window(runtime: dict[str, Any], record: dict[str, Any], epoch: int) -> dict[str, Any]:
-    """对单个窗口执行一次参数更新，并返回标准化的结果结构。"""
+def _train_gmae_on_window(
+    runtime: dict[str, Any],
+    record: dict[str, Any],
+    *,
+    train_window_count: int,
+) -> dict[str, Any]:
+    """对单个窗口执行一次 GMAE 参数更新。"""
 
     from src.process.dgl_adapter import window_to_dgl_graph
     from src.process.window_io import load_window_graph
 
-    # manifest 已经提前标了 trainable，这里先走一次快路径，避免无意义 I/O。
     if not bool(record.get("trainable")):
         return {"skipped": True, "skip_kind": "empty", "reason": "empty_graph", "losses": None}
 
@@ -1347,9 +1341,6 @@ def _train_gmae_on_window(runtime: dict[str, Any], record: dict[str, Any], epoch
         if int(graph.number_of_nodes()) <= 0:
             return {"skipped": True, "skip_kind": "empty", "reason": "empty_graph", "losses": None}
 
-        # 对每个 epoch/window 派生稳定 seed，保证 mask/negative sampling 可复现，
-        # 同时不同 epoch 又不会完全重复。
-        _seed_torch(torch, _stable_step_seed(int(runtime["seed"]), int(epoch), str(record["window_id"])))
         adapter = window_to_dgl_graph(
             graph,
             node_attr_dim=int(runtime["config"]["n_dim"]),
@@ -1364,7 +1355,6 @@ def _train_gmae_on_window(runtime: dict[str, Any], record: dict[str, Any], epoch
         optimizer.zero_grad(set_to_none=True)
         components = model.compute_loss_components(dgl_graph)
 
-        # 训练时同时记录分解后的 loss，外层会把它们汇总到 epoch/全局统计里。
         total_loss = components["total_loss"]
         node_recon_loss = components["node_recon_loss"]
         structure_loss = components["structure_loss"]
@@ -1385,8 +1375,7 @@ def _train_gmae_on_window(runtime: dict[str, Any], record: dict[str, Any], epoch
                 },
             }
 
-        total_loss.backward()
-        # 简单裁剪一下梯度，降低个别坏窗口把参数一步打飞的概率。
+        (total_loss / max(int(train_window_count), 1)).backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=5.0)
         optimizer.step()
         return {
@@ -1400,7 +1389,6 @@ def _train_gmae_on_window(runtime: dict[str, Any], record: dict[str, Any], epoch
             },
         }
     except Exception as exc:
-        # 单窗口失败不应中断整轮训练；外层只累加 failed_windows 并写 debug history。
         try:
             optimizer.zero_grad(set_to_none=True)
         except Exception:
@@ -1413,70 +1401,6 @@ def _train_gmae_on_window(runtime: dict[str, Any], record: dict[str, Any], epoch
         }
 
 
-def _evaluate_gmae_calibration(
-    runtime: dict[str, Any],
-    calibration_records: list[dict[str, Any]],
-) -> dict[str, Any] | None:
-    """在 calibration split 上统计进程节点重建误差，并构造经验分布。"""
-
-    if not calibration_records:
-        return None
-
-    from src.process.dgl_adapter import window_to_dgl_graph
-    from src.process.window_io import load_window_graph
-
-    torch = runtime["torch"]
-    model = runtime["model"]
-    model.eval()
-
-    scores: list[float] = []
-    valid_windows = 0
-    failed_windows = 0
-
-    with torch.no_grad():
-        for record in sorted(calibration_records, key=lambda item: str(item.get("window_id") or "")):
-            try:
-                graph = load_window_graph(str(record["path"]))
-                if int(graph.number_of_nodes()) <= 0:
-                    continue
-
-                adapter = window_to_dgl_graph(
-                    graph,
-                    node_attr_dim=int(runtime["config"]["n_dim"]),
-                    edge_attr_dim=int(runtime["config"]["e_dim"]),
-                    device=runtime["device"],
-                )
-                if not adapter.process_node_indices:
-                    continue
-
-                node_errors = model.compute_node_reconstruction_errors(
-                    adapter.graph,
-                    node_indices=adapter.process_node_indices,
-                )
-                window_has_scores = False
-                for idx in adapter.process_node_indices:
-                    value = float(node_errors[idx].detach().cpu().item())
-                    if math.isfinite(value):
-                        scores.append(value)
-                        window_has_scores = True
-                if window_has_scores:
-                    valid_windows += 1
-            except Exception:
-                failed_windows += 1
-
-    # payload 只保存排序后的原始误差分布；统计摘要单独放在 summary 中
-    scores.sort()
-    summary = _summarize_distribution(scores)
-    summary["requested_window_count"] = int(len(calibration_records))
-    summary["valid_window_count"] = int(valid_windows)
-    summary["failed_window_count"] = int(failed_windows)
-
-    return {
-        "payload": {"type": "empirical_cdf", "scores": scores, "count": len(scores)} if scores else None,
-        "summary": summary,
-    }
-
-
 def _save_gmae_runtime(
     runtime: dict[str, Any],
     manifest_payload: dict[str, Any],
@@ -1485,59 +1409,36 @@ def _save_gmae_runtime(
 ) -> None:
     """保存最佳 checkpoint 的推理载荷和训练诊断 sidecar。"""
 
-    # `.meta.json` 用于训练诊断，字段可以扩展；推理主链路不依赖它。
+    split_summary = training_result.get("split_summary") or {}
     meta_payload = {
         "baseline_version": GMAE_BASELINE_VERSION,
-        "log_file": context["log_file"],
-        "logs_dir": context["logs_dir"],
-        "source_mode": context["source_mode"],
-        "windows_dir": context["windows_dir"],
-        "persist_windows": bool(context["persist_windows"]),
-        "windows_dir_preexisting": bool(context["windows_dir_preexisting"]),
-        "staging_cleaned": bool(context["staging_cleaned"]),
-        "manifest_path": manifest_payload.get("manifest_path"),
-        "reduction_config": dict(manifest_payload.get("reduction_config") or {}),
-        "manifest_summary": training_result.get("manifest_summary") or manifest_payload.get("summary") or {},
-        "split_summary": training_result.get("split_summary") or {},
-        "split_strategy": (training_result.get("split_summary") or {}).get("split_strategy"),
         "seed": int(runtime.get("seed") or 0),
         "epochs_requested": int(runtime.get("epochs") or 0),
         "epochs_completed": int(training_result.get("epochs_completed") or 0),
-        "selected_checkpoint_metric": training_result.get("selected_checkpoint_metric"),
         "best_epoch": training_result.get("best_epoch"),
         "best_metric_value": training_result.get("best_metric_value"),
-        "final_epoch": training_result.get("final_epoch"),
-        "train_window_count": int((training_result.get("split_summary") or {}).get("train_window_count") or 0),
-        "calibration_window_count": int((training_result.get("split_summary") or {}).get("calibration_window_count") or 0),
-        "window_nodes_sum": int(context["window_nodes_sum"]),
-        "window_edges_sum": int(context["window_edges_sum"]),
-        "training_summary": training_result.get("training_summary") or {},
-        "best_calibration_summary": training_result.get("best_calibration_summary"),
+        "selected_checkpoint_metric": training_result.get("selected_checkpoint_metric"),
+        "saved_baseline": bool(training_result.get("saved_baseline")),
         "training_tier": training_result.get("training_tier"),
-        "quality_gate_errors": list(training_result.get("quality_gate_errors") or []),
         "rejected_reason": training_result.get("rejected_reason"),
         "imbalance_warning": training_result.get("imbalance_warning"),
-        "source_run_ids": list(training_result.get("source_run_ids") or (training_result.get("split_summary") or {}).get("source_run_ids") or []),
-        "training_source_run_ids": list((training_result.get("split_summary") or {}).get("training_source_run_ids") or []),
-        "holdout_run_ids": list(training_result.get("holdout_run_ids") or (training_result.get("split_summary") or {}).get("holdout_run_ids") or []),
-        "profile_window_distribution": dict(training_result.get("profile_window_distribution") or (training_result.get("split_summary") or {}).get("profile_window_distribution") or {}),
+        "quality_gate_errors": list(training_result.get("quality_gate_errors") or []),
+        "training_summary": training_result.get("training_summary") or {},
         "epoch_metric_summary": list(training_result.get("epoch_metric_summary") or []),
-        "debug_history": list(training_result.get("debug_history") or []),
-        "saved_baseline": bool(training_result.get("saved_baseline")),
-        "disabled_reason": training_result.get("disabled_reason"),
+        "manifest_summary": training_result.get("manifest_summary") or manifest_payload.get("summary") or {},
+        "split_summary": split_summary,
+        "context": context,
+        "reduction_config": dict(manifest_payload.get("reduction_config") or {}),
     }
     write_json(KB_PATHS.gmae_baseline_meta_path, meta_payload)
 
-    if runtime.get("disabled_reason"):
-        print(f"Warning: GMAE baseline was not saved: {runtime['disabled_reason']}")
-        return
-
-    if training_result.get("rejected_reason"):
-        print(f"Warning: GMAE baseline was not saved because training was rejected: {training_result['rejected_reason']}")
-        return
-
-    if not bool(training_result.get("saved_baseline")):
-        print("Warning: GMAE baseline was not saved because no successful training checkpoint was produced.")
+    skip_reason = (
+        runtime.get("disabled_reason")
+        or training_result.get("rejected_reason")
+        or (None if training_result.get("saved_baseline") else "no_successful_checkpoint")
+    )
+    if skip_reason:
+        print(f"Warning: GMAE baseline was not saved: {skip_reason}")
         return
 
     state_dict = training_result.get("state_dict")
@@ -1546,55 +1447,27 @@ def _save_gmae_runtime(
         return
 
     torch = runtime["torch"]
-    # `.pth` 只保存推理真正需要的载荷，以及少量兼容元数据。
     payload = {
         "baseline_version": GMAE_BASELINE_VERSION,
         "state_dict": state_dict,
         "config": runtime["config"],
         "device": runtime["device"],
-        "trained_windows": int((training_result.get("training_summary") or {}).get("trained_updates") or 0),
-        "avg_train_loss": (training_result.get("training_summary") or {}).get("total_loss", {}).get("mean"),
         "seed": int(runtime["seed"]),
         "epochs_completed": int(training_result.get("epochs_completed") or 0),
-        "selected_checkpoint_metric": training_result.get("selected_checkpoint_metric"),
         "best_epoch": training_result.get("best_epoch"),
-        "final_epoch": training_result.get("final_epoch"),
-        "split_strategy": (training_result.get("split_summary") or {}).get("split_strategy"),
+        "selected_checkpoint_metric": training_result.get("selected_checkpoint_metric"),
         "reduction_config": dict(manifest_payload.get("reduction_config") or {}),
-        "train_window_count": int((training_result.get("split_summary") or {}).get("train_window_count") or 0),
-        "calibration_window_count": int((training_result.get("split_summary") or {}).get("calibration_window_count") or 0),
-        "source_run_ids": list(training_result.get("source_run_ids") or []),
-        "holdout_run_ids": list(training_result.get("holdout_run_ids") or []),
+        "train_window_count": int(split_summary.get("train_window_count") or 0),
+        "source_run_ids": list(split_summary.get("source_run_ids") or []),
+        "holdout_run_ids": list(split_summary.get("holdout_run_ids") or []),
     }
-
-    calibration = training_result.get("process_error_calibration")
-    if isinstance(calibration, dict):
-        payload["process_error_calibration"] = calibration
 
     torch.save(payload, KB_PATHS.gmae_baseline_path)
     print(f"✅ GMAE baseline saved: {KB_PATHS.gmae_baseline_path}")
     print(f"📝 GMAE training metadata saved: {KB_PATHS.gmae_baseline_meta_path}")
 
 
-def _prepare_gmae_windows_dir(persist_windows_dir: str) -> tuple[str, bool, bool]:
-    """确定窗口目录。
 
-    - 用户显式传目录：复用该目录，并清理上一次生成的 window/manifest 文件。
-    - 未显式传目录：在 `data/processed` 下创建临时 staging 目录，训练后清理。
-    """
-
-    requested_dir = str(persist_windows_dir or "").strip()
-    if requested_dir:
-        abs_dir = os.path.abspath(requested_dir)
-        preexisting = os.path.isdir(abs_dir)
-        os.makedirs(abs_dir, exist_ok=True)
-        _cleanup_generated_window_files(abs_dir)
-        return abs_dir, True, preexisting
-
-    processed_dir = os.path.abspath(os.path.join("data", "processed"))
-    os.makedirs(processed_dir, exist_ok=True)
-    staging_dir = tempfile.mkdtemp(prefix=GMAE_STAGING_PREFIX, dir=processed_dir)
-    return staging_dir, False, False
 
 
 def _cleanup_generated_window_files(directory: str) -> None:
@@ -1669,14 +1542,8 @@ def _build_manifest_record(
     source_log_file: str = "",
     source_run_id: str = "",
     source_profile: str = "",
-    source_phase_id: str = "",
     split_role: str = "",
-    window_start_ns: int = 0,
-    window_end_ns: int = 0,
-    window_sequence: int = 0,
 ) -> dict[str, Any]:
-    """从窗口图提取训练/校准阶段需要的最小元数据"""
-
     node_count = int(g.number_of_nodes())
     edge_count = int(g.number_of_edges())
     process_node_count = sum(1 for node_id in g.nodes() if str(node_id).startswith("proc:"))
@@ -1691,20 +1558,13 @@ def _build_manifest_record(
         "source_log_file": os.path.abspath(source_log_file) if str(source_log_file or "").strip() else "",
         "source_run_id": str(source_run_id or ""),
         "source_profile": str(source_profile or ""),
-        "source_phase_id": str(source_phase_id or ""),
         "split_role": _normalize_split_role(split_role or ""),
-        "window_start_ns": int(window_start_ns or 0),
-        "window_end_ns": int(window_end_ns or 0),
-        "window_sequence": int(window_sequence or 0),
     }
 
 
 def _summarize_manifest_records(records: list[dict[str, Any]]) -> dict[str, Any]:
     trainable_records = [record for record in records if bool(record.get("trainable"))]
     scorable_records = [record for record in records if bool(record.get("scorable"))]
-    processless_trainable_records = [
-        record for record in trainable_records if not bool(record.get("scorable"))
-    ]
     source_run_ids = sorted(
         {
             str(record.get("source_run_id") or "").strip()
@@ -1726,11 +1586,8 @@ def _summarize_manifest_records(records: list[dict[str, Any]]) -> dict[str, Any]
         "trainable_window_count": int(len(trainable_records)),
         "scorable_window_count": int(len(scorable_records)),
         "empty_window_count": int(sum(1 for record in records if not bool(record.get("trainable")))),
-        "processless_trainable_window_count": int(len(processless_trainable_records)),
         "node_count_sum": int(sum(int(record.get("node_count") or 0) for record in records)),
         "edge_count_sum": int(sum(int(record.get("edge_count") or 0) for record in records)),
-        "process_node_count_sum": int(sum(int(record.get("process_node_count") or 0) for record in records)),
-        "unique_source_run_count": int(len(source_run_ids)),
         "source_run_ids": source_run_ids,
         "profile_window_distribution": dict(sorted(profile_counter.items())),
         "split_role_window_distribution": dict(sorted(split_role_counter.items())),
@@ -1739,87 +1596,10 @@ def _summarize_manifest_records(records: list[dict[str, Any]]) -> dict[str, Any]
 
 def _split_gmae_manifest(
     records: list[dict[str, Any]],
-    seed: int,
-    calibration_ratio: float,
     source_mode: str = "",
 ) -> dict[str, Any]:
-    if str(source_mode or "") in {"logs_dir", "sampled_train_windows"}:
-        return _split_gmae_manifest_run_level(records, seed=seed)
-    return _split_gmae_manifest_window_level(records, seed=seed, calibration_ratio=calibration_ratio)
+    """按 manifest 角色取训练窗口；不随机切分，也不做 calibration 采样。"""
 
-
-def _split_gmae_manifest_window_level(
-    records: list[dict[str, Any]],
-    seed: int,
-    calibration_ratio: float,
-) -> dict[str, Any]:
-    """按稳定随机规则切 train/calibration。
-
-    只有 `scorable` 窗口参与 calibration 抽样。
-    非空但没有进程节点的窗口仍然保留在 train 中，以便参与参数更新。
-    """
-
-    scorable_records = sorted(
-        [record for record in records if bool(record.get("scorable"))],
-        key=lambda item: str(item.get("window_id") or ""),
-    )
-    calibration_candidates = list(scorable_records)
-    random.Random(seed).shuffle(calibration_candidates)
-
-    calibration_count = int(math.floor(len(calibration_candidates) * float(calibration_ratio)))
-    # 至少保留一个 scorable 窗口在 train 中，否则无法完成训练。
-    calibration_count = min(calibration_count, max(len(calibration_candidates) - 1, 0))
-    calibration_ids = {
-        str(record.get("window_id") or "")
-        for record in calibration_candidates[:calibration_count]
-    }
-
-    train_records = [
-        record
-        for record in records
-        if bool(record.get("trainable")) and str(record.get("window_id") or "") not in calibration_ids
-    ]
-    empty_records = [record for record in records if not bool(record.get("trainable"))]
-    calibration_records = [
-        record for record in records if str(record.get("window_id") or "") in calibration_ids
-    ]
-
-    source_run_ids = _unique_source_run_ids(records)
-    summary = {
-        "split_strategy": "window_random",
-        "seed": int(seed),
-        "calibration_ratio": float(calibration_ratio),
-        "window_count": int(len(records)),
-        "trainable_window_count": int(sum(1 for record in records if bool(record.get("trainable")))),
-        "scorable_window_count": int(len(scorable_records)),
-        "train_window_count": int(len(train_records)),
-        "calibration_window_count": int(len(calibration_records)),
-        "holdout_window_count": 0,
-        "empty_window_count": int(len(empty_records)),
-        "calibration_unsuitable_window_count": 0,
-        "train_window_ids": [str(record.get("window_id") or "") for record in train_records],
-        "calibration_window_ids": [str(record.get("window_id") or "") for record in calibration_records],
-        "holdout_window_ids": [],
-        "scorable_window_ids": [str(record.get("window_id") or "") for record in scorable_records],
-        "empty_window_ids": [str(record.get("window_id") or "") for record in empty_records],
-        "source_run_ids": source_run_ids,
-        "training_source_run_ids": source_run_ids,
-        "train_run_ids": source_run_ids,
-        "calibration_run_ids": [],
-        "holdout_run_ids": [],
-        "unique_source_run_count": int(len(source_run_ids)),
-        "profile_window_distribution": _profile_window_distribution(train_records),
-        "split_role_window_distribution": {"train": int(len(records))},
-    }
-    return {
-        "train_records": train_records,
-        "calibration_records": calibration_records,
-        "empty_records": empty_records,
-        "summary": summary,
-    }
-
-
-def _split_gmae_manifest_run_level(records: list[dict[str, Any]], seed: int) -> dict[str, Any]:
     role_records: dict[str, list[dict[str, Any]]] = {"train": [], "calibration": [], "holdout": []}
     for record in records:
         role = _normalize_split_role(record.get("split_role") or "") or "train"
@@ -1828,18 +1608,8 @@ def _split_gmae_manifest_run_level(records: list[dict[str, Any]], seed: int) -> 
     train_records = [record for record in role_records["train"] if bool(record.get("trainable"))]
     empty_records = [record for record in role_records["train"] if not bool(record.get("trainable"))]
     calibration_records = [record for record in role_records["calibration"] if bool(record.get("scorable"))]
-    calibration_unsuitable_records = [
-        record for record in role_records["calibration"] if not bool(record.get("scorable"))
-    ]
     holdout_records = [record for record in role_records["holdout"] if bool(record.get("trainable"))]
-    scorable_records = sorted(
-        [
-            record
-            for record in records
-            if bool(record.get("scorable")) and _normalize_split_role(record.get("split_role") or "") != "holdout"
-        ],
-        key=lambda item: str(item.get("window_id") or ""),
-    )
+    scorable_records = [record for record in records if bool(record.get("scorable"))]
 
     train_run_ids = _unique_source_run_ids(role_records["train"])
     calibration_run_ids = _unique_source_run_ids(role_records["calibration"])
@@ -1852,9 +1622,8 @@ def _split_gmae_manifest_run_level(records: list[dict[str, Any]], seed: int) -> 
     )
 
     summary = {
-        "split_strategy": "run_level",
-        "seed": int(seed),
-        "calibration_ratio": None,
+        "split_strategy": "manifest_order",
+        "source_mode": str(source_mode or ""),
         "window_count": int(len(records)),
         "trainable_window_count": int(sum(1 for record in records if bool(record.get("trainable")))),
         "scorable_window_count": int(len(scorable_records)),
@@ -1862,18 +1631,9 @@ def _split_gmae_manifest_run_level(records: list[dict[str, Any]], seed: int) -> 
         "calibration_window_count": int(len(calibration_records)),
         "holdout_window_count": int(len(holdout_records)),
         "empty_window_count": int(len(empty_records)),
-        "calibration_unsuitable_window_count": int(len(calibration_unsuitable_records)),
-        "train_window_ids": [str(record.get("window_id") or "") for record in train_records],
-        "calibration_window_ids": [str(record.get("window_id") or "") for record in calibration_records],
-        "holdout_window_ids": [str(record.get("window_id") or "") for record in holdout_records],
-        "scorable_window_ids": [str(record.get("window_id") or "") for record in scorable_records],
-        "empty_window_ids": [str(record.get("window_id") or "") for record in empty_records],
         "source_run_ids": source_run_ids,
         "training_source_run_ids": training_source_run_ids,
-        "train_run_ids": train_run_ids,
-        "calibration_run_ids": calibration_run_ids,
         "holdout_run_ids": holdout_run_ids,
-        "unique_source_run_count": int(len(training_source_run_ids)),
         "profile_window_distribution": _profile_window_distribution(train_records),
         "split_role_window_distribution": dict(sorted(split_role_counter.items())),
     }
@@ -1913,25 +1673,14 @@ def _evaluate_training_quality(
     source_mode = str(manifest_payload.get("source_mode") or "")
     split_strategy = str(split_summary.get("split_strategy") or "")
     formal_source_modes = {"logs_dir", "sampled_train_windows"}
-    training_tier = "formal" if source_mode in formal_source_modes and split_strategy == "run_level" else "bootstrap"
+    training_tier = "formal" if source_mode in formal_source_modes and split_strategy == "manifest_order" else "bootstrap"
     errors: list[str] = []
 
     if training_tier == "formal":
         train_window_count = int(split_summary.get("train_window_count") or 0)
-        calibration_window_count = int(split_summary.get("calibration_window_count") or 0)
-        unique_source_run_count = int(split_summary.get("unique_source_run_count") or 0)
         if train_window_count < DEFAULT_BBK_MIN_TRAIN_WINDOWS:
             errors.append(
                 f"trainable benign windows below threshold: {train_window_count} < {DEFAULT_BBK_MIN_TRAIN_WINDOWS}"
-            )
-        if calibration_window_count < DEFAULT_BBK_MIN_CALIBRATION_WINDOWS:
-            errors.append(
-                "calibration benign windows below threshold: "
-                f"{calibration_window_count} < {DEFAULT_BBK_MIN_CALIBRATION_WINDOWS}"
-            )
-        if unique_source_run_count < DEFAULT_BBK_MIN_SOURCE_RUNS:
-            errors.append(
-                f"unique benign source runs below threshold: {unique_source_run_count} < {DEFAULT_BBK_MIN_SOURCE_RUNS}"
             )
 
     imbalance_warning = _build_profile_imbalance_warning(
@@ -1974,14 +1723,6 @@ def _build_profile_imbalance_warning(
     }
 
 
-def _epoch_train_order(records: list[dict[str, Any]], seed: int, epoch: int) -> list[dict[str, Any]]:
-    """生成某个 epoch 的训练顺序。"""
-
-    ordered = sorted(records, key=lambda item: str(item.get("window_id") or ""))
-    random.Random(seed + epoch).shuffle(ordered)
-    return ordered
-
-
 def _new_loss_trackers() -> dict[str, RunningStats]:
     return {
         "total_loss": RunningStats(),
@@ -1996,7 +1737,7 @@ def _update_loss_trackers(trackers: dict[str, RunningStats], losses: dict[str, f
     trackers["structure_loss"].update(float(losses["structure_loss"]))
 
 
-def _increment_skip_counters(
+def _count_gmae_skip(
     global_counters: dict[str, int],
     epoch_counters: dict[str, int],
     skip_kind: str,
@@ -2013,72 +1754,6 @@ def _increment_skip_counters(
     epoch_counters["failed_windows"] += 1
 
 
-def _append_debug_history(
-    history: deque[dict[str, Any]],
-    epoch: int,
-    window_id: str,
-    skipped: bool,
-    reason: str,
-    losses: Optional[dict[str, float]],
-) -> None:
-    """只保留有限长度的窗口级调试记录，避免训练期元数据无限增长。"""
-
-    history.append(
-        {
-            "epoch": int(epoch),
-            "window_id": str(window_id),
-            "total_loss": _safe_debug_float(None if not losses else losses.get("total_loss")),
-            "node_recon_loss": _safe_debug_float(None if not losses else losses.get("node_recon_loss")),
-            "structure_loss": _safe_debug_float(None if not losses else losses.get("structure_loss")),
-            "skipped": bool(skipped),
-            "reason": _short_reason(reason, limit=96) if reason else "",
-        }
-    )
-
-
-def _empty_distribution_summary() -> dict[str, Any]:
-    return {
-        "count": 0,
-        "mean": None,
-        "std": None,
-        "min": None,
-        "max": None,
-        "p95": None,
-        "p99": None,
-    }
-
-
-def _summarize_distribution(values: list[float]) -> dict[str, Any]:
-    if not values:
-        return _empty_distribution_summary()
-
-    stats = RunningStats()
-    for value in values:
-        stats.update(float(value))
-    payload = stats.to_dict()
-    payload["p95"] = _percentile(values, 0.95)
-    payload["p99"] = _percentile(values, 0.99)
-    return payload
-
-
-def _percentile(sorted_values: list[float], q: float) -> float | None:
-    if not sorted_values:
-        return None
-    if len(sorted_values) == 1:
-        return float(sorted_values[0])
-
-    position = (len(sorted_values) - 1) * float(q)
-    lower_idx = int(math.floor(position))
-    upper_idx = int(math.ceil(position))
-    if lower_idx == upper_idx:
-        return float(sorted_values[lower_idx])
-
-    lower_val = float(sorted_values[lower_idx])
-    upper_val = float(sorted_values[upper_idx])
-    weight = position - lower_idx
-    return float(lower_val * (1.0 - weight) + upper_val * weight)
-
-
 def _clone_state_dict_to_cpu(state_dict: dict[str, Any]) -> dict[str, Any]:
     """冻结当前 checkpoint，避免后续训练继续原地修改同一组张量。"""
 
@@ -2089,16 +1764,6 @@ def _clone_state_dict_to_cpu(state_dict: dict[str, Any]) -> dict[str, Any]:
         else:
             cloned[key] = copy.deepcopy(value)
     return cloned
-
-
-def _stable_step_seed(base_seed: int, epoch: int, window_id: str) -> int:
-    """把 run seed + epoch + window_id 映射成稳定的窗口级随机种子。"""
-
-    digest = hashlib.blake2b(
-        f"{base_seed}:{epoch}:{window_id}".encode("utf-8"),
-        digest_size=8,
-    ).digest()
-    return int.from_bytes(digest, "little") & 0x7FFFFFFF
 
 
 def _seed_torch(torch_module, seed: int) -> None:
@@ -2124,13 +1789,6 @@ def _tensor_to_float(value) -> float | None:
         return None
 
 
-def _safe_debug_float(value: Any) -> float | None:
-    try:
-        return None if value is None else float(value)
-    except Exception:
-        return None
-
-
 def _short_reason(reason: str, limit: int = 120) -> str:
     text = " ".join(str(reason or "").split())
     if len(text) <= limit:
@@ -2148,11 +1806,4 @@ def _env_int(name: str, default: int) -> int:
         return int(default)
 
 
-def _env_float(name: str, default: float) -> float:
-    raw = os.environ.get(name)
-    if raw is None or str(raw).strip() == "":
-        return float(default)
-    try:
-        return float(raw)
-    except ValueError:
-        return float(default)
+
