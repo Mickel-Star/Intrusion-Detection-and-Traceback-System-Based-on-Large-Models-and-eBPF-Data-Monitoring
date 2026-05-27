@@ -7,7 +7,7 @@ import math
 import re
 import sys
 from collections import Counter
-from datetime import datetime, time, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -88,38 +88,13 @@ def parse_datetime(value: Any, warnings: list[str], *, field_name: str = "timest
     return parsed.astimezone(timezone.utc)
 
 
-def trace_seconds_to_datetime(seconds: float, anchor: datetime | None, warnings: list[str]) -> datetime:
-    if seconds > 1e8:
-        return datetime.fromtimestamp(float(seconds), tz=timezone.utc)
-
-    whole_seconds = int(float(seconds))
-    micros = int(round((float(seconds) - whole_seconds) * 1_000_000))
-    seconds_in_day = whole_seconds % 86400
-    tod = time(
-        hour=seconds_in_day // 3600,
-        minute=(seconds_in_day % 3600) // 60,
-        second=seconds_in_day % 60,
-        microsecond=micros,
-        tzinfo=timezone.utc,
-    )
-
-    if anchor is None:
-        if "trace_table_time_without_date_assumed_1970_utc" not in warnings:
-            warnings.append("trace_table_time_without_date_assumed_1970_utc")
-        return datetime.combine(datetime(1970, 1, 1, tzinfo=timezone.utc).date(), tod)
-
-    anchor_utc = anchor.astimezone(timezone.utc)
-    candidate = datetime.combine(anchor_utc.date(), tod)
-    if candidate < anchor_utc - timedelta(hours=12):
-        candidate += timedelta(days=1)
-    elif candidate > anchor_utc + timedelta(hours=12):
-        candidate -= timedelta(days=1)
-    return candidate
-
-
 def event_datetime_from_trace(parsed: dict[str, Any], anchor: datetime | None, warnings: list[str]) -> datetime | None:
     try:
-        return trace_seconds_to_datetime(float(parsed.get("timestamp", 0.0)), anchor, warnings)
+        seconds = float(parsed.get("timestamp", 0.0))
+        if seconds <= 1e8:
+            warnings.append("invalid_trace_json_timestamp_without_epoch")
+            return None
+        return datetime.fromtimestamp(seconds, tz=timezone.utc)
     except Exception as exc:
         warnings.append(f"trace_timestamp_parse_failed:{type(exc).__name__}")
         return None
@@ -464,13 +439,15 @@ def classify_activity(window: dict[str, Any], policy: dict[str, int], graph_stat
     return "active"
 
 
-def add_node_to_window(window: dict[str, Any], node: str) -> None:
+def add_node_to_window(window: dict[str, Any], node: str, meta: dict[str, Any] | None = None) -> None:
     value = str(node or "")
     if value.startswith("proc:"):
         window["_process_nodes"].add(value)
     elif value.startswith("file:"):
         window["_file_nodes"].add(value)
     elif value.startswith("net:"):
+        if meta and meta.get("is_unspec_net"):
+            return
         window["_net_nodes"].add(value)
 
 
@@ -504,6 +481,7 @@ def parse_trace_log(
         "trace_lines_total": 0,
         "trace_lines_parsed": 0,
         "trace_lines_failed": 0,
+        "trace_lines_non_json": 0,
         "parse_error_examples": [],
     }
     if not path.exists() or path.stat().st_size <= 0:
@@ -522,21 +500,17 @@ def parse_trace_log(
             if not raw.strip():
                 continue
             stats["trace_lines_total"] = int(stats["trace_lines_total"]) + 1
+            if not raw.lstrip().startswith("{"):
+                stats["trace_lines_non_json"] = int(stats["trace_lines_non_json"]) + 1
             parsed = None
             try:
-                if raw.lstrip().startswith("{"):
-                    payload = json.loads(raw)
-                    parsed = parser._parse_json_line(payload) if isinstance(payload, dict) else None
-                else:
-                    parsed = parser.parse_log_line(raw.strip())
+                parsed = parser.parse_line(raw)
             except Exception as exc:
                 parsed = None
                 if len(stats["parse_error_examples"]) < 5:
                     stats["parse_error_examples"].append(f"{type(exc).__name__}:{raw[:160]}")
 
             if parsed is None:
-                if raw.startswith("TIME"):
-                    continue
                 stats["trace_lines_failed"] = int(stats["trace_lines_failed"]) + 1
                 if len(stats["parse_error_examples"]) < 5:
                     stats["parse_error_examples"].append(raw[:160])
@@ -845,8 +819,8 @@ def build_window_activity(args: argparse.Namespace) -> tuple[list[dict[str, Any]
         edge = mapper.parse_log_event(event)
         if edge is not None:
             window["_approx_edges"] = safe_int(window.get("_approx_edges"), 0) + 1
-            add_node_to_window(window, edge.src)
-            add_node_to_window(window, edge.dst)
+            add_node_to_window(window, edge.src, edge.src_meta)
+            add_node_to_window(window, edge.dst, edge.dst_meta)
         second = active_second_for(dt, window["_start_dt"], window_seconds)
         if second is not None:
             window["_active_seconds"].add(second)

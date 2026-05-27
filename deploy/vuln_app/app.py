@@ -1,16 +1,26 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, has_request_context
 import os
 import json
 import sqlite3
 import subprocess
 import time
 import secrets
+import csv
+import glob
+import uuid
 from typing import Any, Dict
 
 app = Flask(__name__)
 
 DB_PATH = os.environ.get("DRSEC_DB_PATH", "/app/data/app.db")
 SECRETS_DIR = os.path.join(os.path.dirname(DB_PATH), "secrets")
+RICH_DATA_DIR = os.environ.get("DRSEC_RICH_DATA_DIR", os.path.join(os.path.dirname(DB_PATH), "rich"))
+
+ITEMS = [
+    {"id": "sku-001", "name": "container-monitor", "price": 19.9},
+    {"id": "sku-002", "name": "provenance-audit", "price": 29.9},
+    {"id": "sku-003", "name": "threat-intel-pack", "price": 49.9},
+]
 
 
 def _init_secrets() -> None:
@@ -98,7 +108,80 @@ def _init_db() -> None:
         conn.close()
 
 
+def _safe_component(value: Any, default: str) -> str:
+    text = str(value or default).strip()
+    cleaned = "".join(ch if ch.isalnum() or ch in "._-" else "_" for ch in text)
+    return cleaned[:96] or default
+
+
+def _request_tags(event: str) -> Dict[str, str]:
+    if not has_request_context():
+        return {
+            "run_id": "no_request",
+            "actor": "server",
+            "action": _safe_component(event, "unknown_action"),
+            "request_id": uuid.uuid4().hex,
+        }
+    return {
+        "run_id": _safe_component(request.headers.get("X-DRSEC-Run-ID"), "manual"),
+        "actor": _safe_component(request.headers.get("X-DRSEC-Actor"), "manual_user"),
+        "action": _safe_component(request.headers.get("X-DRSEC-Action"), event),
+        "request_id": _safe_component(request.headers.get("X-DRSEC-Request-ID"), uuid.uuid4().hex),
+    }
+
+
+def _run_dir(run_id: str) -> str:
+    path = os.path.join(RICH_DATA_DIR, "runs", _safe_component(run_id, "manual"))
+    os.makedirs(path, exist_ok=True)
+    return path
+
+
+def _append_jsonl(path: str, payload: Dict[str, Any]) -> None:
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "a", encoding="utf-8") as f:
+        f.write(json.dumps(payload, ensure_ascii=False, sort_keys=True) + "\n")
+
+
+def _write_text(path: str, body: str) -> None:
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(body)
+
+
+def _artifact_path(run_id: str, category: str, actor: str, action: str, request_id: str, suffix: str) -> str:
+    return os.path.join(
+        _run_dir(run_id),
+        category,
+        _safe_component(actor, "actor"),
+        _safe_component(action, "action"),
+        f"{_safe_component(request_id, uuid.uuid4().hex)}{suffix}",
+    )
+
+
 def _audit(event: str, meta: Dict[str, Any]) -> None:
+    tags = _request_tags(event)
+    audit_payload = {
+        "ts": int(time.time()),
+        "event": event,
+        "method": request.method if has_request_context() else "",
+        "path": request.path if has_request_context() else "",
+        "run_id": tags["run_id"],
+        "actor": tags["actor"],
+        "action": tags["action"],
+        "request_id": tags["request_id"],
+        "meta": meta,
+    }
+    audit_path = _artifact_path(
+        tags["run_id"],
+        "audit",
+        tags["actor"],
+        tags["action"],
+        tags["request_id"],
+        ".jsonl",
+    )
+    _append_jsonl(audit_path, audit_payload)
+    _append_jsonl(os.path.join(_run_dir(tags["run_id"]), "audit_index.jsonl"), {**audit_payload, "audit_path": audit_path})
+
     conn = _db()
     try:
         conn.execute(
@@ -126,15 +209,40 @@ def health():
     return jsonify({"status": "ok", "ts": int(time.time())})
 
 
+@app.route('/ready')
+def ready():
+    _init_db()
+    _init_secrets()
+    os.makedirs(RICH_DATA_DIR, exist_ok=True)
+    _audit("ready", {"db_path": DB_PATH, "rich_data_dir": RICH_DATA_DIR})
+    return jsonify({"status": "ready", "ts": int(time.time()), "rich_data_dir": RICH_DATA_DIR})
+
+
 @app.route('/api/items')
 def items():
-    data = [
-        {"id": "sku-001", "name": "container-monitor", "price": 19.9},
-        {"id": "sku-002", "name": "provenance-audit", "price": 29.9},
-        {"id": "sku-003", "name": "threat-intel-pack", "price": 49.9},
-    ]
-    _audit("items_list", {"count": len(data)})
-    return jsonify({"items": data})
+    tags = _request_tags("items_list")
+    snapshot_path = _artifact_path(tags["run_id"], "catalog", tags["actor"], tags["action"], tags["request_id"], ".json")
+    _write_text(snapshot_path, json.dumps({"items": ITEMS, "request": tags}, ensure_ascii=False, sort_keys=True))
+    _audit("items_list", {"count": len(ITEMS), "snapshot_path": snapshot_path})
+    return jsonify({"items": ITEMS, "snapshot_path": snapshot_path})
+
+
+@app.route('/api/items/<item_id>')
+def item_detail(item_id: str):
+    tags = _request_tags("item_detail")
+    item = next((entry for entry in ITEMS if entry["id"] == item_id), None)
+    if item is None:
+        _audit("item_not_found", {"item_id": item_id})
+        return jsonify({"error": "not_found"}), 404
+    detail = {
+        **item,
+        "inventory": {"available": 100 + len(item_id), "warehouse": f"wh-{item_id[-1]}"},
+        "request": tags,
+    }
+    detail_path = _artifact_path(tags["run_id"], "item_detail", tags["actor"], tags["action"], tags["request_id"], ".json")
+    _write_text(detail_path, json.dumps(detail, ensure_ascii=False, sort_keys=True))
+    _audit("item_detail", {"item_id": item_id, "detail_path": detail_path})
+    return jsonify({"item": detail, "detail_path": detail_path})
 
 
 @app.route('/api/order', methods=['POST'])
@@ -172,6 +280,27 @@ def get_order(order_id: int):
         return jsonify({"error": "not_found"}), 404
     _audit("order_viewed", {"order_id": order_id})
     return jsonify(dict(row))
+
+
+@app.route('/api/me/orders')
+def my_orders():
+    username = _get_session_username()
+    if not username:
+        return jsonify({"error": "unauthorized"}), 401
+    tags = _request_tags("my_orders")
+    conn = _db()
+    try:
+        rows = conn.execute(
+            "SELECT id, customer, item, quantity, status, created_at FROM orders WHERE customer = ? ORDER BY id DESC LIMIT 25",
+            (username,),
+        ).fetchall()
+    finally:
+        conn.close()
+    payload = {"username": username, "orders": [dict(r) for r in rows], "request": tags}
+    orders_path = _artifact_path(tags["run_id"], "orders", tags["actor"], tags["action"], tags["request_id"], ".json")
+    _write_text(orders_path, json.dumps(payload, ensure_ascii=False, sort_keys=True))
+    _audit("my_orders", {"username": username, "orders": len(rows), "orders_path": orders_path})
+    return jsonify({"orders": payload["orders"], "orders_path": orders_path})
 
 
 @app.route('/api/search')
@@ -303,6 +432,7 @@ def admin_audit():
 
 @app.route("/api/report/export")
 def report_export():
+    tags = _request_tags("report_export")
     q = str(request.args.get("q") or "").strip().lower()
     try:
         limit = min(max(int(request.args.get("limit") or 20), 1), 200)
@@ -326,8 +456,54 @@ def report_export():
     finally:
         conn.close()
 
-    _audit("report_export", {"q": q, "limit": limit, "rows": len(rows)})
-    return jsonify({"q": q, "limit": limit, "rows": [dict(r) for r in rows]})
+    row_dicts = [dict(r) for r in rows]
+    report_path = _artifact_path(tags["run_id"], "reports", tags["actor"], tags["action"], tags["request_id"], ".csv")
+    os.makedirs(os.path.dirname(report_path), exist_ok=True)
+    with open(report_path, "w", encoding="utf-8", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=["customer", "item", "status", "order_count", "total_quantity"])
+        writer.writeheader()
+        writer.writerows(row_dicts)
+    manifest_path = _artifact_path(tags["run_id"], "reports", tags["actor"], tags["action"], tags["request_id"], ".json")
+    _write_text(manifest_path, json.dumps({"q": q, "limit": limit, "rows": row_dicts, "csv_path": report_path}, ensure_ascii=False, sort_keys=True))
+    _audit("report_export", {"q": q, "limit": limit, "rows": len(rows), "report_path": report_path, "manifest_path": manifest_path})
+    return jsonify({"q": q, "limit": limit, "rows": row_dicts, "report_path": report_path, "manifest_path": manifest_path})
+
+
+@app.route("/api/cache/warmup", methods=["GET", "POST"])
+def cache_warmup():
+    tags = _request_tags("cache_warmup")
+    payload = request.get_json(silent=True) or {}
+    category = str(payload.get("category") or request.args.get("category") or "catalog")
+    cache_body = {
+        "category": category,
+        "items": ITEMS,
+        "request": tags,
+        "generated_at": int(time.time()),
+    }
+    cache_path = _artifact_path(tags["run_id"], "cache", tags["actor"], tags["action"], tags["request_id"], ".json")
+    _write_text(cache_path, json.dumps(cache_body, ensure_ascii=False, sort_keys=True))
+    job_payload = {
+        "run_id": tags["run_id"],
+        "actor": tags["actor"],
+        "action": tags["action"],
+        "request_id": tags["request_id"],
+        "kind": "cache_refresh",
+        "cache_path": cache_path,
+        "created_at": int(time.time()),
+    }
+    job_path = _artifact_path(tags["run_id"], "jobs/pending", tags["actor"], tags["action"], tags["request_id"], ".json")
+    _write_text(job_path, json.dumps(job_payload, ensure_ascii=False, sort_keys=True))
+    _audit("cache_warmup", {"category": category, "cache_path": cache_path, "job_path": job_path})
+    return jsonify({"status": "ok", "cache_path": cache_path, "job_path": job_path})
+
+
+@app.route("/api/worker/jobs")
+def worker_jobs():
+    tags = _request_tags("worker_jobs")
+    pattern = os.path.join(_run_dir(tags["run_id"]), "jobs", "pending", "*", "*", "*.json")
+    jobs = sorted(glob.glob(pattern))[:25]
+    _audit("worker_jobs", {"job_count": len(jobs)})
+    return jsonify({"jobs": jobs})
 
 
 @app.route('/ping')
@@ -346,3 +522,6 @@ if __name__ == '__main__':
     _init_db()
     _init_secrets()
     app.run(host='0.0.0.0', port=5000)
+
+_init_db()
+_init_secrets()

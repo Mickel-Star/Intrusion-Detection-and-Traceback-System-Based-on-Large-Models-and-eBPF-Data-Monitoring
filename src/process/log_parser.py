@@ -1,205 +1,272 @@
 #!/usr/bin/env python3
 """
-Tracee日志解析器
-用于将Tracee生成的原始日志转换为结构化数据
+Tracee JSON/JSONL log parser.
+
+Training and preprocessing expect one Tracee JSON object per non-empty line.
+Text/table output is intentionally rejected because it truncates fields such as
+COMM and IMAGE and loses type information for syscall arguments.
 """
 
-import os
-import re
 import json
-from datetime import datetime
-from typing import List, Dict, Any
+import os
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
+
+
+def detect_trace_log_format(file_path: str | os.PathLike[str]) -> Dict[str, Any]:
+    """Detect the on-disk Tracee trace format used by a trace.log file."""
+    path = Path(file_path)
+    result: Dict[str, Any] = {
+        "actual_trace_format": "missing",
+        "trace_log_exists": path.exists(),
+        "trace_log_size_bytes": path.stat().st_size if path.exists() else 0,
+        "nonempty_lines": 0,
+        "json_object_lines": 0,
+        "json_array_lines": 0,
+        "json_parse_error_lines": 0,
+        "non_json_lines": 0,
+        "parse_error_examples": [],
+    }
+    if not path.exists():
+        return result
+    if path.stat().st_size <= 0:
+        result["actual_trace_format"] = "empty"
+        return result
+
+    first_nonempty = ""
+    whole_text_parts: List[str] | None = [] if path.stat().st_size <= 1_000_000 else None
+    with path.open("r", encoding="utf-8", errors="ignore") as fp:
+        for line in fp:
+            if whole_text_parts is not None:
+                whole_text_parts.append(line)
+            stripped = line.strip()
+            if not stripped:
+                continue
+            if not first_nonempty:
+                first_nonempty = stripped
+            result["nonempty_lines"] = int(result["nonempty_lines"]) + 1
+            if not stripped.startswith(("{", "[")):
+                result["non_json_lines"] = int(result["non_json_lines"]) + 1
+                if len(result["parse_error_examples"]) < 5:
+                    result["parse_error_examples"].append(stripped[:160])
+                continue
+            try:
+                payload = json.loads(stripped)
+            except Exception:
+                result["json_parse_error_lines"] = int(result["json_parse_error_lines"]) + 1
+                if len(result["parse_error_examples"]) < 5:
+                    result["parse_error_examples"].append(stripped[:160])
+                continue
+            if isinstance(payload, dict):
+                result["json_object_lines"] = int(result["json_object_lines"]) + 1
+            elif isinstance(payload, list):
+                result["json_array_lines"] = int(result["json_array_lines"]) + 1
+
+    nonempty = int(result["nonempty_lines"])
+    object_lines = int(result["json_object_lines"])
+    array_lines = int(result["json_array_lines"])
+    non_json = int(result["non_json_lines"])
+    parse_errors = int(result["json_parse_error_lines"])
+
+    if nonempty <= 0:
+        result["actual_trace_format"] = "empty"
+    elif object_lines == nonempty:
+        result["actual_trace_format"] = "jsonl"
+    elif array_lines == 1 and nonempty == 1:
+        result["actual_trace_format"] = "json_array"
+    elif non_json == nonempty:
+        result["actual_trace_format"] = "table"
+    else:
+        whole_text = "".join(whole_text_parts).strip() if whole_text_parts is not None else ""
+        if whole_text:
+            try:
+                payload = json.loads(whole_text)
+            except Exception:
+                payload = None
+            if isinstance(payload, dict):
+                result["actual_trace_format"] = "json"
+            elif isinstance(payload, list):
+                result["actual_trace_format"] = "json_array"
+            elif object_lines or array_lines:
+                result["actual_trace_format"] = "mixed"
+            elif parse_errors:
+                result["actual_trace_format"] = "invalid_json"
+            else:
+                result["actual_trace_format"] = "mixed"
+        else:
+            result["actual_trace_format"] = "empty"
+    if first_nonempty:
+        result["first_nonempty_prefix"] = first_nonempty[:80]
+    return result
+
 
 class TraceeLogParser:
-    """Tracee日志解析器类"""
-    
-    def __init__(self):
-        self.log_pattern = re.compile(r'^(\d{2}:\d{2}:\d{2}:\d{6})\s+(\d+)\s+([^\s]+)\s+(\d+)\s+(\d+)\s+([-\d]+)\s+([^\s]+)\s+(.*)$')
-        self.log_pattern_container = re.compile(
-            r'^(\d{2}:\d{2}:\d{2}:\d{6})\s+([0-9a-fA-F]{6,})\s+([^\s]+)\s+(\d+)\s+([^\s]+)\s+(\d+)\s*/\s*(\d+)\s+(\d+)\s*/\s*(\d+)\s+([-\d]+)\s+([^\s]+)\s+(.*)$'
-        )
-        self.args_pattern = re.compile(r'([^,:\s]+):\s*([^,\n]+)')
-    
-    def parse_log_line(self, line: str) -> Dict[str, Any]:
-        """解析单行Tracee日志"""
-        if line.startswith('TIME'):
-            return None  # 跳过表头行
-        
-        match = self.log_pattern_container.match(line)
-        if match:
-            (
-                time_str,
-                container_id,
-                image,
-                uid,
-                comm,
-                pid_container,
-                pid_host,
-                tid_container,
-                tid_host,
-                ret,
-                event,
-                args_str,
-            ) = match.groups()
-            timestamp = self._parse_timestamp(time_str)
-            args = self._parse_args(args_str)
-            structured_data = {
-                "timestamp": timestamp,
-                "uid": int(uid),
-                "comm": comm.strip(),
-                "pid": int(pid_host),
-                "tid": int(tid_host),
-                "ret": int(ret),
-                "event": event.strip(),
-                "args": args,
-                "container_id": container_id,
-                "container_image": image,
-                "container_pid": int(pid_container),
-                "container_tid": int(tid_container),
-            }
-            return structured_data
+    """Parse Tracee JSON/JSONL events into the internal log schema."""
 
-        match = self.log_pattern.match(line)
-        if not match:
+    def parse_line(self, line: str) -> Optional[Dict[str, Any]]:
+        raw = str(line or "").strip()
+        if not raw:
             return None
-
-        time_str, uid, comm, pid, tid, ret, event, args_str = match.groups()
-        
-        # 解析时间
-        timestamp = self._parse_timestamp(time_str)
-        
-        # 解析参数
-        args = self._parse_args(args_str)
-        
-        # 构建结构化数据
-        structured_data = {
-            'timestamp': timestamp,
-            'uid': int(uid),
-            'comm': comm.strip(),
-            'pid': int(pid),
-            'tid': int(tid),
-            'ret': int(ret),
-            'event': event.strip(),
-            'args': args
-        }
-        
-        # 提取 Kubernetes 上下文（如果存在于参数中）
-        # Tracee 有时会将 k8s 信息放在 args 或 context 中
-        # 这里尝试从 args 中提取常见的 k8s 字段
-        if 'pod_name' in args:
-            structured_data['pod_name'] = args['pod_name']
-        if 'container_id' in args:
-            structured_data['container_id'] = args['container_id']
-        
-        return structured_data
-    
-    def _parse_timestamp(self, time_str: str) -> float:
-        """解析时间戳字符串"""
-        # 格式: HH:MM:SS:ssssss
-        dt = datetime.strptime(time_str, '%H:%M:%S:%f')
-        # 转换为当天的时间戳（秒）
-        return dt.hour * 3600 + dt.minute * 60 + dt.second + dt.microsecond / 1000000
-    
-    def _parse_json_line(self, json_log: Dict[str, Any]) -> Dict[str, Any]:
-        """Parses a single JSON log entry from Tracee (JSON output mode)."""
+        if not raw.startswith("{"):
+            return None
         try:
-            # Tracee JSON format usually has: timestamp, processName, processId, eventName, args, etc.
-            # Adaptation logic to match our internal structure
-            
-            # Timestamp (nanoseconds -> seconds)
-            timestamp = json_log.get('timestamp', 0) / 1e9
-            
-            structured_data = {
-                'timestamp': timestamp,
-                'uid': json_log.get('userId', 0),
-                'comm': json_log.get('processName', 'unknown'),
-                'pid': json_log.get('processId', 0),
-                'tid': json_log.get('threadId', 0),
-                'ret': json_log.get('returnValue', 0),
-                'event': json_log.get('eventName', 'unknown'),
-                'args': {}
-            }
-            
-            # Flatten args
-            if 'args' in json_log:
-                for arg in json_log['args']:
-                    key = arg.get('name')
-                    value = arg.get('value')
-                    if key:
-                        structured_data['args'][key] = value
-            
-            # Kubernetes context
-            if 'kubernetes' in json_log:
-                k8s = json_log['kubernetes']
-                if 'podName' in k8s:
-                    structured_data['pod_name'] = k8s['podName']
-                if 'containerId' in k8s:
-                    structured_data['container_id'] = k8s['containerId']
-            
-            return structured_data
-        except Exception as e:
-            # print(f"Error parsing JSON log: {e}")
+            payload = json.loads(raw)
+        except Exception:
             return None
-    
-    def _parse_args(self, args_str: str) -> Dict[str, Any]:
-        """解析事件参数。"""
-        args = {}
+        if not isinstance(payload, dict):
+            return None
+        return self._parse_json_line(payload)
 
-        # Tracee table 输出会把 socket 地址渲染成 `remote_addr: map[...]`。
-        # 先抽取这些 map 值，再解析剩余的普通 key/value，避免 map 前缀被误当成一个长 key。
-        remaining = str(args_str or "")
-        for match in list(re.finditer(r"([A-Za-z0-9_]+):\s*map\[(.*?)\]", remaining)):
-            key = match.group(1).strip()
-            map_content = match.group(2)
-            map_args = {}
-            for item_key, value in re.findall(r"([A-Za-z0-9_]+):([^\s\]]+)", map_content):
-                map_args[item_key.strip()] = value.strip().rstrip(",")
-            if key:
-                args[key] = map_args
+    def _parse_json_line(self, json_log: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        try:
+            if not json_log.get("eventName"):
+                return None
 
-        remaining = re.sub(r"([A-Za-z0-9_]+):\s*map\[(.*?)\]", r"\1: ", remaining)
+            timestamp = self._json_timestamp_seconds(json_log.get("timestamp", 0))
+            process_id = int(json_log.get("processId") or 0)
+            thread_id = int(json_log.get("threadId") or process_id)
+            host_process_id = int(json_log.get("hostProcessId") or process_id)
+            host_thread_id = int(json_log.get("hostThreadId") or thread_id)
 
-        # 处理普通键值对参数
-        for match in self.args_pattern.finditer(remaining):
-            key, value = match.groups()
-            if key.strip() not in args:
-                args[key.strip()] = value.strip()
+            structured_data: Dict[str, Any] = {
+                "timestamp": timestamp,
+                "uid": json_log.get("userId", 0),
+                "comm": json_log.get("processName", "unknown"),
+                "pid": host_process_id,
+                "tid": host_thread_id,
+                "ret": json_log.get("returnValue", 0),
+                "event": json_log.get("eventName", "unknown"),
+                "args": {},
+                "container_pid": process_id,
+                "container_tid": thread_id,
+            }
 
-        return args
+            for source_key, target_key in (
+                ("containerId", "container_id"),
+                ("containerImage", "container_image"),
+                ("containerName", "container_name"),
+                ("podName", "pod_name"),
+                ("podNamespace", "pod_namespace"),
+                ("podUID", "pod_uid"),
+            ):
+                value = json_log.get(source_key)
+                if value not in (None, ""):
+                    structured_data[target_key] = value
+
+            container_obj = json_log.get("container")
+            if isinstance(container_obj, dict):
+                if not structured_data.get("container_id"):
+                    v = container_obj.get("id") or container_obj.get("containerId")
+                    if v not in (None, ""):
+                        structured_data["container_id"] = v
+                if not structured_data.get("container_image"):
+                    v = container_obj.get("image") or container_obj.get("containerImage")
+                    if v not in (None, ""):
+                        structured_data["container_image"] = v
+                if not structured_data.get("container_name"):
+                    v = container_obj.get("name") or container_obj.get("containerName")
+                    if v not in (None, ""):
+                        structured_data["container_name"] = v
+
+            for entity_key, entity_target in (
+                ("threadEntityId", "thread_entity_id"),
+                ("processEntityId", "process_entity_id"),
+                ("parentEntityId", "parent_entity_id"),
+            ):
+                entity_val = json_log.get(entity_key)
+                if entity_val is not None:
+                    try:
+                        structured_data[entity_target] = int(entity_val)
+                    except (ValueError, TypeError):
+                        pass
+
+            args = json_log.get("args")
+            if isinstance(args, list):  # 如果json数据是列表格式，分别提取key和value
+                for arg in args:
+                    if not isinstance(arg, dict):
+                        continue
+                    key = arg.get("name")
+                    if key:
+                        structured_data["args"][str(key)] = arg.get("value")
+            elif isinstance(args, dict):  # 如果json数据是字典格式，直接更新
+                structured_data["args"].update(args)
+
+            k8s = json_log.get("kubernetes")
+            if isinstance(k8s, dict):
+                if k8s.get("podName"):
+                    structured_data["pod_name"] = k8s.get("podName")
+                if k8s.get("containerId"):
+                    structured_data["container_id"] = k8s.get("containerId")
+
+            return structured_data
+        except Exception:
+            return None
+
+    def _json_timestamp_seconds(self, value: Any) -> float:
+        try:
+            numeric = float(value)
+        except Exception:
+            return 0.0
+        if numeric > 1e17:
+            return numeric / 1e9
+        if numeric > 1e14:
+            return numeric / 1e6
+        if numeric > 1e11:
+            return numeric / 1e3
+        return numeric
 
     def parse_log_file(self, file_path: str) -> List[Dict[str, Any]]:
-        """解析整个日志文件"""
-        structured_logs = []
-        
+        structured_logs: List[Dict[str, Any]] = []
+
         if not os.path.exists(file_path):
             print(f"Error: Log file not found at {file_path}")
             return []
 
-        is_json = file_path.endswith(".json") or file_path.endswith(".jsonl")
-        with open(file_path, 'r', encoding='utf-8') as f:
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-
-                if is_json or line.startswith("{"):
-                    try:
-                        obj = json.loads(line)
-                    except Exception:
-                        continue
-                    parsed = self._parse_json_line(obj)
-                else:
-                    parsed = self.parse_log_line(line)
-
+        with open(file_path, "r", encoding="utf-8", errors="ignore") as fp:
+            for line in fp:
+                parsed = self.parse_line(line)
                 if parsed:
                     structured_logs.append(parsed)
-        
+
         return structured_logs
 
+    def parse_log_file_with_stats(self, file_path: str) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
+        stats: Dict[str, Any] = {
+            "trace_log_exists": os.path.exists(file_path),
+            "trace_log_size_bytes": os.path.getsize(file_path) if os.path.exists(file_path) else 0,
+            "trace_lines_total": 0,
+            "trace_lines_parsed": 0,
+            "trace_lines_failed": 0,
+            "trace_lines_non_json": 0,
+            "parse_error_examples": [],
+        }
+        structured_logs: List[Dict[str, Any]] = []
+        if not os.path.exists(file_path):
+            return structured_logs, stats
+
+        with open(file_path, "r", encoding="utf-8", errors="ignore") as fp:
+            for line in fp:
+                raw = line.rstrip("\n")
+                if not raw.strip():
+                    continue
+                stats["trace_lines_total"] = int(stats["trace_lines_total"]) + 1
+                if not raw.lstrip().startswith("{"):
+                    stats["trace_lines_non_json"] = int(stats["trace_lines_non_json"]) + 1
+                parsed = self.parse_line(raw)
+                if parsed is None:
+                    stats["trace_lines_failed"] = int(stats["trace_lines_failed"]) + 1
+                    if len(stats["parse_error_examples"]) < 5:
+                        stats["parse_error_examples"].append(raw[:160])
+                    continue
+                stats["trace_lines_parsed"] = int(stats["trace_lines_parsed"]) + 1
+                structured_logs.append(parsed)
+
+        return structured_logs, stats
+
+
 if __name__ == "__main__":
-    # 测试解析器
     parser = TraceeLogParser()
-    test_file = '../../data/raw/tracee.log'
+    test_file = "../../data/raw/tracee.log"
     if os.path.exists(test_file):
         logs = parser.parse_log_file(test_file)
         print(f"解析了 {len(logs)} 条日志记录")

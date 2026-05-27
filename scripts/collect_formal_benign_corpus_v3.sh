@@ -17,8 +17,6 @@ SKIP_TRACEE=0
 SKIP_COMPOSE_UP=0
 DURATION_SCALE="1.0"
 REHEARSAL=0
-FORCE=0
-CLEAN_RUN=0
 NO_MANIFEST=0
 NO_WINDOW_ACTIVITY=0
 CONTINUE_ON_ERROR=0
@@ -36,8 +34,6 @@ Options:
   --skip-compose-up           Use an already-running app and skip docker compose up.
   --duration-scale <float>    Scale every run and phase duration.
   --rehearsal                 Use duration-scale 0.1 and data/benign_corpus_v3_rehearsal.
-  --force                     Rebuild derived artifacts and allow collection of incomplete runs.
-  --clean-run                 Remove selected run output dirs before collecting; requires --force.
   --no-manifest               Collect runs only; skip corpus manifest/report manifest checks.
   --no-window-activity        Collect trace and driver outputs only.
   --continue-on-error         Continue later runs after a run failure; final exit is non-zero.
@@ -76,14 +72,6 @@ while [ "$#" -gt 0 ]; do
       REHEARSAL=1
       shift
       ;;
-    --force)
-      FORCE=1
-      shift
-      ;;
-    --clean-run)
-      CLEAN_RUN=1
-      shift
-      ;;
     --no-manifest)
       NO_MANIFEST=1
       shift
@@ -113,11 +101,6 @@ if [ "${REHEARSAL}" -eq 1 ]; then
   if [ "${CORPUS_DIR_SET}" -eq 0 ]; then
     CORPUS_DIR="data/benign_corpus_v3_rehearsal"
   fi
-fi
-
-if [ "${CLEAN_RUN}" -eq 1 ] && [ "${FORCE}" -ne 1 ]; then
-  echo "ERROR: --clean-run requires --force" >&2
-  exit 2
 fi
 
 PLAN_COMMON=(
@@ -177,10 +160,6 @@ for line in "${PLAN_LINES[@]}"; do
   echo ""
   echo "==> collecting ${RUN_ID} (${SPLIT}) duration=${DURATION_SECONDS}s output=${RUN_DIR}"
 
-  if [ "${CLEAN_RUN}" -eq 1 ]; then
-    echo "clean-run: removing ${RUN_DIR}"
-    rm -rf "${RUN_DIR}"
-  fi
   mkdir -p "${RUN_DIR}"
 
   RUN_CONFIG="${RUN_DIR}/effective_config.yaml"
@@ -196,43 +175,39 @@ for line in "${PLAN_LINES[@]}"; do
   [ "${SKIP_COMPOSE_UP}" -eq 1 ] && WRITE_ARGS+=(--skip-compose-up)
   "${PYTHON_BIN}" -m src.process.benign_manifest_builder write-run-config "${WRITE_ARGS[@]}"
 
-  SHOULD_COLLECT=1
-  if [ -f "${RUN_DIR}/collection_summary.json" ] && [ "${CLEAN_RUN}" -ne 1 ]; then
-    SHOULD_COLLECT=0
-    if [ "${FORCE}" -eq 1 ]; then
-      echo "existing collection_summary.json found; --force will rebuild derived artifacts without deleting raw collection data"
-    else
-      echo "existing collection_summary.json found; skipping collection for ${RUN_ID}"
-    fi
-  elif [ "${CLEAN_RUN}" -ne 1 ] && [ -s "${RUN_DIR}/request_events.jsonl" ]; then
-    if [ "${SKIP_TRACEE}" -eq 1 ] || [ -s "${RUN_DIR}/trace.log" ]; then
-      SHOULD_COLLECT=0
-      echo "existing raw collection artifacts found; preserving them and rebuilding derived artifacts"
-    fi
-  fi
+  rm -f \
+    "${RUN_DIR}/.collection_errors.tmp" \
+    "${RUN_DIR}/.collection_warnings.tmp" \
+    "${RUN_DIR}/collection_summary.json" \
+    "${RUN_DIR}/driver.log" \
+    "${RUN_DIR}/request_events.jsonl" \
+    "${RUN_DIR}/run_meta.json" \
+    "${RUN_DIR}/trace.log" \
+    "${RUN_DIR}/tracee_runtime.log" \
+    "${RUN_DIR}/window_activity.jsonl" \
+    "${RUN_DIR}/window_activity_summary.json" \
+    "${RUN_DIR}/workload_summary.json"
+  echo "collecting fresh run data; existing raw artifacts in ${RUN_DIR} will be overwritten"
+  COLLECT_ARGS=(
+    --config "${RUN_CONFIG}"
+    --output-dir "${RUN_DIR}"
+    --duration-seconds "${DURATION_SECONDS}"
+  )
+  [ "${SKIP_TRACEE}" -eq 1 ] && COLLECT_ARGS+=(--skip-tracee)
+  [ "${SKIP_COMPOSE_UP}" -eq 1 ] && COLLECT_ARGS+=(--skip-compose-up)
 
-  if [ "${SHOULD_COLLECT}" -eq 1 ]; then
-    COLLECT_ARGS=(
-      --config "${RUN_CONFIG}"
-      --output-dir "${RUN_DIR}"
-      --duration-seconds "${DURATION_SECONDS}"
-    )
-    [ "${SKIP_TRACEE}" -eq 1 ] && COLLECT_ARGS+=(--skip-tracee)
-    [ "${SKIP_COMPOSE_UP}" -eq 1 ] && COLLECT_ARGS+=(--skip-compose-up)
-
-    set +e
-    bash scripts/run_benign_corpus_v3_tracee.sh "${COLLECT_ARGS[@]}"
-    COLLECT_EXIT=$?
-    set -e
-    if [ "${COLLECT_EXIT}" -ne 0 ]; then
-      echo "ERROR: collection failed for ${RUN_ID} with exit code ${COLLECT_EXIT}" >&2
-      FAILED=1
-      if [ "${CONTINUE_ON_ERROR}" -ne 1 ]; then
-        write_report
-        exit "${COLLECT_EXIT}"
-      fi
-      continue
+  set +e
+  bash scripts/run_benign_corpus_v3_tracee.sh "${COLLECT_ARGS[@]}"
+  COLLECT_EXIT=$?
+  set -e
+  if [ "${COLLECT_EXIT}" -ne 0 ]; then
+    echo "ERROR: collection failed for ${RUN_ID} with exit code ${COLLECT_EXIT}" >&2
+    FAILED=1
+    if [ "${CONTINUE_ON_ERROR}" -ne 1 ]; then
+      write_report
+      exit "${COLLECT_EXIT}"
     fi
+    continue
   fi
 
   if [ "${NO_WINDOW_ACTIVITY}" -ne 1 ]; then

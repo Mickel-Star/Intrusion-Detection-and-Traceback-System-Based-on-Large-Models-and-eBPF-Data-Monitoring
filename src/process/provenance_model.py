@@ -52,12 +52,17 @@ class ProvenanceEventMapper:
             "connect": ("Send", "forward"),
             "security_socket_connect": ("Send", "forward"),
             "accept": ("Receive", "backward"),
+            "accept4": ("Receive", "backward"),
             "security_socket_accept": ("Receive", "backward"),
             "openat": ("Write", "forward"),
             "close": ("Write", "forward"),
         }
+        self.state_only_events = {"socket", "bind", "listen", "getpeername", "getsockname"}
         self._fd_files: Dict[Tuple[str, int, str], Dict[str, Any]] = {}
         self._fd_nets: Dict[Tuple[str, int, str], Dict[str, Any]] = {}
+        self._fd_local_sockets: Dict[Tuple[str, int, str], Dict[str, Any]] = {}
+        self.af_unspec_count: int = 0
+        self.addrlen_zero_count: int = 0
 
     def _container_scope(self, container_id: Any) -> str:
         value = str(container_id or "").strip().lower()
@@ -65,16 +70,21 @@ class ProvenanceEventMapper:
 
     def parse_log_event(self, log: Dict[str, Any]) -> Optional[ProvenanceEdge]:
         event = (log.get("event") or "").strip()
-        if event not in self.event_semantics:
-            return None
-
-        edge_type, direction = self.event_semantics[event]
         pid = int(log.get("pid", 0))
-        comm = log.get("comm", "unknown")
         args = log.get("args", {}) or {}
         container_id = log.get("container_id")
         container_scope = self._container_scope(container_id)
 
+        # 纯状态事件：不产生溯源边,只更新内部状态,为后续的connect/sendto/accept等事件提供必需的上下文（例如套接字的本地地址、监听端口）
+        if event in self.state_only_events:
+            self._update_socket_state_event(event, args, container_scope, pid, log)
+            return None
+
+        if event not in self.event_semantics:
+            return None
+
+        edge_type, direction = self.event_semantics[event]
+        comm = log.get("comm", "unknown")
         timestamp_ns = int(float(log.get("timestamp", 0.0)) * 1e9)
 
         proc_uuid = f"container:{container_scope}:pid:{pid}"
@@ -90,6 +100,8 @@ class ProvenanceEventMapper:
             "container_image": log.get("container_image"),
             "pod_name": log.get("pod_name"),
         }
+        if log.get("process_entity_id") is not None:
+            proc_meta["process_entity_id"] = log["process_entity_id"]
 
         if event in {"openat", "execve", "sched_process_exec", "read", "write", "close", "mmap"}:
             resolved = self._resolve_file_object(event, args, container_scope, pid, log)
@@ -97,14 +109,16 @@ class ProvenanceEventMapper:
                 return None
             obj_node, obj_meta = resolved
 
-        elif event in {"connect", "security_socket_connect", "accept", "security_socket_accept", "sendto", "recvfrom"}:
-            resolved = self._resolve_net_object(event, args, container_scope, pid)
+        elif event in {"connect", "security_socket_connect", "accept", "accept4", "security_socket_accept", "sendto", "recvfrom"}:
+            resolved = self._resolve_net_object(event, args, container_scope, pid, log)
             if resolved is None:
                 return None
             obj_node, obj_meta = resolved
 
         elif event in {"fork", "vfork", "clone"}:
-            child_pid = args.get("child_pid")
+            child_pid = args.get("child_pid") or args.get("child_tid") or args.get("newpid")
+            if not child_pid:
+                child_pid = self._ret_fd(log)
             if not child_pid:
                 return None
             child_uuid = f"container:{container_scope}:pid:{child_pid}"
@@ -118,6 +132,8 @@ class ProvenanceEventMapper:
                 "container_image": log.get("container_image"),
                 "pod_name": log.get("pod_name"),
             }
+            if log.get("parent_entity_id") is not None:
+                obj_meta["process_entity_id"] = log["parent_entity_id"]
 
         if not obj_node:
             return None
@@ -151,8 +167,38 @@ class ProvenanceEventMapper:
         for name in names:
             value = args.get(name)
             if value is not None and str(value).strip():
-                return str(value).strip()
+                fd, _path = self._split_fd_value(value)
+                return fd
         return ""
+
+    def _fd_path(self, args: Dict[str, Any], *names: str) -> str:
+        for name in names:
+            value = args.get(name)
+            if value is None or not str(value).strip():
+                continue
+            _fd, path = self._split_fd_value(value)
+            if path:
+                return path
+        return ""
+
+    def _split_fd_value(self, value: Any) -> Tuple[str, str]:
+        text = str(value or "").strip()
+        if not text:
+            return "", ""
+        match = re.match(r"^(-?\d+)\s*=\s*(.+)$", text)
+        if match:
+            fd = match.group(1).strip()
+            path = match.group(2).strip()
+            return fd, path
+        return text, ""
+
+    def _is_real_file_path(self, path: str) -> bool:
+        value = str(path or "").strip()
+        if not value:
+            return False
+        if value.startswith(("socket:[", "pipe:[", "anon_inode:", "memfd:")):
+            return False
+        return value.startswith("/") or value.startswith("./") or value.startswith("../")
 
     def _fd_key(self, container_scope: str, pid: int, fd: str) -> Tuple[str, int, str]:
         return (str(container_scope), int(pid), str(fd))
@@ -172,10 +218,14 @@ class ProvenanceEventMapper:
     ) -> Optional[Tuple[str, Dict[str, Any]]]:
         path = str(args.get("pathname") or args.get("path") or args.get("mountpoint") or "")
         fd = self._fd_value(args, "fd")
+        fd_path = self._fd_path(args, "fd")
+        if not path and self._is_real_file_path(fd_path):
+            path = fd_path
 
         if path:
             node, meta = self._file_from_path(path, args)
             if event == "openat":
+                # openat 系统调用会返回一个新的文件描述符（fd），该返回值存储在 log["ret"] 中
                 returned_fd = int(log.get("ret", -1))
                 if returned_fd >= 0:
                     self._fd_files[self._fd_key(container_scope, pid, str(returned_fd))] = {
@@ -188,6 +238,9 @@ class ProvenanceEventMapper:
             file_entry = self._fd_files.get(self._fd_key(container_scope, pid, fd))
             if file_entry:
                 return str(file_entry["node"]), dict(file_entry["meta"])
+
+            if event == "mmap":
+                return None
 
             if event == "close":
                 net_entry = self._fd_nets.get(self._fd_key(container_scope, pid, fd))
@@ -222,7 +275,12 @@ class ProvenanceEventMapper:
         meta = {
             "uuid": net_uuid,
             "src_ip": str(src_ip),
+            "src_port": int(src_port),
             "dst_ip": str(dst_ip),
+            "dst_port": int(dst_port),
+            "local_addr": local_addr,
+            "remote_addr": remote_addr,
+            "remote_addr_known": bool(remote_addr and dst_ip != "unknown"),
             "name": f"{src_ip}:{src_port}->{dst_ip}:{dst_port}",
         }
         return f"net:{net_uuid}", meta
@@ -233,24 +291,193 @@ class ProvenanceEventMapper:
         args: Dict[str, Any],
         container_scope: str,
         pid: int,
+        log: Dict[str, Any],
     ) -> Optional[Tuple[str, Dict[str, Any]]]:
         fd = self._fd_value(args, "sockfd", "fd")
+        cache_fd = fd
+        if event in {"accept", "accept4"}:
+            accepted_fd = self._ret_fd(log)
+            if accepted_fd:
+                cache_fd = accepted_fd
         fd_key = self._fd_key(container_scope, pid, fd) if fd else None
+        cache_fd_key = self._fd_key(container_scope, pid, cache_fd) if cache_fd else None
 
         remote_raw = self._addr_arg(args, "remote_addr", "dest_addr", "addr", "dst")
-        if event in {"accept", "security_socket_accept", "recvfrom"}:
-            remote_raw = self._addr_arg(args, "src_addr", "remote_addr", "addr", "dst")
+        if event in {"accept", "accept4", "security_socket_accept", "recvfrom"}:
+            remote_raw = self._addr_arg(args, "src_addr", "remote_addr", "peer_addr", "upeer_sockaddr", "addr", "dst")
         local_raw = self._addr_arg(args, "local_addr", "src")
+        if not local_raw:
+            local_raw = self._local_raw_for_fd(container_scope, pid, fd)
 
-        if not remote_raw and fd_key is not None:
+        is_unspec = self._args_contain_unspec_addr(args) or self._is_addrlen_zero(args)
+        self._record_addr_context_stats(args)
+
+        if (not remote_raw or is_unspec) and fd_key is not None:
             cached = self._fd_nets.get(fd_key)
             if cached:
                 return str(cached["node"]), dict(cached["meta"])
+        if (not remote_raw or is_unspec) and cache_fd_key is not None and cache_fd_key != fd_key:
+            cached = self._fd_nets.get(cache_fd_key)
+            if cached:
+                return str(cached["node"]), dict(cached["meta"])
+
+        if event in {"sendto", "recvfrom"} and is_unspec:
+            return self._make_unknown_connected_socket(event, args, container_scope, pid, fd)
+
+        if event in {"connect", "security_socket_connect", "accept", "accept4", "security_socket_accept"} and (
+            not remote_raw or is_unspec
+        ):
+            return None
+
+        if not remote_raw:
+            return None
 
         node, meta = self._net_from_addr(remote_raw, local_raw, args, pid)
-        if fd_key is not None and meta.get("dst_ip") not in {"", "unknown"}:
-            self._fd_nets[fd_key] = {"node": node, "meta": meta}
+        if event in {"connect", "security_socket_connect"} and cache_fd_key is not None and self._ret_success(log):
+            self._fd_nets[cache_fd_key] = {"node": node, "meta": meta}
+        elif event in {"accept", "accept4"} and cache_fd_key is not None and cache_fd != fd and self._ret_success(log):
+            self._fd_nets[cache_fd_key] = {"node": node, "meta": meta}
+        elif event == "security_socket_accept" and cache_fd_key is not None and self._ret_success(log):
+            self._fd_nets[cache_fd_key] = {"node": node, "meta": meta}
         return node, meta
+
+    def _ret_fd(self, log: Dict[str, Any]) -> str:
+        try:
+            value = int(log.get("ret", -1))
+        except (ValueError, TypeError):
+            return ""
+        return str(value) if value >= 0 else ""
+
+    def _ret_success(self, log: Dict[str, Any]) -> bool:
+        try:
+            return int(log.get("ret", 0)) >= 0
+        except (ValueError, TypeError):
+            return True
+
+    def _local_raw_for_fd(self, container_scope: str, pid: int, fd: str) -> Any:
+        if not fd:
+            return ""
+        entry = self._fd_local_sockets.get(self._fd_key(container_scope, pid, fd))
+        if not entry:
+            return ""
+        return entry.get("local_raw") or ""
+
+    def _update_socket_state_event(
+        self,
+        event: str,
+        args: Dict[str, Any],
+        container_scope: str,
+        pid: int,
+        log: Dict[str, Any],
+    ) -> None:
+        self._record_addr_context_stats(args)
+        fd = self._fd_value(args, "sockfd", "fd")
+        if event == "socket":
+            fd = self._ret_fd(log) or fd
+        if not fd or not self._ret_success(log):
+            return
+
+        key = self._fd_key(container_scope, pid, fd)
+        entry = dict(self._fd_local_sockets.get(key) or {})
+        entry["fd"] = fd
+        entry["container_scope"] = container_scope
+        entry["pid"] = int(pid)
+        proto = str(args.get("protocol") or args.get("proto") or entry.get("protocol") or "tcp").lower()
+        entry["protocol"] = proto
+        if args.get("domain") is not None:
+            entry["domain"] = args.get("domain")
+        if args.get("type") is not None:
+            entry["socket_type"] = args.get("type")
+
+        if event in {"bind", "getsockname"}:
+            local_raw = self._addr_arg(args, "local_addr", "src", "addr", "sockaddr")
+            if local_raw:  # 从参数中提取本地地址的原始表示
+                entry["local_raw"] = local_raw
+                entry["local_addr"] = self._normalize_addr(local_raw)
+            if event == "bind":
+                entry["bound"] = True  # 表示该套接字已绑定到本地地址
+            else:
+                entry["getsockname_seen"] = True  # 记录已查询过本地地址
+        elif event == "listen":
+            entry["listening"] = True
+            if args.get("backlog") is not None:
+                entry["backlog"] = args.get("backlog")
+        elif event == "getpeername":
+            # 只有成功获取 remote_raw，且不是未指定地址才能作为有效的网络对端
+            remote_raw = self._addr_arg(args, "remote_addr", "peer_addr", "addr", "dst")
+            if remote_raw and not (self._args_contain_unspec_addr(args) or self._is_addrlen_zero(args)):
+                local_raw = entry.get("local_raw") or self._addr_arg(args, "local_addr", "src")
+                node, meta = self._net_from_addr(remote_raw, local_raw, args, pid)
+                # 返回一个网络对象节点（如 net:tcp:192.168.1.100:54321）及其元数据
+                # 网络对象节点格式：{proto}:{src_ip}:{src_port}->{dst_ip}:{dst_port}
+                self._fd_nets[key] = {"node": node, "meta": meta}
+            entry["getpeername_seen"] = True
+
+        self._fd_local_sockets[key] = entry
+
+    def _record_addr_context_stats(self, args: Dict[str, Any]) -> None:
+        if not (self._args_contain_unspec_addr(args) or self._is_addrlen_zero(args)):
+            return
+        if self._args_contain_unspec_addr(args):
+            self.af_unspec_count += 1
+        else:
+            self.addrlen_zero_count += 1
+
+    def _args_contain_unspec_addr(self, args: Dict[str, Any]) -> bool:
+        for name in (
+            "remote_addr",
+            "dest_addr",
+            "addr",
+            "dst",
+            "src_addr",
+            "peer_addr",
+            "upeer_sockaddr",
+            "local_addr",
+            "src",
+            "sockaddr",
+        ):
+            value = args.get(name)
+            if isinstance(value, dict):
+                family = str(value.get("sa_family") or "").upper()
+                if family == "AF_UNSPEC":
+                    return True
+        return False
+
+    def _is_addrlen_zero(self, args: Dict[str, Any]) -> bool:
+        for name in ("addrlen", "upeer_addrlen", "peer_addrlen"):
+            addrlen = args.get(name)
+            if addrlen is not None:
+                try:
+                    return int(addrlen) == 0
+                except (ValueError, TypeError):
+                    pass
+        return False
+
+    def _make_unknown_connected_socket(
+        self,
+        event: str,
+        args: Dict[str, Any],
+        container_scope: str,
+        pid: int,
+        fd: str,
+    ) -> Tuple[str, Dict[str, Any]]:
+        proto = str(args.get("protocol") or args.get("proto") or "tcp").lower()
+        net_uuid = "unknown_connected_socket"
+        meta = {
+            "uuid": net_uuid,
+            "src_ip": "pid",
+            "dst_ip": "unknown_connected_socket",
+            "name": "unknown_connected_socket",
+            "is_unspec_net": True,
+            "remote_addr_known": False,
+            "reason": "af_unspec_or_addrlen_zero",
+            "event_name": event,
+            "protocol": proto,
+            "container_scope": container_scope,
+            "pid": int(pid),
+            "fd": str(fd or ""),
+        }
+        return f"net:{net_uuid}", meta
 
     def _cleanup_after_event(self, event: str, args: Dict[str, Any], container_scope: str, pid: int) -> None:
         if event != "close":
@@ -261,6 +488,7 @@ class ProvenanceEventMapper:
         key = self._fd_key(container_scope, pid, fd)
         self._fd_files.pop(key, None)
         self._fd_nets.pop(key, None)
+        self._fd_local_sockets.pop(key, None)
 
     def _normalize_addr(self, value: Any) -> str:
         if value is None:
@@ -324,6 +552,9 @@ class RarePathSelector:
             next_frontier: List[Tuple[str, List[Tuple[str, str, str, str]]]] = []
             for node, edge_chain in frontier:
                 for _, nbr, key, data in g.out_edges(node, keys=True, data=True):
+                    nbr_meta = g.nodes[nbr].get("meta") or {}
+                    if nbr_meta.get("is_unspec_net"):
+                        continue
                     et = str(data.get("type"))
                     chain2 = edge_chain + [(node, et, nbr, "out")]
                     state = (nbr, len(chain2))
@@ -351,6 +582,9 @@ class RarePathSelector:
                         )
 
                 for nbr, _, key, data in g.in_edges(node, keys=True, data=True):
+                    nbr_meta = g.nodes[nbr].get("meta") or {}
+                    if nbr_meta.get("is_unspec_net"):
+                        continue
                     et = str(data.get("type"))
                     chain2 = edge_chain + [(node, et, nbr, "in")]
                     state = (nbr, len(chain2))

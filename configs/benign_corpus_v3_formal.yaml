@@ -11,17 +11,18 @@
   "request_timeout_seconds": 5,
   "collection": {
     "tracee_enabled": true,
-    "tracee_image": "aquasec/tracee:latest",
+    "tracee_image": "aquasec/tracee:0.24.1",
     "compose_file": "deploy/docker-compose.yml",
     "skip_compose_up": false,
     "readiness_timeout_seconds": 60,  # 等待vuln-app就绪的超时
+    "tracee_startup_timeout_seconds": 120,
     "tracee_settle_seconds": 3,
     "tracee_flush_seconds": 3,
-    "tracee_output_format": "table",
+    "tracee_output_format": "json",
     "trace_log_name": "trace.log",
     "tracee_runtime_log_name": "tracee_runtime.log",
     "allow_skip_tracee": true,
-    "tracee_events": "sched_process_exec,execve,openat,read,write,close,connect,accept,sendto,recvfrom,fork,clone,vfork,mmap,security_socket_connect,security_socket_accept"
+    "tracee_events": "sched_process_exec,execve,openat,read,write,close,socket,bind,listen,accept,accept4,connect,getpeername,getsockname,sendto,recvfrom,fork,clone,vfork,mmap,security_socket_connect,security_socket_accept"
   },
   "auth": {
     "user_username": "alice",

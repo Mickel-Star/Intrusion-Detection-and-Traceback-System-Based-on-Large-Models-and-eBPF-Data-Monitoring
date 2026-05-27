@@ -30,8 +30,8 @@ Options:
   --compose-file <path>           Docker Compose file. Default from config, or deploy/docker-compose.yml
   --skip-compose-up               Use an already-running app and skip docker compose up.
   --skip-tracee                   Run only the workload driver and collection summary.
-  --tracee-image <image>          Tracee image. Default: aquasec/tracee:latest
-  --tracee-output-format <format> Tracee output format. Default: table
+  --tracee-image <image>          Tracee image. Default: aquasec/tracee:0.24.1
+  --tracee-output-format <format> Tracee output format. Allowed: json/jsonl. Default: json
   --container-filter <filter>     Extra Tracee --scope expression.
   -h, --help                      Show this help.
 EOF
@@ -134,14 +134,28 @@ DATASET="$(config_get dataset benign_corpus_v3)"
 DURATION_SECONDS="${DURATION_SECONDS_ARG:-$(config_get duration_seconds 300)}"
 OUTPUT_DIR="${OUTPUT_DIR_ARG:-$(config_get output_dir data/benign_corpus_v3/smoke/run_smoke_tracee)}"
 COMPOSE_FILE="${COMPOSE_FILE_ARG:-$(config_get collection.compose_file deploy/docker-compose.yml)}"
-TRACEE_IMAGE="${TRACEE_IMAGE_ARG:-$(config_get collection.tracee_image aquasec/tracee:latest)}"
-TRACEE_OUTPUT_FORMAT="${TRACEE_OUTPUT_FORMAT_ARG:-$(config_get collection.tracee_output_format table)}"
+TRACEE_IMAGE="${TRACEE_IMAGE_ARG:-$(config_get collection.tracee_image aquasec/tracee:0.24.1)}"
+TRACEE_CONFIGURED_OUTPUT_FORMAT="${TRACEE_OUTPUT_FORMAT_ARG:-$(config_get collection.tracee_output_format json)}"
+TRACEE_CONFIGURED_OUTPUT_FORMAT="$(printf '%s' "${TRACEE_CONFIGURED_OUTPUT_FORMAT}" | tr '[:upper:]' '[:lower:]')"
+case "${TRACEE_CONFIGURED_OUTPUT_FORMAT}" in
+  json)
+    TRACEE_OUTPUT_FORMAT="json"
+    ;;
+  jsonl)
+    TRACEE_OUTPUT_FORMAT="json"
+    ;;
+  *)
+    echo "ERROR: Tracee output format must be json/jsonl for training data, got: ${TRACEE_CONFIGURED_OUTPUT_FORMAT}" >&2
+    exit 2
+    ;;
+esac
 TRACE_LOG_NAME="$(config_get collection.trace_log_name trace.log)"
 TRACEE_RUNTIME_LOG_NAME="$(config_get collection.tracee_runtime_log_name tracee_runtime.log)"
 READINESS_TIMEOUT_SECONDS="$(config_get collection.readiness_timeout_seconds 60)"
+TRACEE_STARTUP_TIMEOUT_SECONDS="$(config_get collection.tracee_startup_timeout_seconds 120)"
 TRACEE_SETTLE_SECONDS="$(config_get collection.tracee_settle_seconds 3)"
 TRACEE_FLUSH_SECONDS="$(config_get collection.tracee_flush_seconds 3)"
-TRACEE_EVENTS="$(config_get collection.tracee_events sched_process_exec,execve,openat,read,write,close,connect,accept,sendto,recvfrom,fork,clone,vfork,mmap,security_socket_connect,security_socket_accept)"
+TRACEE_EVENTS="$(config_get collection.tracee_events sched_process_exec,execve,openat,read,write,close,socket,bind,listen,accept,accept4,connect,getpeername,getsockname,sendto,recvfrom,fork,clone,vfork,mmap,security_socket_connect,security_socket_accept)"
 BASE_URL_FROM_CONFIG="$(config_get base_url http://127.0.0.1:5000)"
 
 SKIP_COMPOSE_UP=0
@@ -256,7 +270,8 @@ write_summary() {
   export SUMMARY_TRACEE_RUNTIME_LOG_NAME="${TRACEE_RUNTIME_LOG_NAME}"
   export SUMMARY_TRACEE_STARTUP_SUCCESS="${TRACE_STARTUP_SUCCESS}"
   export SUMMARY_TRACEE_STOP_SUCCESS="${TRACE_STOP_SUCCESS}"
-  export SUMMARY_TRACEE_OUTPUT_FORMAT="${TRACEE_OUTPUT_FORMAT}"
+  export SUMMARY_TRACEE_CONFIGURED_OUTPUT_FORMAT="${TRACEE_CONFIGURED_OUTPUT_FORMAT}"
+  export SUMMARY_TRACEE_CLI_OUTPUT_FORMAT="${TRACEE_OUTPUT_FORMAT}"
   export SUMMARY_TRACEE_CONTAINER_FILTER="${CONTAINER_FILTER}"
   export SUMMARY_TRACEE_CONTAINER_FILTER_ENABLED="${TRACE_FILTER_ENABLED}"
   export SUMMARY_DRIVER_COMMAND="${DRIVER_CMD_STRING}"
@@ -274,6 +289,7 @@ write_summary() {
 import json
 import os
 from pathlib import Path
+from src.process.log_parser import detect_trace_log_format
 
 def env(name: str, default: str = "") -> str:
     return os.environ.get(name, default)
@@ -300,6 +316,20 @@ driver_log = Path(env("SUMMARY_DRIVER_LOG"))
 request_events = Path(env("SUMMARY_REQUEST_EVENTS"))
 workload_summary = Path(env("SUMMARY_WORKLOAD_SUMMARY"))
 collection_summary = Path(env("SUMMARY_COLLECTION_SUMMARY"))
+trace_format_detection = detect_trace_log_format(trace_log)
+configured_output_format = env("SUMMARY_TRACEE_CONFIGURED_OUTPUT_FORMAT", "json").strip().lower()
+cli_output_format = env("SUMMARY_TRACEE_CLI_OUTPUT_FORMAT", "json").strip().lower()
+warnings = lines(env("SUMMARY_WARNINGS_FILE"))
+errors = lines(env("SUMMARY_ERRORS_FILE"))
+actual_trace_format = str(trace_format_detection.get("actual_trace_format") or "missing")
+compatible_actual_formats = {
+    "json": {"jsonl"},
+    "jsonl": {"jsonl"},
+}.get(configured_output_format, set())
+if env_bool("SUMMARY_TRACEE_ENABLED") and actual_trace_format not in compatible_actual_formats:
+    errors.append(f"trace_format_mismatch:configured={configured_output_format}:actual={actual_trace_format}")
+elif env_bool("SUMMARY_TRACEE_ENABLED") and configured_output_format != actual_trace_format:
+    warnings.append(f"trace_format_alias:configured={configured_output_format}:actual={actual_trace_format}")
 
 payload = {
     "dataset": env("SUMMARY_DATASET", "benign_corpus_v3"),
@@ -318,7 +348,7 @@ payload = {
     "skip_tracee": env_bool("SUMMARY_SKIP_TRACEE"),
     "tracee": {
         "enabled": env_bool("SUMMARY_TRACEE_ENABLED"),
-        "image": env("SUMMARY_TRACEE_IMAGE", "aquasec/tracee:latest"),
+        "image": env("SUMMARY_TRACEE_IMAGE", "aquasec/tracee:0.24.1"),
         "container_name": env("SUMMARY_TRACEE_CONTAINER_NAME"),
         "command": env("SUMMARY_TRACEE_COMMAND"),
         "trace_log": env("SUMMARY_TRACEE_TRACE_LOG_NAME", "trace.log"),
@@ -327,7 +357,11 @@ payload = {
         "trace_log_size_bytes": trace_log.stat().st_size if trace_log.exists() else 0,
         "startup_success": env_bool("SUMMARY_TRACEE_STARTUP_SUCCESS"),
         "stop_success": env_bool("SUMMARY_TRACEE_STOP_SUCCESS"),
-        "output_format": env("SUMMARY_TRACEE_OUTPUT_FORMAT", "table"),
+        "configured_output_format": configured_output_format,
+        "cli_output_format": cli_output_format,
+        "output_format": cli_output_format,
+        "actual_trace_format": actual_trace_format,
+        "trace_format_detection": trace_format_detection,
         "container_filter_enabled": env_bool("SUMMARY_TRACEE_CONTAINER_FILTER_ENABLED"),
         "container_filter": env("SUMMARY_TRACEE_CONTAINER_FILTER"),
         "scope_expression": ["container", "comm!=tracee"] + ([env("SUMMARY_TRACEE_CONTAINER_FILTER")] if env("SUMMARY_TRACEE_CONTAINER_FILTER") else []),
@@ -348,8 +382,8 @@ payload = {
         "workload_summary": str(workload_summary),
         "collection_summary": str(collection_summary),
     },
-    "errors": lines(env("SUMMARY_ERRORS_FILE")),
-    "warnings": lines(env("SUMMARY_WARNINGS_FILE")),
+    "errors": errors,
+    "warnings": warnings,
 }
 collection_summary.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8")
 PY
@@ -416,6 +450,31 @@ while time.time() < deadline:
 print(f"health check failed for {base_url}{health.path}: {last_error}", file=sys.stderr)
 raise SystemExit(1)
 PY
+}
+
+ensure_tracee_image() {
+  if docker image inspect "${TRACEE_IMAGE}" >/dev/null 2>&1; then
+    echo "tracee image already available: ${TRACEE_IMAGE}" >> "${TRACEE_RUNTIME_LOG}"
+    return 0
+  fi
+  echo "pulling tracee image before capture: ${TRACEE_IMAGE}" | tee -a "${TRACEE_RUNTIME_LOG}"
+  docker pull "${TRACEE_IMAGE}" >> "${TRACEE_RUNTIME_LOG}" 2>&1
+}
+
+wait_for_tracee_startup() {
+  local deadline
+  deadline=$(( $(date +%s) + ${TRACEE_STARTUP_TIMEOUT_SECONDS%.*} ))
+  while [ "$(date +%s)" -le "${deadline}" ]; do
+    if docker ps --format '{{.Names}}' | grep -qx "${TRACEE_CONTAINER_NAME}"; then
+      sleep "${TRACEE_SETTLE_SECONDS}"
+      return 0
+    fi
+    if ! kill -0 "${TRACE_PID}" 2>/dev/null; then
+      return 1
+    fi
+    sleep 1
+  done
+  return 1
 }
 
 stop_tracee() {
@@ -490,38 +549,18 @@ if [ "${SKIP_COMPOSE_UP}" -eq 0 ]; then
     write_summary
     exit 1
   fi
-  if ! docker ps --format '{{.Names}}' | grep -qx 'drsec-target'; then
-    COMPOSE_OWNED_BY_SCRIPT=true
-  else
-    add_warning "drsec-target was already running before compose up; script will not stop it"
-  fi
-  COMPOSE_STARTED_BY_SCRIPT=true
-  echo "compose up: ${COMPOSE_CMD_STRING} -f ${COMPOSE_FILE} up -d --build vuln-app" | tee -a "${TRACEE_RUNTIME_LOG}"
-  "${COMPOSE_CMD[@]}" -f "${COMPOSE_FILE}" up -d --build vuln-app >> "${TRACEE_RUNTIME_LOG}" 2>&1
-
-  if is_loopback_base_url "${BASE_URL_FROM_CONFIG}"; then
-    target_ip="$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' drsec-target 2>>"${TRACEE_RUNTIME_LOG}" || true)"
-    if [ -n "${target_ip}" ]; then
-      BASE_URL_EFFECTIVE="$(container_base_url "${BASE_URL_FROM_CONFIG}" "${target_ip}")"
-      add_warning "config base_url is loopback but compose service is not port-published; using target container IP ${BASE_URL_EFFECTIVE}"
-      write_effective_config "${BASE_URL_EFFECTIVE}"
-    else
-      add_warning "could not resolve drsec-target container IP; keeping configured base_url ${BASE_URL_FROM_CONFIG}"
-    fi
-  fi
-fi
-
-if ! wait_for_readiness; then
-  add_error "demo app readiness check failed within ${READINESS_TIMEOUT_SECONDS}s"
-  FINAL_EXIT_CODE=1
-  END_TS="$(utc_now)"
-  write_summary
-  exit 1
 fi
 
 if [ "${SKIP_TRACEE}" -eq 0 ]; then
   TRACEE_ENABLED=true
   docker rm -f "${TRACEE_CONTAINER_NAME}" >> "${TRACEE_RUNTIME_LOG}" 2>&1 || true
+  if ! ensure_tracee_image; then
+    add_error "failed to prepare Tracee image: ${TRACEE_IMAGE}"
+    FINAL_EXIT_CODE=1
+    END_TS="$(utc_now)"
+    write_summary
+    exit 1
+  fi
   TRACEE_CMD=(docker run --name "${TRACEE_CONTAINER_NAME}")
   if [ "${DEBUG_KEEP_TRACEE:-0}" != "1" ]; then
     TRACEE_CMD+=(--rm)
@@ -558,8 +597,7 @@ if [ "${SKIP_TRACEE}" -eq 0 ]; then
   echo "tracee command: ${TRACE_CMD_STRING}" >> "${TRACEE_RUNTIME_LOG}"
   "${TRACEE_CMD[@]}" > "${TRACE_LOG}" 2>&1 &
   TRACE_PID=$!
-  sleep "${TRACEE_SETTLE_SECONDS}"
-  if ! docker ps --format '{{.Names}}' | grep -qx "${TRACEE_CONTAINER_NAME}"; then
+  if ! wait_for_tracee_startup; then
     add_error "Tracee container did not stay running; see ${TRACE_LOG} and ${TRACEE_RUNTIME_LOG}"
     FINAL_EXIT_CODE=1
     END_TS="$(utc_now)"
@@ -571,6 +609,31 @@ if [ "${SKIP_TRACEE}" -eq 0 ]; then
 else
   TRACEE_ENABLED=false
   add_warning "skip-tracee enabled; trace.log will not be produced"
+fi
+
+if [ "${SKIP_COMPOSE_UP}" -eq 0 ]; then
+  COMPOSE_OWNED_BY_SCRIPT=true
+  COMPOSE_STARTED_BY_SCRIPT=true
+  echo "compose up: ${COMPOSE_CMD_STRING} -f ${COMPOSE_FILE} up -d --build --force-recreate vuln-app" | tee -a "${TRACEE_RUNTIME_LOG}"
+  "${COMPOSE_CMD[@]}" -f "${COMPOSE_FILE}" up -d --build --force-recreate vuln-app >> "${TRACEE_RUNTIME_LOG}" 2>&1
+  if is_loopback_base_url "${BASE_URL_FROM_CONFIG}"; then
+    target_ip="$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' drsec-target 2>>"${TRACEE_RUNTIME_LOG}" || true)"
+    if [ -n "${target_ip}" ]; then
+      BASE_URL_EFFECTIVE="$(container_base_url "${BASE_URL_FROM_CONFIG}" "${target_ip}")"
+      add_warning "config base_url is loopback but compose service is not port-published; using target container IP ${BASE_URL_EFFECTIVE}"
+      write_effective_config "${BASE_URL_EFFECTIVE}"
+    else
+      add_warning "could not resolve drsec-target container IP; keeping configured base_url ${BASE_URL_FROM_CONFIG}"
+    fi
+  fi
+fi
+
+if ! wait_for_readiness; then
+  add_error "demo app readiness check failed within ${READINESS_TIMEOUT_SECONDS}s"
+  FINAL_EXIT_CODE=1
+  END_TS="$(utc_now)"
+  write_summary
+  exit 1
 fi
 
 DRIVER_CMD=(

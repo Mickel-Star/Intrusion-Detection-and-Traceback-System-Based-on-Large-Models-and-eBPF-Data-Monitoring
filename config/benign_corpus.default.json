@@ -57,7 +57,9 @@
     "health_timeout_seconds": 60
   },
   "tracee": {
-    "image": "aquasec/tracee:latest",
+    "image": "aquasec/tracee:0.24.1",
+    "output_format": "json",
+    "output_option": "option:parse-arguments-fds",
     "scopes": [
       "container",
       "comm!=tracee"

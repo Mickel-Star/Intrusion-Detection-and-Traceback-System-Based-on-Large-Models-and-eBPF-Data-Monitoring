@@ -68,16 +68,7 @@ def iter_realtime_windows(
                 time.sleep(float(cfg.poll_interval_seconds))
                 continue
             for line in new_lines:
-                parsed = None
-                if line.startswith("{"):
-                    try:
-                        import json
-
-                        parsed = parser._parse_json_line(json.loads(line))
-                    except Exception:
-                        parsed = None
-                else:
-                    parsed = parser.parse_log_line(line)
+                parsed = parser.parse_line(line)
                 if not parsed:
                     continue
                 out = reducer.ingest_log(parsed)

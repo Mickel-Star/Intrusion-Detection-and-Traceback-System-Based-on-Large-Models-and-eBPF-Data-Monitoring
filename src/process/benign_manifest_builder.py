@@ -26,6 +26,7 @@ from src.common.io import (
     write_jsonl,
 )
 from src.process.benign_workload_driver import load_config
+from src.process.log_parser import detect_trace_log_format
 
 
 DEFAULT_INCLUDE_SPLITS = ("train", "calibration", "holdout")
@@ -47,6 +48,10 @@ DEFAULT_SAMPLING = {
 KNOWN_WINDOWS_DIRS = ("windows", "processed_windows", "debug_windows", "persisted_windows", "realtime_windows")
 DEFAULT_RUN_ORDER = ("run_a", "run_b", "run_c", "run_d")
 SPLITS = ("train", "calibration", "holdout")
+TRACE_FORMAT_COMPATIBILITY = {
+    "json": {"jsonl"},
+    "jsonl": {"jsonl"},
+}
 
 
 def path_for_manifest(path: Path) -> str:
@@ -780,6 +785,27 @@ def validate_run_artifacts(
     collection_summary = read_json(run_dir / "collection_summary.json")
     activity_rows = read_jsonl(run_dir / "window_activity.jsonl")
     activity_summary = read_json(run_dir / "window_activity_summary.json")
+    effective_collection = dict(effective_config.get("collection") or {})
+    tracee_summary = dict(collection_summary.get("tracee") or {})
+    configured_output_format = str(
+        effective_collection.get("tracee_output_format")
+        or collection.get("tracee_output_format")
+        or tracee_summary.get("configured_output_format")
+        or tracee_summary.get("output_format")
+        or "json"
+    ).strip().lower()
+    summary_configured_output_format = str(tracee_summary.get("configured_output_format") or "").strip().lower()
+    cli_output_format = str(tracee_summary.get("cli_output_format") or tracee_summary.get("output_format") or "").strip().lower()
+    trace_format_detection = dict(tracee_summary.get("trace_format_detection") or {})
+    if not trace_format_detection:
+        trace_format_detection = detect_trace_log_format(run_dir / "trace.log")
+    actual_trace_format = str(
+        tracee_summary.get("actual_trace_format")
+        or trace_format_detection.get("actual_trace_format")
+        or "missing"
+    ).strip().lower()
+    compatible_actual_formats = TRACE_FORMAT_COMPATIBILITY.get(configured_output_format, set())
+    trace_format_consistent = bool(actual_trace_format in compatible_actual_formats)
 
     required = [
         ("effective_config.yaml", run_dir / "effective_config.yaml"),
@@ -828,6 +854,18 @@ def validate_run_artifacts(
 
     if selected and tracee_enabled and (not (run_dir / "trace.log").is_file() or (run_dir / "trace.log").stat().st_size <= 0):
         errors.append("trace_log_missing_or_empty")
+    if selected and tracee_enabled:
+        if configured_output_format not in TRACE_FORMAT_COMPATIBILITY:
+            errors.append(f"configured_output_format_invalid:{configured_output_format}")
+        elif not trace_format_consistent:
+            errors.append(f"trace_format_mismatch:configured={configured_output_format}:actual={actual_trace_format}")
+        elif configured_output_format != actual_trace_format:
+            warnings.append(f"trace_format_alias:configured={configured_output_format}:actual={actual_trace_format}")
+        if summary_configured_output_format and summary_configured_output_format != configured_output_format:
+            warnings.append(
+                f"collection_summary_configured_output_format_mismatch:"
+                f"{summary_configured_output_format}!={configured_output_format}"
+            )
 
     driver = dict(collection_summary.get("driver") or {})
     if selected and collection_summary and safe_int(driver.get("exit_code"), -1) != 0:
@@ -876,6 +914,11 @@ def validate_run_artifacts(
         "window_count": safe_int(activity_summary.get("window_count"), len(activity_rows)),
         "activity_level_counts": activity_counts(activity_rows),
         "trace_log_size_bytes": (run_dir / "trace.log").stat().st_size if (run_dir / "trace.log").exists() else 0,
+        "configured_output_format": configured_output_format,
+        "cli_output_format": cli_output_format,
+        "actual_trace_format": actual_trace_format,
+        "trace_format_consistent": trace_format_consistent,
+        "trace_format_detection": trace_format_detection,
         "status": status,
         "warnings": sorted(set(warnings)),
         "errors": sorted(set(errors)),
@@ -1037,6 +1080,7 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
     )
     collection = dict(config.get("collection") or {})
     tracee_enabled = safe_bool(collection.get("tracee_enabled"), True) and not bool(args.allow_missing_trace)
+    configured_output_format = str(collection.get("tracee_output_format") or "json").strip().lower()
     report = {
         "dataset": str(config.get("dataset") or "benign_corpus_v3"),
         "version": str(config.get("version") or "v3"),
@@ -1047,6 +1091,12 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
         "window_seconds": safe_int(config.get("window_seconds"), 30),
         "time_bin_seconds": safe_int(config.get("time_bin_seconds"), 2),
         "tracee_enabled": bool(tracee_enabled),
+        "configured_output_format": configured_output_format,
+        "actual_trace_formats": {
+            run_id: str(payload.get("actual_trace_format") or "")
+            for run_id, payload in sorted(run_reports.items())
+            if run_id in selected
+        },
         "runs": run_reports,
         "split_summary": split_summary,
         "profile_coverage": build_profile_coverage(full_rows),
@@ -1086,6 +1136,11 @@ def print_summary(report: dict[str, Any]) -> None:
     print("")
     print("Corpus dir:")
     print(f"  {report.get('corpus_dir')}")
+    print("Trace format:")
+    print(f"  configured output format: {report.get('configured_output_format')}")
+    actual_formats = dict(report.get("actual_trace_formats") or {})
+    if actual_formats:
+        print(f"  actual trace format: {', '.join(f'{run_id}={fmt}' for run_id, fmt in actual_formats.items())}")
     print("")
     print("Runs:")
     for run_id, payload in dict(report.get("runs") or {}).items():

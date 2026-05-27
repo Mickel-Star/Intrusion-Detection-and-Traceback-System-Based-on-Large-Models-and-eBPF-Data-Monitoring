@@ -2,7 +2,8 @@ FROM python:alpine
 
 WORKDIR /app
 COPY app.py .
-RUN pip install flask
+COPY rich_client.py .
+RUN pip install flask gunicorn
 
 RUN apk add --no-cache \
     bash \

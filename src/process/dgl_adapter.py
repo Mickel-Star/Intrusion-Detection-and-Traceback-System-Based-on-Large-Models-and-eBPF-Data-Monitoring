@@ -85,6 +85,7 @@ def _node_feature(node_id: str, meta: Dict[str, Any], dim: int) -> torch.Tensor:
         min(math.log1p(abs(int(meta.get("pid") or 0))) / 10.0, 1.0),
         min(len(str(meta.get("pathname") or "")) / 256.0, 1.0),
         min(len(str(meta.get("name") or "")) / 64.0, 1.0),
+        1.0 if meta.get("is_unspec_net") else 0.0,
     ]
     for offset, value in enumerate(stats):
         idx = cursor + offset
@@ -157,8 +158,29 @@ def window_to_dgl_graph(
     node_attr_dim: int = DEFAULT_NODE_ATTR_DIM,
     edge_attr_dim: int = DEFAULT_EDGE_ATTR_DIM,
     device: str | torch.device = "cpu",
+    filter_unspec_net: bool = True,
 ) -> DGLWindowGraph:
     _require_dgl()
+
+    unspec_net_nodes: set[str] = set()
+    if filter_unspec_net:
+        for node_id in nx_graph.nodes():
+            meta = nx_graph.nodes[node_id].get("meta") or {}
+            if meta.get("is_unspec_net"):
+                unspec_net_nodes.add(str(node_id))
+
+    if unspec_net_nodes:
+        filtered_graph = nx.MultiDiGraph()
+        for node_id in nx_graph.nodes():
+            if str(node_id) in unspec_net_nodes:
+                continue
+            filtered_graph.add_node(node_id, **nx_graph.nodes[node_id])
+        for src, dst, key, data in nx_graph.edges(keys=True, data=True):
+            if str(src) in unspec_net_nodes or str(dst) in unspec_net_nodes:
+                continue
+            filtered_graph.add_edge(src, dst, key=key, **data)
+        nx_graph = filtered_graph
+
     node_ids = list(nx_graph.nodes())
     node_id_to_idx = {node_id: idx for idx, node_id in enumerate(node_ids)}
     idx_to_node_id = {idx: node_id for node_id, idx in node_id_to_idx.items()}

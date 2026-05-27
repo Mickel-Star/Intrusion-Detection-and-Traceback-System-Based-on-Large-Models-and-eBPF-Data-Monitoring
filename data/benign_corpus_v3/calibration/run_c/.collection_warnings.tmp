@@ -1,1 +1,0 @@
-config base_url is loopback but compose service is not port-published; using target container IP http://172.18.0.2:5000

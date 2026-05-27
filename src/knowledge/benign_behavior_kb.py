@@ -77,7 +77,14 @@ class BenignBehaviorKnowledgeBase:
     def update_from_edges(self, edges: Iterable[Tuple[str, str, str, int]], metas: Dict[str, Dict[str, Any]]) -> None:
         cur = self.conn.cursor()
 
+        unspec_nodes: set[str] = set()
         for node, meta in metas.items():
+            if meta.get("is_unspec_net"):
+                unspec_nodes.add(str(node))
+
+        for node, meta in metas.items():
+            if str(node) in unspec_nodes:
+                continue
             entity_type = "UNKNOWN"
             if node.startswith("proc:"):
                 entity_type = "Process"
@@ -108,6 +115,8 @@ class BenignBehaviorKnowledgeBase:
             )
 
         for src, dst, edge_type, count in edges:
+            if str(src) in unspec_nodes or str(dst) in unspec_nodes:
+                continue
             count = int(count)
             cur.execute(
                 """
@@ -149,6 +158,8 @@ class BenignBehaviorKnowledgeBase:
 
         sentences: List[List[str]] = []
         for meta in metas.values():
+            if meta.get("is_unspec_net"):
+                continue
             base = meta.get("pathname") or meta.get("name") or ""
             toks = tokenize_identifier(base)
             if toks:

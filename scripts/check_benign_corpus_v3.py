@@ -14,8 +14,13 @@ if ROOT_DIR not in sys.path:
     sys.path.insert(0, ROOT_DIR)
 
 from src.common.io import safe_int
+from src.process.log_parser import detect_trace_log_format
 
 VALID_LEVELS = {"empty", "idle", "low_activity", "active", "burst"}
+TRACE_FORMAT_COMPATIBILITY = {
+    "json": {"jsonl"},
+    "jsonl": {"jsonl"},
+}
 DEFAULT_RUN_SPLITS = {
     "run_a": "train",
     "run_b": "train",
@@ -85,6 +90,10 @@ def _count_nonempty_lines(path: Path) -> int:
         return 0
     with path.open("r", encoding="utf-8", errors="ignore") as fp:
         return sum(1 for line in fp if line.strip())
+
+
+def _trace_log_is_jsonl(path: Path) -> bool:
+    return str(detect_trace_log_format(path).get("actual_trace_format") or "") == "jsonl"
 
 
 def _parse_ts(value: Any) -> datetime:
@@ -201,6 +210,8 @@ def check_window_activity(argv: list[str]) -> int:
 
     trace_path = run_dir / "trace.log"
     if trace_path.exists() and trace_path.stat().st_size > 0:
+        if not _trace_log_is_jsonl(trace_path):
+            failures.append("trace.log is not JSON/JSONL; Tracee table output is not accepted")
         total_raw_events = sum(int(row.get("raw_event_count") or 0) for row in rows)
         if total_raw_events <= 0 and not _summary_records_trace_parse_failed(summary):
             failures.append("trace.log is non-empty but total raw_event_count is 0 and summary has no trace_parse_failed warning")
@@ -379,6 +390,8 @@ def _check_run(
         trace_path = run_dir / "trace.log"
         if not trace_path.is_file() or trace_path.stat().st_size <= 0:
             failures.append(f"{split}/{run_id}: trace.log missing or empty")
+        elif not _trace_log_is_jsonl(trace_path):
+            failures.append(f"{split}/{run_id}: trace.log is not JSON/JSONL; table output is not accepted")
 
     activity_rows = _read_jsonl(run_dir / "window_activity.jsonl", failures, f"{split}/{run_id}/window_activity.jsonl")
     if not activity_rows:
@@ -393,6 +406,36 @@ def _check_run(
             failures.append(f"{split}/{run_id}: window {idx} run_id mismatch: {row.get('run_id')}")
 
     effective = _read_json(run_dir / "effective_config.yaml", failures, f"{split}/{run_id}/effective_config.yaml")
+    collection_cfg = dict(effective.get("collection") or {})
+    configured_output_format = str(collection_cfg.get("tracee_output_format") or "json").strip().lower()
+    if configured_output_format not in TRACE_FORMAT_COMPATIBILITY:
+        failures.append(
+            f"{split}/{run_id}: effective_config collection.tracee_output_format must be json/jsonl, got {configured_output_format}"
+        )
+    tracee_summary = dict(collection.get("tracee") or {})
+    summary_format = str(tracee_summary.get("output_format") or "json").strip().lower()
+    if summary_format not in {"json", "jsonl"}:
+        failures.append(f"{split}/{run_id}: collection_summary tracee.output_format must be json/jsonl, got {summary_format}")
+    summary_configured_output_format = str(tracee_summary.get("configured_output_format") or "").strip().lower()
+    if summary_configured_output_format and summary_configured_output_format != configured_output_format:
+        warnings.append(
+            f"{split}/{run_id}: collection_summary configured_output_format mismatch: "
+            f"{summary_configured_output_format} != {configured_output_format}"
+        )
+    trace_detection = dict(tracee_summary.get("trace_format_detection") or detect_trace_log_format(run_dir / "trace.log"))
+    actual_trace_format = str(tracee_summary.get("actual_trace_format") or trace_detection.get("actual_trace_format") or "missing").strip().lower()
+    if not allow_missing_trace and configured_output_format in TRACE_FORMAT_COMPATIBILITY:
+        compatible_actual_formats = TRACE_FORMAT_COMPATIBILITY.get(configured_output_format, set())
+        if actual_trace_format not in compatible_actual_formats:
+            failures.append(
+                f"{split}/{run_id}: trace format mismatch: configured_output_format={configured_output_format}, "
+                f"actual_trace_format={actual_trace_format}"
+            )
+        elif configured_output_format != actual_trace_format:
+            warnings.append(
+                f"{split}/{run_id}: trace format alias: configured_output_format={configured_output_format}, "
+                f"actual_trace_format={actual_trace_format}"
+            )
     run_meta = _read_json(run_dir / "run_meta.json", failures, f"{split}/{run_id}/run_meta.json")
     if str(run_meta.get("split") or "") != split:
         failures.append(f"{split}/{run_id}: run_meta split mismatch: {run_meta.get('split')}")
@@ -505,6 +548,18 @@ def check_formal(argv: list[str]) -> int:
             failures.append(f"report {run_id} split mismatch: {run_report.get('split')}")
         if str(run_report.get("status") or "") not in {"success", "skipped"}:
             failures.append(f"report {run_id} status is not success/skipped: {run_report.get('status')}")
+        configured_output_format = str(run_report.get("configured_output_format") or "").strip().lower()
+        actual_trace_format = str(run_report.get("actual_trace_format") or "").strip().lower()
+        if not configured_output_format:
+            failures.append(f"report {run_id} missing configured_output_format")
+        if not args.allow_missing_trace and not actual_trace_format:
+            failures.append(f"report {run_id} missing actual_trace_format")
+        if not args.allow_missing_trace and configured_output_format in TRACE_FORMAT_COMPATIBILITY and actual_trace_format:
+            if actual_trace_format not in TRACE_FORMAT_COMPATIBILITY.get(configured_output_format, set()):
+                failures.append(
+                    f"report {run_id} trace format mismatch: "
+                    f"configured_output_format={configured_output_format}, actual_trace_format={actual_trace_format}"
+                )
 
     if failures:
         for failure in failures:

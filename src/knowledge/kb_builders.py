@@ -178,8 +178,10 @@ def build_bbk(
                 manifest_records.append(record)
 
                 if fit_for_bbk:
-                    store.update_from_edges(iter_reduced_edges(g), metas)
-                    store.update_word2vec_from_metas(metas)
+                    train_graph = _filter_training_graph(g)
+                    train_metas = _metas_from_graph(train_graph)
+                    store.update_from_edges(iter_reduced_edges(train_graph), train_metas)
+                    store.update_word2vec_from_metas(train_metas)
 
                 total_nodes += int(record["node_count"])
                 total_edges += int(record["edge_count"])
@@ -393,10 +395,8 @@ def _build_bbk_from_sampled_train_windows(
         print(f"📦 Stage 1/2: fitting BBK from sampled train windows ({sampled_path})")
         for record in train_records:
             graph = load_window_graph(str(record["path"]))
-            metas = {
-                str(node_id): dict((node_data or {}).get("meta") or {})
-                for node_id, node_data in graph.nodes(data=True)
-            }
+            graph = _filter_training_graph(graph)
+            metas = _metas_from_graph(graph)
             store.update_from_edges(iter_reduced_edges(graph), metas)
             store.update_word2vec_from_metas(metas)
     finally:
@@ -860,7 +860,7 @@ def _resolve_bbk_logs_dir_sources(logs_dir: str) -> list[dict[str, Any]]:
         raise FileNotFoundError(f"benign corpus directory not found: {root}")
 
     raw_sources: list[dict[str, Any]] = []
-    for run_dir in sorted([path for path in root.iterdir() if path.is_dir()], key=lambda item: item.name):
+    for run_dir in _iter_bbk_run_dirs(root):
         trace_path = _discover_trace_log(run_dir)
         if trace_path is None:
             continue
@@ -902,6 +902,26 @@ def _resolve_bbk_logs_dir_sources(logs_dir: str) -> list[dict[str, Any]]:
             )
         sources.append(enriched)
     return sources
+
+
+def _iter_bbk_run_dirs(root: Path) -> list[Path]:
+    """Return direct run dirs and one-level split/run dirs, without duplicates."""
+
+    candidates: list[Path] = []
+    seen: set[Path] = set()
+    split_names = {"train", "calibration", "holdout", "smoke"}
+    for path in sorted([item for item in root.iterdir() if item.is_dir()], key=lambda item: item.as_posix()):
+        children = []
+        if path.name in split_names:
+            children = sorted([child for child in path.iterdir() if child.is_dir()], key=lambda item: item.as_posix())
+        scan = children if children else [path]
+        for candidate in scan:
+            resolved = candidate.resolve()
+            if resolved in seen:
+                continue
+            seen.add(resolved)
+            candidates.append(candidate)
+    return candidates
 
 
 def _discover_trace_log(run_dir: Path) -> Path | None:
@@ -1170,6 +1190,45 @@ def _iter_bbk_windows(
     yield from reducer.ingest_logs(logs)
 
 
+def _filter_training_graph(g):
+    """Remove placeholder connected-socket nodes from BBK/GMAE training input."""
+
+    unknown_nodes = [
+        node_id
+        for node_id, node_data in g.nodes(data=True)
+        if _is_unknown_connected_socket_node(node_id, (node_data or {}).get("meta") or {})
+    ]
+    if not unknown_nodes:
+        return g
+
+    filtered = g.copy()
+    filtered.remove_nodes_from(unknown_nodes)
+    graph_filter = dict(filtered.graph.get("training_filter") or {})
+    graph_filter["removed_unknown_connected_socket_nodes"] = int(len(unknown_nodes))
+    graph_filter["policy"] = "drop_unknown_connected_socket_nodes_and_incident_edges"
+    filtered.graph["training_filter"] = graph_filter
+    return filtered
+
+
+def _metas_from_graph(g) -> dict[str, dict[str, Any]]:
+    return {
+        str(node_id): dict((node_data or {}).get("meta") or {})
+        for node_id, node_data in g.nodes(data=True)
+    }
+
+
+def _is_unknown_connected_socket_node(node_id: Any, meta: dict[str, Any]) -> bool:
+    node_text = str(node_id or "")
+    if node_text == "net:unknown_connected_socket" or node_text.startswith("net:unknown_connected_socket:"):
+        return True
+    if bool(meta.get("is_unspec_net")):
+        return True
+    for key in ("uuid", "name", "dst_ip"):
+        if str(meta.get(key) or "") == "unknown_connected_socket":
+            return True
+    return False
+
+
 def _bbk_reduction_config_payload(window_seconds: int, time_bin_seconds: int = DEFAULT_TIME_BIN_SECONDS) -> dict[str, Any]:
     from src.process.streaming_reduction import StreamingReductionConfig
 
@@ -1338,6 +1397,7 @@ def _train_gmae_on_window(
 
     try:
         graph = load_window_graph(str(record["path"]))
+        graph = _filter_training_graph(graph)
         if int(graph.number_of_nodes()) <= 0:
             return {"skipped": True, "skip_kind": "empty", "reason": "empty_graph", "losses": None}
 
@@ -1804,6 +1864,3 @@ def _env_int(name: str, default: int) -> int:
         return int(raw)
     except ValueError:
         return int(default)
-
-
-

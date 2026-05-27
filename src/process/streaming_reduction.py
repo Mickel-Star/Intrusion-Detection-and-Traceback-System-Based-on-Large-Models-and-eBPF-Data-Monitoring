@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
+from collections import deque
 from dataclasses import dataclass
-from typing import Any, Dict, Iterable, Iterator, List, Optional, Tuple
+from typing import Any, Deque, Dict, Iterable, Iterator, List, Optional, Tuple
 
 import networkx as nx
 
-from src.common.defaults import DEFAULT_WINDOW_SECONDS
+from src.common.defaults import DEFAULT_DETECT_STRIDE_SECONDS, DEFAULT_TIME_BIN_SECONDS, DEFAULT_WINDOW_SECONDS
 from src.process.provenance_model import ProvenanceEventMapper, ProvenanceEdge
 
 
 @dataclass(frozen=True)
 class StreamingReductionConfig:
     window_seconds: int = DEFAULT_WINDOW_SECONDS
-    time_bin_seconds: int = 1
+    time_bin_seconds: int = DEFAULT_TIME_BIN_SECONDS
     edge_key_mode: str = "event_time_bin"
 
     @property
@@ -152,6 +153,188 @@ class StreamingReducer:
         if self.config.normalized_edge_key_mode() == "semantic":
             return True
         return str(attrs.get("event_name") or "") == str(event_name or "") and int(attrs.get("bin_idx") or 0) == int(bin_idx)
+
+
+@dataclass(frozen=True)
+class SlidingWindowConfig:
+    window_seconds: int = DEFAULT_WINDOW_SECONDS
+    stride_seconds: int = DEFAULT_DETECT_STRIDE_SECONDS
+    time_bin_seconds: int = DEFAULT_TIME_BIN_SECONDS
+    edge_key_mode: str = "event_time_bin"
+
+    @property
+    def window_ns(self) -> int:
+        return int(self.window_seconds) * 1_000_000_000
+
+    @property
+    def stride_ns(self) -> int:
+        return int(self.stride_seconds) * 1_000_000_000
+
+    @property
+    def bin_ns(self) -> int:
+        return max(int(self.time_bin_seconds), 1) * 1_000_000_000
+
+    def normalized_edge_key_mode(self) -> str:
+        value = str(self.edge_key_mode or "").strip().lower()
+        if value in {"semantic", "event_time_bin"}:
+            return value
+        return "event_time_bin"
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "window_seconds": int(self.window_seconds),
+            "stride_seconds": int(self.stride_seconds),
+            "time_bin_seconds": int(self.time_bin_seconds),
+            "edge_key_mode": self.normalized_edge_key_mode(),
+        }
+
+
+@dataclass(frozen=True)
+class SlidingWindowResult:
+    window_start_ns: int
+    window_end_ns: int
+    graph: nx.MultiDiGraph
+    metas: Dict[str, Dict[str, Any]]
+    event_count: int
+    complete: bool = True
+
+    @property
+    def window_start(self) -> float:
+        return float(self.window_start_ns) / 1_000_000_000.0
+
+    @property
+    def window_end(self) -> float:
+        return float(self.window_end_ns) / 1_000_000_000.0
+
+
+class SlidingWindowReducer:
+    def __init__(
+        self,
+        mapper: Optional[ProvenanceEventMapper] = None,
+        config: Optional[SlidingWindowConfig] = None,
+    ):
+        self.mapper = mapper or ProvenanceEventMapper()
+        self.config = config or SlidingWindowConfig()
+        if int(self.config.window_seconds) <= 0:
+            raise ValueError("window_seconds must be > 0")
+        if int(self.config.stride_seconds) <= 0:
+            raise ValueError("stride_seconds must be > 0")
+        if int(self.config.stride_seconds) > int(self.config.window_seconds):
+            raise ValueError("stride_seconds must be <= window_seconds")
+
+        self._edges: Deque[ProvenanceEdge] = deque()
+        self._origin_ns: Optional[int] = None
+        self._next_window_start_ns: Optional[int] = None
+        self._last_seen_ts_ns: Optional[int] = None
+
+    def add_event(self, log: Dict[str, Any]) -> List[SlidingWindowResult]:
+        edge = self.mapper.parse_log_event(log)
+        if edge is None:
+            return []
+        return self.add_edge(edge)
+
+    def ingest_log(self, log: Dict[str, Any]) -> List[SlidingWindowResult]:
+        return self.add_event(log)
+
+    def ingest_logs(self, logs: Iterable[Dict[str, Any]], *, emit_partial: bool = False) -> Iterator[SlidingWindowResult]:
+        for log in logs:
+            for window in self.add_event(log):
+                yield window
+        for window in self.flush(emit_partial=emit_partial):
+            yield window
+
+    def add_edge(self, edge: ProvenanceEdge) -> List[SlidingWindowResult]:
+        ts_ns = int(edge.timestamp_ns)
+        if self._origin_ns is None:
+            self._origin_ns = ts_ns
+            self._next_window_start_ns = ts_ns
+
+        emitted = self._emit_due_windows(ts_ns)
+        self._edges.append(edge)
+        self._last_seen_ts_ns = ts_ns
+        self._drop_expired_edges()
+        return emitted
+
+    def flush(self, *, emit_partial: bool = True) -> List[SlidingWindowResult]:
+        if not emit_partial:
+            self._reset()
+            return []
+        if self._next_window_start_ns is None or self._last_seen_ts_ns is None:
+            return []
+
+        window_start_ns = int(self._next_window_start_ns)
+        if window_start_ns > int(self._last_seen_ts_ns):
+            self._reset()
+            return []
+
+        result = self._build_window(window_start_ns, complete=False)
+        self._reset()
+        if result.event_count <= 0:
+            return []
+        return [result]
+
+    def finalize(self, *, emit_partial: bool = True) -> List[SlidingWindowResult]:
+        return self.flush(emit_partial=emit_partial)
+
+    def _emit_due_windows(self, current_ts_ns: int) -> List[SlidingWindowResult]:
+        if self._next_window_start_ns is None:
+            return []
+
+        emitted: List[SlidingWindowResult] = []
+        while int(current_ts_ns) >= int(self._next_window_start_ns) + self.config.window_ns:
+            emitted.append(self._build_window(int(self._next_window_start_ns), complete=True))
+            self._next_window_start_ns = int(self._next_window_start_ns) + self.config.stride_ns
+        return emitted
+
+    def _build_window(self, window_start_ns: int, *, complete: bool) -> SlidingWindowResult:
+        window_end_ns = int(window_start_ns) + self.config.window_ns
+        selected = [
+            edge
+            for edge in self._edges
+            if int(window_start_ns) <= int(edge.timestamp_ns) < int(window_end_ns)
+        ]
+
+        reduction_config = StreamingReductionConfig(
+            window_seconds=int(self.config.window_seconds),
+            time_bin_seconds=int(self.config.time_bin_seconds),
+            edge_key_mode=self.config.normalized_edge_key_mode(),
+        )
+        reducer = StreamingReducer(mapper=self.mapper, config=reduction_config)
+        reducer._window_start_ns = int(window_start_ns)
+        for edge in selected:
+            reducer._add_edge(edge)
+
+        graph = reducer._graph
+        graph.graph["reduction_config"] = reduction_config.to_dict()
+        graph.graph["sliding_window_config"] = self.config.to_dict()
+        graph.graph["window_start_ns"] = int(window_start_ns)
+        graph.graph["window_end_ns"] = int(window_end_ns)
+        graph.graph["window_start"] = float(window_start_ns) / 1_000_000_000.0
+        graph.graph["window_end"] = float(window_end_ns) / 1_000_000_000.0
+        graph.graph["event_count"] = int(len(selected))
+        graph.graph["complete"] = bool(complete)
+
+        return SlidingWindowResult(
+            window_start_ns=int(window_start_ns),
+            window_end_ns=int(window_end_ns),
+            graph=graph,
+            metas=dict(reducer._metas),
+            event_count=int(len(selected)),
+            complete=bool(complete),
+        )
+
+    def _drop_expired_edges(self) -> None:
+        if self._next_window_start_ns is None:
+            return
+        keep_from_ns = int(self._next_window_start_ns)
+        while self._edges and int(self._edges[0].timestamp_ns) < keep_from_ns:
+            self._edges.popleft()
+
+    def _reset(self) -> None:
+        self._edges.clear()
+        self._origin_ns = None
+        self._next_window_start_ns = None
+        self._last_seen_ts_ns = None
 
 
 def iter_reduced_edges(g: nx.MultiDiGraph) -> List[Tuple[str, str, str, int]]:

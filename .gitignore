@@ -17,6 +17,33 @@ dist/
 build/
 *.pdf
 config/config.json
+data/benign_corpus_v4/
 
 # Local third-party skill sources installed for private review/classification.
 private_skill_library/
+data/
+*.log
+.env
+*.pem
+
+# Generated data / logs
+data/
+logs/
+*.log
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Environments and secrets
+.env
+.venv/
+venv/
+
+# Large model/checkpoint/archive files
+*.pt
+*.pth
+*.pkl
+*.zip
+*.tar
+*.tar.gz

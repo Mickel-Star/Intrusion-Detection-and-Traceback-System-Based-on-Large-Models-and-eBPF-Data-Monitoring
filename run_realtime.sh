@@ -45,7 +45,7 @@ docker run \
   -v /etc/os-release:/etc/os-release-host:ro \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
-  aquasec/tracee:latest \
+  aquasec/tracee:0.24.1 \
   --containers enrich=true \
   --containers sockets.docker=/var/run/docker.sock \
   --containers cgroupfs.path=/sys/fs/cgroup \
